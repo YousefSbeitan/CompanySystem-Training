@@ -1,5 +1,7 @@
 ﻿namespace CompanySystem.Data.Entities;
 
+using System;
+
 public class Note
 {
     public int NoteId { get; set; }

@@ -1,5 +1,7 @@
 ﻿namespace CompanySystem.Data.Entities;
 
+using System;
+
 public class MainPageSection
 {
     public int SectionId { get; set; }
