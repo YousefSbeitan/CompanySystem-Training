@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CompanySystem.Data.Entities
 {
-    internal class Role
+    internal class TrackingEntity
     {
     }
 }
