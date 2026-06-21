@@ -1,8 +1,6 @@
 ﻿namespace CompanySystem.Data.Entities;
 
-using System;
-
-public class MainPageSection
+public class MainPageSection : TrackingEntity
 {
     public int SectionId { get; set; }
 
@@ -11,8 +9,4 @@ public class MainPageSection
     public string Title { get; set; }
 
     public string Content { get; set; }
-
-    public int UpdatedBy { get; set; }
-
-    public DateTime UpdatedDate { get; set; }
 }

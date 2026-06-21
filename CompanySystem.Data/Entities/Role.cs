@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace CompanySystem.Data.Entities;
 
-namespace CompanySystem.Data.Entities
+public class Role : TrackingEntity
 {
-    internal class Role
-    {
-    }
+    public int RoleId { get; set; }
+
+    public string RoleName { get; set; }
 }

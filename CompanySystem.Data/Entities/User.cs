@@ -1,8 +1,8 @@
 ﻿namespace CompanySystem.Data.Entities;
 
-public class User
+public class User : TrackingEntity
 {
-    public int UserId { get; set; }
+    public string UserId { get; set; }
 
     public string Username { get; set; }
 
@@ -10,7 +10,7 @@ public class User
 
     public int RoleId { get; set; }
 
-    public int? LeaderId { get; set; }
+    public string? LeaderId { get; set; }
 
     public int? DepartmentId { get; set; }
 

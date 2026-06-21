@@ -1,10 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace CompanySystem.Data.Entities;
 
-namespace CompanySystem.Data.Entities
+public abstract class TrackingEntity
 {
-    internal class TrackingEntity
-    {
-    }
+    public string CreatedBy { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    public string? UpdatedBy { get; set; }
+
+    public DateTime? UpdatedDate { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
 }
