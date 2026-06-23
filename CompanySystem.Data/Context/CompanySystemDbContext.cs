@@ -23,6 +23,9 @@ public class CompanySystemDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<User>()
+    .Property(x => x.Salary)
+    .HasPrecision(18, 2);
         base.OnModelCreating(modelBuilder);
     }
 }
