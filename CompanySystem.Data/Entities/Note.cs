@@ -1,4 +1,6 @@
-﻿namespace CompanySystem.Data.Entities;
+﻿using CompanySystem.Data.Entities.Enums;
+
+namespace CompanySystem.Data.Entities;
 
 public class Note : TrackingEntity
 {
@@ -6,7 +8,7 @@ public class Note : TrackingEntity
 
     public string UserId { get; set; }
 
-    public string NoteType { get; set; }
+    public NoteType NoteType { get; set; }
 
     public string Title { get; set; }
 

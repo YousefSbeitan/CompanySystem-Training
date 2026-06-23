@@ -16,7 +16,7 @@ public class User : TrackingEntity
 
     public string PhoneNumber { get; set; }
 
-    public int YearsOfExperience { get; set; }
+    public DateTime StartDate { get; set; }
 
     public decimal Salary { get; set; }
 
