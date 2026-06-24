@@ -19,17 +19,15 @@ public class RoleDto
 
 public class CreateRoleDto
 {
-    [Required(ErrorMessage = "Role name is required")]
-    [StringLength(100, ErrorMessage = "Role name must not exceed 100 characters")]
+    
     public string RoleName { get; set; }
 }
 
 public class EditRoleDto
 {
-    [Required]
+    
     public int RoleId { get; set; }
 
-    [Required(ErrorMessage = "Role name is required")]
-    [StringLength(100, ErrorMessage = "Role name must not exceed 100 characters")]
+    
     public string RoleName { get; set; }
 }
