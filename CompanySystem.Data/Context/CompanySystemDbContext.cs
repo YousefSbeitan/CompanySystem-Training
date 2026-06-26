@@ -28,4 +28,5 @@ public class CompanySystemDbContext : DbContext
     .HasPrecision(18, 2);
         base.OnModelCreating(modelBuilder);
     }
+
 }
