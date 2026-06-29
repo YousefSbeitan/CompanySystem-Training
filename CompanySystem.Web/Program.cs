@@ -1,6 +1,8 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Services;
 using CompanySystem.Data.Context;
+using CompanySystem.Data.Repositories.Implementations;
+using CompanySystem.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,11 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<CompanySystemDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register Generic Repository
+builder.Services.AddScoped(
+    typeof(IGenericRepository<>),
+    typeof(GenericRepository<>));
 
 // Register Business Services
 builder.Services.AddScoped<IRoleService, RoleService>();

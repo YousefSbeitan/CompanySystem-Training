@@ -103,4 +103,5 @@ public class CompanySystemDbContext : DbContext
                 IsDeleted = false
             });
     }
+
 }

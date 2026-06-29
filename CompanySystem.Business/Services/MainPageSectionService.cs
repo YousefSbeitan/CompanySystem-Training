@@ -1,35 +1,34 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Mappers;
-using CompanySystem.Data.Context;
-using Microsoft.EntityFrameworkCore;
+using CompanySystem.Data.Entities;
+using CompanySystem.Data.Repositories.Interfaces;
 
 namespace CompanySystem.Business.Services;
 
 public class MainPageSectionService : IMainPageSectionService
 {
-    private readonly CompanySystemDbContext _context;
+    private readonly IGenericRepository<MainPageSection> _repository;
 
-    public MainPageSectionService(CompanySystemDbContext context)
+    public MainPageSectionService(
+        IGenericRepository<MainPageSection> repository)
     {
-        _context = context;
+        _repository = repository;
     }
 
     public async Task<IEnumerable<MainPageSectionDto>> GetAllAsync()
     {
-        var sections = await _context.MainPageSections
-            .Where(s => !s.IsDeleted)
-            .ToListAsync();
+        var sections = await _repository.FindAsync(
+            s => !s.IsDeleted);
 
         return sections.Select(MainPageSectionMapper.ToDto);
     }
 
     public async Task<MainPageSectionDto?> GetByIdAsync(int sectionId)
     {
-        var section = await _context.MainPageSections
-            .FirstOrDefaultAsync(s =>
-                s.SectionId == sectionId &&
-                !s.IsDeleted);
+        var section = await _repository.FirstOrDefaultAsync(
+            s => s.SectionId == sectionId &&
+                 !s.IsDeleted);
 
         if (section == null)
             return null;
@@ -43,19 +42,18 @@ public class MainPageSectionService : IMainPageSectionService
 
         section.CreatedBy = "System";
 
-        _context.MainPageSections.Add(section);
+        await _repository.AddAsync(section);
 
-        await _context.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         return MainPageSectionMapper.ToDto(section);
     }
 
     public async Task<MainPageSectionDto?> UpdateAsync(EditMainPageSectionDto dto)
     {
-        var section = await _context.MainPageSections
-            .FirstOrDefaultAsync(s =>
-                s.SectionId == dto.SectionId &&
-                !s.IsDeleted);
+        var section = await _repository.FirstOrDefaultAsync(
+            s => s.SectionId == dto.SectionId &&
+                 !s.IsDeleted);
 
         if (section == null)
             return null;
@@ -65,17 +63,18 @@ public class MainPageSectionService : IMainPageSectionService
         section.UpdatedBy = "System";
         section.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(section);
+
+        await _repository.SaveChangesAsync();
 
         return MainPageSectionMapper.ToDto(section);
     }
 
     public async Task<bool> DeleteAsync(int sectionId)
     {
-        var section = await _context.MainPageSections
-            .FirstOrDefaultAsync(s =>
-                s.SectionId == sectionId &&
-                !s.IsDeleted);
+        var section = await _repository.FirstOrDefaultAsync(
+            s => s.SectionId == sectionId &&
+                 !s.IsDeleted);
 
         if (section == null)
             return false;
@@ -84,7 +83,9 @@ public class MainPageSectionService : IMainPageSectionService
         section.UpdatedBy = "System";
         section.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(section);
+
+        await _repository.SaveChangesAsync();
 
         return true;
     }

@@ -1,35 +1,34 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Mappers;
-using CompanySystem.Data.Context;
-using Microsoft.EntityFrameworkCore;
+using CompanySystem.Data.Entities;
+using CompanySystem.Data.Repositories.Interfaces;
 
 namespace CompanySystem.Business.Services;
 
 public class DepartmentService : IDepartmentService
 {
-    private readonly CompanySystemDbContext _context;
+    private readonly IGenericRepository<Department> _repository;
 
-    public DepartmentService(CompanySystemDbContext context)
+    public DepartmentService(
+        IGenericRepository<Department> repository)
     {
-        _context = context;
+        _repository = repository;
     }
 
     public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
     {
-        var departments = await _context.Departments
-            .Where(d => !d.IsDeleted)
-            .ToListAsync();
+        var departments = await _repository.FindAsync(
+            d => !d.IsDeleted);
 
         return departments.Select(DepartmentMapper.ToDto);
     }
 
     public async Task<DepartmentDto?> GetByIdAsync(int departmentId)
     {
-        var department = await _context.Departments
-            .FirstOrDefaultAsync(d =>
-                d.DepartmentId == departmentId &&
-                !d.IsDeleted);
+        var department = await _repository.FirstOrDefaultAsync(
+            d => d.DepartmentId == departmentId &&
+                 !d.IsDeleted);
 
         if (department == null)
             return null;
@@ -43,19 +42,18 @@ public class DepartmentService : IDepartmentService
 
         department.CreatedBy = "System";
 
-        _context.Departments.Add(department);
+        await _repository.AddAsync(department);
 
-        await _context.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         return DepartmentMapper.ToDto(department);
     }
 
     public async Task<DepartmentDto?> UpdateAsync(EditDepartmentDto dto)
     {
-        var department = await _context.Departments
-            .FirstOrDefaultAsync(d =>
-                d.DepartmentId == dto.DepartmentId &&
-                !d.IsDeleted);
+        var department = await _repository.FirstOrDefaultAsync(
+            d => d.DepartmentId == dto.DepartmentId &&
+                 !d.IsDeleted);
 
         if (department == null)
             return null;
@@ -65,17 +63,18 @@ public class DepartmentService : IDepartmentService
         department.UpdatedBy = "System";
         department.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(department);
+
+        await _repository.SaveChangesAsync();
 
         return DepartmentMapper.ToDto(department);
     }
 
     public async Task<bool> DeleteAsync(int departmentId)
     {
-        var department = await _context.Departments
-            .FirstOrDefaultAsync(d =>
-                d.DepartmentId == departmentId &&
-                !d.IsDeleted);
+        var department = await _repository.FirstOrDefaultAsync(
+            d => d.DepartmentId == departmentId &&
+                 !d.IsDeleted);
 
         if (department == null)
             return false;
@@ -84,7 +83,9 @@ public class DepartmentService : IDepartmentService
         department.UpdatedBy = "System";
         department.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(department);
+
+        await _repository.SaveChangesAsync();
 
         return true;
     }
