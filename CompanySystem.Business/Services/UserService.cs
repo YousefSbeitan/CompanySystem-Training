@@ -1,35 +1,34 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Mappers;
-using CompanySystem.Data.Context;
-using Microsoft.EntityFrameworkCore;
+using CompanySystem.Data.Entities;
+using CompanySystem.Data.Repositories.Interfaces;
 
 namespace CompanySystem.Business.Services;
 
 public class UserService : IUserService
 {
-    private readonly CompanySystemDbContext _context;
+    private readonly IGenericRepository<User> _repository;
 
-    public UserService(CompanySystemDbContext context)
+    public UserService(
+        IGenericRepository<User> repository)
     {
-        _context = context;
+        _repository = repository;
     }
 
     public async Task<IEnumerable<UserDto>> GetAllAsync()
     {
-        var users = await _context.Users
-            .Where(u => !u.IsDeleted)
-            .ToListAsync();
+        var users = await _repository.FindAsync(
+            u => !u.IsDeleted);
 
         return users.Select(UserMapper.ToDto);
     }
 
     public async Task<UserDto?> GetByIdAsync(string userId)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u =>
-                u.UserId == userId &&
-                !u.IsDeleted);
+        var user = await _repository.FirstOrDefaultAsync(
+            u => u.UserId == userId &&
+                 !u.IsDeleted);
 
         if (user == null)
             return null;
@@ -43,19 +42,18 @@ public class UserService : IUserService
 
         user.CreatedBy = "System";
 
-        _context.Users.Add(user);
+        await _repository.AddAsync(user);
 
-        await _context.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         return UserMapper.ToDto(user);
     }
 
     public async Task<UserDto?> UpdateAsync(EditUserDto dto)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u =>
-                u.UserId == dto.UserId &&
-                !u.IsDeleted);
+        var user = await _repository.FirstOrDefaultAsync(
+            u => u.UserId == dto.UserId &&
+                 !u.IsDeleted);
 
         if (user == null)
             return null;
@@ -65,17 +63,18 @@ public class UserService : IUserService
         user.UpdatedBy = "System";
         user.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(user);
+
+        await _repository.SaveChangesAsync();
 
         return UserMapper.ToDto(user);
     }
 
     public async Task<bool> DeleteAsync(string userId)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u =>
-                u.UserId == userId &&
-                !u.IsDeleted);
+        var user = await _repository.FirstOrDefaultAsync(
+            u => u.UserId == userId &&
+                 !u.IsDeleted);
 
         if (user == null)
             return false;
@@ -84,7 +83,9 @@ public class UserService : IUserService
         user.UpdatedBy = "System";
         user.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(user);
+
+        await _repository.SaveChangesAsync();
 
         return true;
     }

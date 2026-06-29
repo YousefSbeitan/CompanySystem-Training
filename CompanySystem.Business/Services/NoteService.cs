@@ -1,35 +1,34 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Mappers;
-using CompanySystem.Data.Context;
-using Microsoft.EntityFrameworkCore;
+using CompanySystem.Data.Entities;
+using CompanySystem.Data.Repositories.Interfaces;
 
 namespace CompanySystem.Business.Services;
 
 public class NoteService : INoteService
 {
-    private readonly CompanySystemDbContext _context;
+    private readonly IGenericRepository<Note> _repository;
 
-    public NoteService(CompanySystemDbContext context)
+    public NoteService(
+        IGenericRepository<Note> repository)
     {
-        _context = context;
+        _repository = repository;
     }
 
     public async Task<IEnumerable<NoteDto>> GetAllAsync()
     {
-        var notes = await _context.Notes
-            .Where(n => !n.IsDeleted)
-            .ToListAsync();
+        var notes = await _repository.FindAsync(
+            n => !n.IsDeleted);
 
         return notes.Select(NoteMapper.ToDto);
     }
 
     public async Task<NoteDto?> GetByIdAsync(int noteId)
     {
-        var note = await _context.Notes
-            .FirstOrDefaultAsync(n =>
-                n.NoteId == noteId &&
-                !n.IsDeleted);
+        var note = await _repository.FirstOrDefaultAsync(
+            n => n.NoteId == noteId &&
+                 !n.IsDeleted);
 
         if (note == null)
             return null;
@@ -43,19 +42,18 @@ public class NoteService : INoteService
 
         note.CreatedBy = "System";
 
-        _context.Notes.Add(note);
+        await _repository.AddAsync(note);
 
-        await _context.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         return NoteMapper.ToDto(note);
     }
 
     public async Task<NoteDto?> UpdateAsync(EditNoteDto dto)
     {
-        var note = await _context.Notes
-            .FirstOrDefaultAsync(n =>
-                n.NoteId == dto.NoteId &&
-                !n.IsDeleted);
+        var note = await _repository.FirstOrDefaultAsync(
+            n => n.NoteId == dto.NoteId &&
+                 !n.IsDeleted);
 
         if (note == null)
             return null;
@@ -65,17 +63,18 @@ public class NoteService : INoteService
         note.UpdatedBy = "System";
         note.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(note);
+
+        await _repository.SaveChangesAsync();
 
         return NoteMapper.ToDto(note);
     }
 
     public async Task<bool> DeleteAsync(int noteId)
     {
-        var note = await _context.Notes
-            .FirstOrDefaultAsync(n =>
-                n.NoteId == noteId &&
-                !n.IsDeleted);
+        var note = await _repository.FirstOrDefaultAsync(
+            n => n.NoteId == noteId &&
+                 !n.IsDeleted);
 
         if (note == null)
             return false;
@@ -84,7 +83,9 @@ public class NoteService : INoteService
         note.UpdatedBy = "System";
         note.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(note);
+
+        await _repository.SaveChangesAsync();
 
         return true;
     }

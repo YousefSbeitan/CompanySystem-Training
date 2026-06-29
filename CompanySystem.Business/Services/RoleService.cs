@@ -1,35 +1,33 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Mappers;
-using CompanySystem.Data.Context;
-using Microsoft.EntityFrameworkCore;
+using CompanySystem.Data.Entities;
+using CompanySystem.Data.Repositories.Interfaces;
 
 namespace CompanySystem.Business.Services;
 
 public class RoleService : IRoleService
 {
-    private readonly CompanySystemDbContext _context;
+    private readonly IGenericRepository<Role> _repository;
 
-    public RoleService(CompanySystemDbContext context)
+    public RoleService(
+        IGenericRepository<Role> repository)
     {
-        _context = context;
+        _repository = repository;
     }
 
     public async Task<IEnumerable<RoleDto>> GetAllAsync()
     {
-        var roles = await _context.Roles
-            .Where(r => !r.IsDeleted)
-            .ToListAsync();
+        var roles = await _repository.FindAsync(r => !r.IsDeleted);
 
         return roles.Select(RoleMapper.ToDto);
     }
 
     public async Task<RoleDto?> GetByIdAsync(int roleId)
     {
-        var role = await _context.Roles
-            .FirstOrDefaultAsync(r =>
-                r.RoleId == roleId &&
-                !r.IsDeleted);
+        var role = await _repository.FirstOrDefaultAsync(
+            r => r.RoleId == roleId &&
+                 !r.IsDeleted);
 
         if (role == null)
             return null;
@@ -43,19 +41,18 @@ public class RoleService : IRoleService
 
         role.CreatedBy = "System";
 
-        _context.Roles.Add(role);
+        await _repository.AddAsync(role);
 
-        await _context.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         return RoleMapper.ToDto(role);
     }
 
     public async Task<RoleDto?> UpdateAsync(EditRoleDto dto)
     {
-        var role = await _context.Roles
-            .FirstOrDefaultAsync(r =>
-                r.RoleId == dto.RoleId &&
-                !r.IsDeleted);
+        var role = await _repository.FirstOrDefaultAsync(
+            r => r.RoleId == dto.RoleId &&
+                 !r.IsDeleted);
 
         if (role == null)
             return null;
@@ -65,17 +62,18 @@ public class RoleService : IRoleService
         role.UpdatedBy = "System";
         role.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(role);
+
+        await _repository.SaveChangesAsync();
 
         return RoleMapper.ToDto(role);
     }
 
     public async Task<bool> DeleteAsync(int roleId)
     {
-        var role = await _context.Roles
-            .FirstOrDefaultAsync(r =>
-                r.RoleId == roleId &&
-                !r.IsDeleted);
+        var role = await _repository.FirstOrDefaultAsync(
+            r => r.RoleId == roleId &&
+                 !r.IsDeleted);
 
         if (role == null)
             return false;
@@ -84,7 +82,9 @@ public class RoleService : IRoleService
         role.UpdatedBy = "System";
         role.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        _repository.Update(role);
+
+        await _repository.SaveChangesAsync();
 
         return true;
     }
