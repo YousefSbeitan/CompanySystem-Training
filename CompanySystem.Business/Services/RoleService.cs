@@ -18,121 +18,74 @@ public class RoleService : IRoleService
 
     public async Task<IEnumerable<RoleDto>> GetAllAsync()
     {
-        try
-        {
-            var roles = await _repository.FindAsync(r => !r.IsDeleted);
+        var roles = await _repository.FindAsync(r => !r.IsDeleted);
 
-            return roles.Select(RoleMapper.ToDto);
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException("Failed to retrieve roles.", ex);
-        }
+        return roles.Select(RoleMapper.ToDto);
     }
 
-    public async Task<RoleDto?> GetByIdAsync(int roleId)
+    public async Task<RoleDto> GetByIdAsync(int roleId)
     {
-        try
-        {
-            var role = await _repository.FirstOrDefaultAsync(
-                r => r.RoleId == roleId &&
-                     !r.IsDeleted);
+        var role = await _repository.FirstOrDefaultAsync(
+            r => r.RoleId == roleId &&
+                 !r.IsDeleted);
 
-            if (role == null)
-                throw new ResourceNotFoundException("Role", roleId);
+        if (role == null)
+            throw new ResourceNotFoundException("Role", roleId);
 
-            return RoleMapper.ToDto(role);
-        }
-        catch (ResourceNotFoundException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException("Failed to retrieve the role.", ex);
-        }
+        return RoleMapper.ToDto(role);
     }
 
     public async Task<RoleDto> CreateAsync(CreateRoleDto dto)
     {
-        try
-        {
-            var role = RoleMapper.ToEntity(dto);
+        var role = RoleMapper.ToEntity(dto);
 
-            role.CreatedBy = "System";
+        role.CreatedBy = "System";
 
-            await _repository.AddAsync(role);
+        await _repository.AddAsync(role);
 
-            await _repository.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
-            return RoleMapper.ToDto(role);
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException("Failed to create the role.", ex);
-        }
+        return RoleMapper.ToDto(role);
     }
 
-    public async Task<RoleDto?> UpdateAsync(EditRoleDto dto)
+    public async Task<RoleDto> UpdateAsync(EditRoleDto dto)
     {
-        try
-        {
-            var role = await _repository.FirstOrDefaultAsync(
-                r => r.RoleId == dto.RoleId &&
-                     !r.IsDeleted);
+        var role = await _repository.FirstOrDefaultAsync(
+            r => r.RoleId == dto.RoleId &&
+                 !r.IsDeleted);
 
-            if (role == null)
-                throw new ResourceNotFoundException("Role", dto.RoleId);
+        if (role == null)
+            throw new ResourceNotFoundException("Role", dto.RoleId);
 
-            RoleMapper.UpdateEntity(role, dto);
+        RoleMapper.UpdateEntity(role, dto);
 
-            role.UpdatedBy = "System";
-            role.UpdatedDate = DateTime.UtcNow;
+        role.UpdatedBy = "System";
+        role.UpdatedDate = DateTime.UtcNow;
 
-            _repository.Update(role);
+        _repository.Update(role);
 
-            await _repository.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
-            return RoleMapper.ToDto(role);
-        }
-        catch (ResourceNotFoundException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException("Failed to update the role.", ex);
-        }
+        return RoleMapper.ToDto(role);
     }
 
     public async Task<bool> DeleteAsync(int roleId)
     {
-        try
-        {
-            var role = await _repository.FirstOrDefaultAsync(
-                r => r.RoleId == roleId &&
-                     !r.IsDeleted);
+        var role = await _repository.FirstOrDefaultAsync(
+            r => r.RoleId == roleId &&
+                 !r.IsDeleted);
 
-            if (role == null)
-                throw new ResourceNotFoundException("Role", roleId);
+        if (role == null)
+            throw new ResourceNotFoundException("Role", roleId);
 
-            role.IsDeleted = true;
-            role.UpdatedBy = "System";
-            role.UpdatedDate = DateTime.UtcNow;
+        role.IsDeleted = true;
+        role.UpdatedBy = "System";
+        role.UpdatedDate = DateTime.UtcNow;
 
-            _repository.Update(role);
+        _repository.Update(role);
 
-            await _repository.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
-            return true;
-        }
-        catch (ResourceNotFoundException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException("Failed to delete the role.", ex);
-        }
+        return true;
     }
 }

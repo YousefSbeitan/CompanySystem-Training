@@ -1,5 +1,6 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
+using CompanySystem.Shared.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -17,21 +18,44 @@ public class RoleController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var roles = await _roleService.GetAllAsync();
+        try
+        {
+            var roles = await _roleService.GetAllAsync();
 
-        return Json(roles);
+            return Ok(roles);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     // GET: /Role/Details/1
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
-        var role = await _roleService.GetByIdAsync(id);
+        try
+        {
+            var role = await _roleService.GetByIdAsync(id);
 
-        if (role == null)
-            return NotFound();
-
-        return Json(role);
+            return Ok(role);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     // POST: /Role/Create
@@ -41,9 +65,20 @@ public class RoleController : Controller
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var role = await _roleService.CreateAsync(dto);
+        try
+        {
+            var role = await _roleService.CreateAsync(dto);
 
-        return Ok(role);
+            return Ok(role);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     // PUT: /Role/Edit
@@ -53,26 +88,50 @@ public class RoleController : Controller
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var role = await _roleService.UpdateAsync(dto);
+        try
+        {
+            var role = await _roleService.UpdateAsync(dto);
 
-        if (role == null)
-            return NotFound();
-
-        return Ok(role);
+            return Ok(role);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     // DELETE: /Role/Delete/1
     [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _roleService.DeleteAsync(id);
-
-        if (!deleted)
-            return NotFound();
-
-        return Ok(new
+        try
         {
-            Message = "Role deleted successfully."
-        });
+            await _roleService.DeleteAsync(id);
+
+            return Ok(new
+            {
+                Message = "Role deleted successfully."
+            });
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 }

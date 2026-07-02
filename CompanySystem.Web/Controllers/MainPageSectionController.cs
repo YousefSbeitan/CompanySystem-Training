@@ -1,5 +1,6 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
+using CompanySystem.Shared.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -13,61 +14,124 @@ public class MainPageSectionController : Controller
         _mainPageSectionService = mainPageSectionService;
     }
 
+    // GET: /MainPageSection
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var sections = await _mainPageSectionService.GetAllAsync();
+        try
+        {
+            var sections = await _mainPageSectionService.GetAllAsync();
 
-        return Json(sections);
+            return Ok(sections);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // GET: /MainPageSection/Details/1
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
-        var section = await _mainPageSectionService.GetByIdAsync(id);
+        try
+        {
+            var section = await _mainPageSectionService.GetByIdAsync(id);
 
-        if (section == null)
-            return NotFound();
-
-        return Json(section);
+            return Ok(section);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // POST: /MainPageSection/Create
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMainPageSectionDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var section = await _mainPageSectionService.CreateAsync(dto);
+        try
+        {
+            var section = await _mainPageSectionService.CreateAsync(dto);
 
-        return Ok(section);
+            return Ok(section);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // PUT: /MainPageSection/Edit
     [HttpPut]
     public async Task<IActionResult> Edit([FromBody] EditMainPageSectionDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var section = await _mainPageSectionService.UpdateAsync(dto);
+        try
+        {
+            var section = await _mainPageSectionService.UpdateAsync(dto);
 
-        if (section == null)
-            return NotFound();
-
-        return Ok(section);
+            return Ok(section);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // DELETE: /MainPageSection/Delete/1
     [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _mainPageSectionService.DeleteAsync(id);
-
-        if (!deleted)
-            return NotFound();
-
-        return Ok(new
+        try
         {
-            Message = "Main page section deleted successfully."
-        });
+            await _mainPageSectionService.DeleteAsync(id);
+
+            return Ok(new
+            {
+                Message = "Main page section deleted successfully."
+            });
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 }

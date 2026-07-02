@@ -1,5 +1,6 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
+using CompanySystem.Shared.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -13,61 +14,124 @@ public class UserController : Controller
         _userService = userService;
     }
 
+    // GET: /User
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var users = await _userService.GetAllAsync();
+        try
+        {
+            var users = await _userService.GetAllAsync();
 
-        return Json(users);
+            return Ok(users);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // GET: /User/Details/EMP001
     [HttpGet]
     public async Task<IActionResult> Details(string id)
     {
-        var user = await _userService.GetByIdAsync(id);
+        try
+        {
+            var user = await _userService.GetByIdAsync(id);
 
-        if (user == null)
-            return NotFound();
-
-        return Json(user);
+            return Ok(user);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // POST: /User/Create
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var user = await _userService.CreateAsync(dto);
+        try
+        {
+            var user = await _userService.CreateAsync(dto);
 
-        return Ok(user);
+            return Ok(user);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // PUT: /User/Edit
     [HttpPut]
     public async Task<IActionResult> Edit([FromBody] EditUserDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var user = await _userService.UpdateAsync(dto);
+        try
+        {
+            var user = await _userService.UpdateAsync(dto);
 
-        if (user == null)
-            return NotFound();
-
-        return Ok(user);
+            return Ok(user);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // DELETE: /User/Delete/EMP001
     [HttpDelete]
     public async Task<IActionResult> Delete(string id)
     {
-        var deleted = await _userService.DeleteAsync(id);
-
-        if (!deleted)
-            return NotFound();
-
-        return Ok(new
+        try
         {
-            Message = "User deleted successfully."
-        });
+            await _userService.DeleteAsync(id);
+
+            return Ok(new
+            {
+                Message = "User deleted successfully."
+            });
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 }

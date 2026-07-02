@@ -1,5 +1,6 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
+using CompanySystem.Shared.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -13,61 +14,124 @@ public class DepartmentController : Controller
         _departmentService = departmentService;
     }
 
+    // GET: /Department
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var departments = await _departmentService.GetAllAsync();
+        try
+        {
+            var departments = await _departmentService.GetAllAsync();
 
-        return Json(departments);
+            return Ok(departments);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // GET: /Department/Details/1
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
-        var department = await _departmentService.GetByIdAsync(id);
+        try
+        {
+            var department = await _departmentService.GetByIdAsync(id);
 
-        if (department == null)
-            return NotFound();
-
-        return Json(department);
+            return Ok(department);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // POST: /Department/Create
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDepartmentDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var department = await _departmentService.CreateAsync(dto);
+        try
+        {
+            var department = await _departmentService.CreateAsync(dto);
 
-        return Ok(department);
+            return Ok(department);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // PUT: /Department/Edit
     [HttpPut]
     public async Task<IActionResult> Edit([FromBody] EditDepartmentDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var department = await _departmentService.UpdateAsync(dto);
+        try
+        {
+            var department = await _departmentService.UpdateAsync(dto);
 
-        if (department == null)
-            return NotFound();
-
-        return Ok(department);
+            return Ok(department);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
+    // DELETE: /Department/Delete/1
     [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _departmentService.DeleteAsync(id);
-
-        if (!deleted)
-            return NotFound();
-
-        return Ok(new
+        try
         {
-            Message = "Department deleted successfully."
-        });
+            await _departmentService.DeleteAsync(id);
+
+            return Ok(new
+            {
+                Message = "Department deleted successfully."
+            });
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 }
