@@ -3,6 +3,7 @@ using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Mappers;
 using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
+using CompanySystem.Shared.Exceptions;
 
 namespace CompanySystem.Business.Services;
 
@@ -10,83 +11,128 @@ public class UserService : IUserService
 {
     private readonly IGenericRepository<User> _repository;
 
-    public UserService(
-        IGenericRepository<User> repository)
+    public UserService(IGenericRepository<User> repository)
     {
         _repository = repository;
     }
 
     public async Task<IEnumerable<UserDto>> GetAllAsync()
     {
-        var users = await _repository.FindAsync(
-            u => !u.IsDeleted);
+        try
+        {
+            var users = await _repository.FindAsync(u => !u.IsDeleted);
 
-        return users.Select(UserMapper.ToDto);
+            return users.Select(UserMapper.ToDto);
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException("Failed to retrieve users.", ex);
+        }
     }
 
     public async Task<UserDto?> GetByIdAsync(string userId)
     {
-        var user = await _repository.FirstOrDefaultAsync(
-            u => u.UserId == userId &&
-                 !u.IsDeleted);
+        try
+        {
+            var user = await _repository.FirstOrDefaultAsync(
+                u => u.UserId == userId &&
+                     !u.IsDeleted);
 
-        if (user == null)
-            return null;
+            if (user == null)
+                throw new ResourceNotFoundException("User", userId);
 
-        return UserMapper.ToDto(user);
+            return UserMapper.ToDto(user);
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException("Failed to retrieve the user.", ex);
+        }
     }
 
     public async Task<UserDto> CreateAsync(CreateUserDto dto)
     {
-        var user = UserMapper.ToEntity(dto);
+        try
+        {
+            var user = UserMapper.ToEntity(dto);
 
-        user.CreatedBy = "System";
+            user.CreatedBy = "System";
 
-        await _repository.AddAsync(user);
+            await _repository.AddAsync(user);
 
-        await _repository.SaveChangesAsync();
+            await _repository.SaveChangesAsync();
 
-        return UserMapper.ToDto(user);
+            return UserMapper.ToDto(user);
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException("Failed to create the user.", ex);
+        }
     }
 
     public async Task<UserDto?> UpdateAsync(EditUserDto dto)
     {
-        var user = await _repository.FirstOrDefaultAsync(
-            u => u.UserId == dto.UserId &&
-                 !u.IsDeleted);
+        try
+        {
+            var user = await _repository.FirstOrDefaultAsync(
+                u => u.UserId == dto.UserId &&
+                     !u.IsDeleted);
 
-        if (user == null)
-            return null;
+            if (user == null)
+                throw new ResourceNotFoundException("User", dto.UserId);
 
-        UserMapper.UpdateEntity(user, dto);
+            UserMapper.UpdateEntity(user, dto);
 
-        user.UpdatedBy = "System";
-        user.UpdatedDate = DateTime.UtcNow;
+            user.UpdatedBy = "System";
+            user.UpdatedDate = DateTime.UtcNow;
 
-        _repository.Update(user);
+            _repository.Update(user);
 
-        await _repository.SaveChangesAsync();
+            await _repository.SaveChangesAsync();
 
-        return UserMapper.ToDto(user);
+            return UserMapper.ToDto(user);
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException("Failed to update the user.", ex);
+        }
     }
 
     public async Task<bool> DeleteAsync(string userId)
     {
-        var user = await _repository.FirstOrDefaultAsync(
-            u => u.UserId == userId &&
-                 !u.IsDeleted);
+        try
+        {
+            var user = await _repository.FirstOrDefaultAsync(
+                u => u.UserId == userId &&
+                     !u.IsDeleted);
 
-        if (user == null)
-            return false;
+            if (user == null)
+                throw new ResourceNotFoundException("User", userId);
 
-        user.IsDeleted = true;
-        user.UpdatedBy = "System";
-        user.UpdatedDate = DateTime.UtcNow;
+            user.IsDeleted = true;
+            user.UpdatedBy = "System";
+            user.UpdatedDate = DateTime.UtcNow;
 
-        _repository.Update(user);
+            _repository.Update(user);
 
-        await _repository.SaveChangesAsync();
+            await _repository.SaveChangesAsync();
 
-        return true;
+            return true;
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException("Failed to delete the user.", ex);
+        }
     }
 }

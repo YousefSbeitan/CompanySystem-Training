@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <ProjectReference Include="..\CompanySystem.Business\CompanySystem.Business.csproj" />
-	  <ProjectReference Include="..\CompanySystem.Data\CompanySystem.Data.csproj" />
+    <ProjectReference Include="..\CompanySystem.Business\CompanySystem.Business.csproj" />
+    <ProjectReference Include="..\CompanySystem.Shared\CompanySystem.Shared.csproj" />
   </ItemGroup>
 
 </Project>
