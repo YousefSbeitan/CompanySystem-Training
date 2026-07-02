@@ -4,9 +4,9 @@ namespace CompanySystem.Business.DTOs;
 
 public class UserDto
 {
-    public string UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
 
-    public string Username { get; set; }
+    public string Username { get; set; } = string.Empty;
 
     public int RoleId { get; set; }
 
@@ -14,7 +14,7 @@ public class UserDto
 
     public int? DepartmentId { get; set; }
 
-    public string PhoneNumber { get; set; }
+    public string PhoneNumber { get; set; } = string.Empty;
 
     public DateTime StartDate { get; set; }
 
@@ -22,7 +22,7 @@ public class UserDto
 
     public bool IsActive { get; set; }
 
-    public string CreatedBy { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
 
     public DateTime CreatedDate { get; set; }
 
@@ -33,44 +33,86 @@ public class UserDto
 
 public class CreateUserDto
 {
-    public string UserId { get; set; }
+    [Required(ErrorMessage = "User ID is required.")]
+    [StringLength(50, ErrorMessage = "User ID must not exceed 50 characters.")]
+    [Display(Name = "User ID")]
+    public string UserId { get; set; } = string.Empty;
 
-    public string Username { get; set; }
+    [Required(ErrorMessage = "Username is required.")]
+    [StringLength(100, ErrorMessage = "Username must not exceed 100 characters.")]
+    [Display(Name = "Username")]
+    public string Username { get; set; } = string.Empty;
 
-    public string PasswordHash { get; set; }
+    [Required(ErrorMessage = "Password is required.")]
+    [StringLength(255, ErrorMessage = "Password must not exceed 255 characters.")]
+    [Display(Name = "Password")]
+    public string PasswordHash { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Role is required.")]
+    [Display(Name = "Role")]
     public int RoleId { get; set; }
 
+    [Display(Name = "Leader")]
     public string? LeaderId { get; set; }
 
+    [Display(Name = "Department")]
     public int? DepartmentId { get; set; }
 
-    public string PhoneNumber { get; set; }
+    [Required(ErrorMessage = "Phone number is required.")]
+    [Phone(ErrorMessage = "Invalid phone number.")]
+    [StringLength(20, ErrorMessage = "Phone number must not exceed 20 characters.")]
+    [Display(Name = "Phone Number")]
+    public string PhoneNumber { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Start date is required.")]
+    [DataType(DataType.Date)]
+    [Display(Name = "Start Date")]
     public DateTime StartDate { get; set; }
 
+    [Range(0, 1000000000, ErrorMessage = "Salary must be greater than or equal to zero.")]
+    [Display(Name = "Salary")]
     public decimal Salary { get; set; }
 
+    [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 }
 
 public class EditUserDto
 {
-    public string UserId { get; set; }
-    
-    public string Username { get; set; }
+    [Required]
+    [Display(Name = "User ID")]
+    public string UserId { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Username is required.")]
+    [StringLength(100, ErrorMessage = "Username must not exceed 100 characters.")]
+    [Display(Name = "Username")]
+    public string Username { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Role is required.")]
+    [Display(Name = "Role")]
     public int RoleId { get; set; }
-    
+
+    [Display(Name = "Leader")]
     public string? LeaderId { get; set; }
 
+    [Display(Name = "Department")]
     public int? DepartmentId { get; set; }
-  
-    public string PhoneNumber { get; set; }
-   
+
+    [Required(ErrorMessage = "Phone number is required.")]
+    [Phone(ErrorMessage = "Invalid phone number.")]
+    [StringLength(20, ErrorMessage = "Phone number must not exceed 20 characters.")]
+    [Display(Name = "Phone Number")]
+    public string PhoneNumber { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Start date is required.")]
+    [DataType(DataType.Date)]
+    [Display(Name = "Start Date")]
     public DateTime StartDate { get; set; }
-    
+
+    [Range(0, 1000000000, ErrorMessage = "Salary must be greater than or equal to zero.")]
+    [Display(Name = "Salary")]
     public decimal Salary { get; set; }
 
+    [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 }

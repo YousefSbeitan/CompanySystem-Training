@@ -9,11 +9,11 @@ public class MainPageSectionDto
 
     public SectionType SectionType { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
-    public string Content { get; set; }
+    public string Content { get; set; } = string.Empty;
 
-    public string CreatedBy { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
 
     public DateTime CreatedDate { get; set; }
 
@@ -24,20 +24,35 @@ public class MainPageSectionDto
 
 public class CreateMainPageSectionDto
 {
+    [Required(ErrorMessage = "Section type is required.")]
+    [Display(Name = "Section Type")]
     public SectionType SectionType { get; set; }
 
-    public string Title { get; set; }
+    [Required(ErrorMessage = "Title is required.")]
+    [StringLength(200, ErrorMessage = "Title must not exceed 200 characters.")]
+    [Display(Name = "Title")]
+    public string Title { get; set; } = string.Empty;
 
-    public string Content { get; set; }
+    [Required(ErrorMessage = "Content is required.")]
+    [Display(Name = "Content")]
+    public string Content { get; set; } = string.Empty;
 }
 
 public class EditMainPageSectionDto
 {
+    [Required]
     public int SectionId { get; set; }
 
+    [Required(ErrorMessage = "Section type is required.")]
+    [Display(Name = "Section Type")]
     public SectionType SectionType { get; set; }
 
-    public string Title { get; set; }
+    [Required(ErrorMessage = "Title is required.")]
+    [StringLength(200, ErrorMessage = "Title must not exceed 200 characters.")]
+    [Display(Name = "Title")]
+    public string Title { get; set; } = string.Empty;
 
-    public string Content { get; set; }
+    [Required(ErrorMessage = "Content is required.")]
+    [Display(Name = "Content")]
+    public string Content { get; set; } = string.Empty;
 }
