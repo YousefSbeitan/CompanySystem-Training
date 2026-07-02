@@ -33,11 +33,6 @@ public class UserDto
 
 public class CreateUserDto
 {
-    [Required(ErrorMessage = "User ID is required.")]
-    [StringLength(50, ErrorMessage = "User ID must not exceed 50 characters.")]
-    [Display(Name = "User ID")]
-    public string UserId { get; set; } = string.Empty;
-
     [Required(ErrorMessage = "Username is required.")]
     [StringLength(100, ErrorMessage = "Username must not exceed 100 characters.")]
     [Display(Name = "Username")]
@@ -57,6 +52,9 @@ public class CreateUserDto
 
     [Display(Name = "Department")]
     public int? DepartmentId { get; set; }
+
+    [Display(Name = "Is Leader")]
+    public bool IsLeader { get; set; }
 
     [Required(ErrorMessage = "Phone number is required.")]
     [Phone(ErrorMessage = "Invalid phone number.")]
@@ -97,6 +95,9 @@ public class EditUserDto
 
     [Display(Name = "Department")]
     public int? DepartmentId { get; set; }
+
+    [Display(Name = "Is Leader")]
+    public bool IsLeader { get; set; }
 
     [Required(ErrorMessage = "Phone number is required.")]
     [Phone(ErrorMessage = "Invalid phone number.")]

@@ -29,7 +29,6 @@ public static class UserMapper
     {
         return new User
         {
-            UserId = dto.UserId,
             Username = dto.Username,
             PasswordHash = dto.PasswordHash,
             RoleId = dto.RoleId,

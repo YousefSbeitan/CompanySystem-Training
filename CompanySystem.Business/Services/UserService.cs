@@ -4,6 +4,7 @@ using CompanySystem.Business.Mappers;
 using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Helpers;
 
 namespace CompanySystem.Business.Services;
 
@@ -20,7 +21,8 @@ public class UserService : IUserService
     {
         try
         {
-            var users = await _repository.FindAsync(u => !u.IsDeleted);
+            var users = await _repository.FindAsync(
+                u => !u.IsDeleted);
 
             return users.Select(UserMapper.ToDto);
         }
@@ -30,7 +32,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDto?> GetByIdAsync(string userId)
+    public async Task<UserDto> GetByIdAsync(string userId)
     {
         try
         {
@@ -59,6 +61,17 @@ public class UserService : IUserService
         {
             var user = UserMapper.ToEntity(dto);
 
+            user.UserId = UserIdGenerator.Generate(dto.DepartmentId);
+
+            if (dto.IsDepartmentLeader)
+            {
+                user.LeaderId = user.UserId;
+            }
+            else
+            {
+                user.LeaderId = dto.LeaderId;
+            }
+
             user.CreatedBy = "System";
 
             await _repository.AddAsync(user);
@@ -73,7 +86,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDto?> UpdateAsync(EditUserDto dto)
+    public async Task<UserDto> UpdateAsync(EditUserDto dto)
     {
         try
         {
@@ -85,6 +98,15 @@ public class UserService : IUserService
                 throw new ResourceNotFoundException("User", dto.UserId);
 
             UserMapper.UpdateEntity(user, dto);
+
+            if (dto.IsDepartmentLeader)
+            {
+                user.LeaderId = user.UserId;
+            }
+            else
+            {
+                user.LeaderId = dto.LeaderId;
+            }
 
             user.UpdatedBy = "System";
             user.UpdatedDate = DateTime.UtcNow;
