@@ -25,6 +25,7 @@ public static class UserMapper
         };
     }
 
+
     public static User ToEntity(CreateUserDto dto)
     {
         return new User
@@ -32,7 +33,6 @@ public static class UserMapper
             Username = dto.Username,
             PasswordHash = dto.PasswordHash,
             RoleId = dto.RoleId,
-            LeaderId = dto.LeaderId,
             DepartmentId = dto.DepartmentId,
             PhoneNumber = dto.PhoneNumber,
             StartDate = dto.StartDate,
@@ -40,6 +40,7 @@ public static class UserMapper
             IsActive = dto.IsActive
         };
     }
+
 
     public static void UpdateEntity(
         User user,

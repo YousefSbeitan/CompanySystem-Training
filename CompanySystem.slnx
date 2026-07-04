@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="CompanySystem.Business/CompanySystem.Business.csproj" />
   <Project Path="CompanySystem.Data/CompanySystem.Data.csproj" />
+  <Project Path="CompanySystem.Shared/CompanySystem.Shared.csproj" Id="71f4f360-1792-4964-81e6-a6a69487d0a5" />
   <Project Path="CompanySystem.Web/CompanySystem.Web.csproj" Id="3c6f56b8-bad8-4567-a90b-a65bf62a9ba3" />
 </Solution>

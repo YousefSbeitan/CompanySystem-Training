@@ -47,9 +47,6 @@ public class CreateUserDto
     [Display(Name = "Role")]
     public int RoleId { get; set; }
 
-    [Display(Name = "Leader")]
-    public string? LeaderId { get; set; }
-
     [Display(Name = "Department")]
     public int? DepartmentId { get; set; }
 
