@@ -19,6 +19,7 @@ public static class DepartmentMapper
         };
     }
 
+
     public static Department ToEntity(CreateDepartmentDto dto)
     {
         return new Department
@@ -27,6 +28,7 @@ public static class DepartmentMapper
             ManagerId = dto.ManagerId
         };
     }
+
 
     public static void UpdateEntity(
         Department department,
