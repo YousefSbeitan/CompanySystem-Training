@@ -9,37 +9,51 @@ namespace CompanySystem.Business.Services;
 
 public class NoteService : INoteService
 {
-    private readonly IGenericRepository<Note> _repository;
+    private readonly IGenericRepository<Note> _noteRepository;
+    private readonly IGenericRepository<User> _userRepository;
 
-    public NoteService(IGenericRepository<Note> repository)
+
+    public NoteService(
+        IGenericRepository<Note> noteRepository,
+        IGenericRepository<User> userRepository)
     {
-        _repository = repository;
+        _noteRepository = noteRepository;
+        _userRepository = userRepository;
     }
+
 
     public async Task<IEnumerable<NoteDto>> GetAllAsync()
     {
         try
         {
-            var notes = await _repository.FindAsync(n => !n.IsDeleted);
+            var notes = await _noteRepository.FindAsync(
+                n => !n.IsDeleted);
 
             return notes.Select(NoteMapper.ToDto);
         }
         catch (Exception ex)
         {
-            throw new BusinessException("Failed to retrieve notes.", ex);
+            throw new BusinessException(
+                "Failed to retrieve notes.", ex);
         }
     }
+
 
     public async Task<NoteDto?> GetByIdAsync(int noteId)
     {
         try
         {
-            var note = await _repository.FirstOrDefaultAsync(
-                n => n.NoteId == noteId &&
-                     !n.IsDeleted);
+            var note =
+                await _noteRepository.FirstOrDefaultAsync(
+                    n => n.NoteId == noteId &&
+                         !n.IsDeleted);
+
 
             if (note == null)
-                throw new ResourceNotFoundException("Note", noteId);
+                throw new ResourceNotFoundException(
+                    "Note",
+                    noteId);
+
 
             return NoteMapper.ToDto(note);
         }
@@ -49,49 +63,38 @@ public class NoteService : INoteService
         }
         catch (Exception ex)
         {
-            throw new BusinessException("Failed to retrieve the note.", ex);
+            throw new BusinessException(
+                "Failed to retrieve the note.", ex);
         }
     }
+
 
     public async Task<NoteDto> CreateAsync(CreateNoteDto dto)
     {
         try
         {
+            var user =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.UserId == dto.UserId &&
+                         !u.IsDeleted);
+
+
+            if (user == null)
+                throw new ResourceNotFoundException(
+                    "User",
+                    dto.UserId);
+
+
             var note = NoteMapper.ToEntity(dto);
+
 
             note.CreatedBy = "System";
 
-            await _repository.AddAsync(note);
 
-            await _repository.SaveChangesAsync();
+            await _noteRepository.AddAsync(note);
 
-            return NoteMapper.ToDto(note);
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException("Failed to create the note.", ex);
-        }
-    }
+            await _noteRepository.SaveChangesAsync();
 
-    public async Task<NoteDto?> UpdateAsync(EditNoteDto dto)
-    {
-        try
-        {
-            var note = await _repository.FirstOrDefaultAsync(
-                n => n.NoteId == dto.NoteId &&
-                     !n.IsDeleted);
-
-            if (note == null)
-                throw new ResourceNotFoundException("Note", dto.NoteId);
-
-            NoteMapper.UpdateEntity(note, dto);
-
-            note.UpdatedBy = "System";
-            note.UpdatedDate = DateTime.UtcNow;
-
-            _repository.Update(note);
-
-            await _repository.SaveChangesAsync();
 
             return NoteMapper.ToDto(note);
         }
@@ -101,28 +104,82 @@ public class NoteService : INoteService
         }
         catch (Exception ex)
         {
-            throw new BusinessException("Failed to update the note.", ex);
+            throw new BusinessException(
+                "Failed to create the note.", ex);
         }
     }
+
+
+    public async Task<NoteDto?> UpdateAsync(EditNoteDto dto)
+    {
+        try
+        {
+            var note =
+                await _noteRepository.FirstOrDefaultAsync(
+                    n => n.NoteId == dto.NoteId &&
+                         !n.IsDeleted);
+
+
+            if (note == null)
+                throw new ResourceNotFoundException(
+                    "Note",
+                    dto.NoteId);
+
+
+            NoteMapper.UpdateEntity(
+                note,
+                dto);
+
+
+            note.UpdatedBy = "System";
+            note.UpdatedDate = DateTime.UtcNow;
+
+
+            _noteRepository.Update(note);
+
+            await _noteRepository.SaveChangesAsync();
+
+
+            return NoteMapper.ToDto(note);
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to update the note.", ex);
+        }
+    }
+
 
     public async Task<bool> DeleteAsync(int noteId)
     {
         try
         {
-            var note = await _repository.FirstOrDefaultAsync(
-                n => n.NoteId == noteId &&
-                     !n.IsDeleted);
+            var note =
+                await _noteRepository.FirstOrDefaultAsync(
+                    n => n.NoteId == noteId &&
+                         !n.IsDeleted);
+
 
             if (note == null)
-                throw new ResourceNotFoundException("Note", noteId);
+                throw new ResourceNotFoundException(
+                    "Note",
+                    noteId);
+
 
             note.IsDeleted = true;
+
             note.UpdatedBy = "System";
             note.UpdatedDate = DateTime.UtcNow;
 
-            _repository.Update(note);
 
-            await _repository.SaveChangesAsync();
+            _noteRepository.Update(note);
+
+            await _noteRepository.SaveChangesAsync();
+
 
             return true;
         }
@@ -132,7 +189,8 @@ public class NoteService : INoteService
         }
         catch (Exception ex)
         {
-            throw new BusinessException("Failed to delete the note.", ex);
+            throw new BusinessException(
+                "Failed to delete the note.", ex);
         }
     }
 }
