@@ -26,7 +26,6 @@ public class CreateDepartmentDto
     [Display(Name = "Department Name")]
     public string DepartmentName { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Manager ID is required.")]
     [StringLength(50, ErrorMessage = "Manager ID must not exceed 50 characters.")]
     [Display(Name = "Manager")]
     public string ManagerId { get; set; } = string.Empty;
