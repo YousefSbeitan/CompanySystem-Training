@@ -1,0 +1,111 @@
+@{
+    ViewData["Title"] = "Delete Department";
+}
+
+<div class="container">
+    <h1>Delete Department</h1>
+
+    <div id="loading-spinner" class="text-center my-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div id="error-alert" class="alert alert-danger d-none" role="alert"></div>
+
+    <div id="delete-content" class="d-none">
+        <div class="alert alert-warning">
+            <strong>Warning!</strong> Are you sure you want to delete this department? This action cannot be undone.
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-sm-3 fw-bold">Department ID</div>
+                    <div class="col-sm-9" id="detail-departmentId"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-3 fw-bold">Department Name</div>
+                    <div class="col-sm-9" id="detail-departmentName"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-3 fw-bold">Manager</div>
+                    <div class="col-sm-9" id="detail-managerId"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-3 fw-bold">Created By</div>
+                    <div class="col-sm-9" id="detail-createdBy"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-3 fw-bold">Created Date</div>
+                    <div class="col-sm-9" id="detail-createdDate"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button id="btn-confirm-delete" class="btn btn-danger">Confirm Delete</button>
+            <a href="/Department" class="btn btn-secondary">Cancel</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var id = parseInt(window.location.pathname.split('/').pop());
+            if (!id) {
+                $('#loading-spinner').html('<div class="alert alert-danger">Invalid department ID.</div>');
+                return;
+            }
+
+            $.getJSON('/Department/GetById/' + id)
+                .done(function (dept) {
+                    $('#detail-departmentId').text(dept.departmentId || '-');
+                    $('#detail-departmentName').text(dept.departmentName || '-');
+                    $('#detail-managerId').text(dept.managerId || '-');
+                    $('#detail-createdBy').text(dept.createdBy || '-');
+                    $('#detail-createdDate').text(formatDate(dept.createdDate));
+
+                    $('#loading-spinner').addClass('d-none');
+                    $('#delete-content').removeClass('d-none');
+                })
+                .fail(function (xhr) {
+                    $('#loading-spinner').html('<div class="alert alert-danger">Error loading department: ' + (xhr.responseJSON || xhr.responseText || 'Unknown error') + '</div>');
+                });
+
+            $('#btn-confirm-delete').click(function () {
+                $('#btn-confirm-delete').prop('disabled', true);
+                $('#error-alert').addClass('d-none');
+
+                $.ajax({
+                    type: 'DELETE',
+                    url: '/Department/Delete/' + id
+                })
+                    .done(function () {
+                        window.location.href = '/Department';
+                    })
+                    .fail(function (xhr) {
+                        $('#btn-confirm-delete').prop('disabled', false);
+                        var msg = 'An error occurred while deleting the department.';
+                        try {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (resp.title) msg = resp.title;
+                            else if (resp.message) msg = resp.message;
+                            else if (typeof resp === 'string') msg = resp;
+                        } catch (e) {
+                            msg = xhr.responseText || msg;
+                        }
+                        $('#error-alert').removeClass('d-none').html(msg);
+                    });
+            });
+        });
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            var d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+    </script>
+}

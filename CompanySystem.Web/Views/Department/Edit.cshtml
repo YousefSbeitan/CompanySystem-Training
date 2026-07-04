@@ -1,0 +1,138 @@
+@{
+    ViewData["Title"] = "Edit Department";
+}
+
+<div class="container">
+    <h1>Edit Department</h1>
+
+    <div id="loading-spinner" class="text-center my-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div id="error-alert" class="alert alert-danger d-none" role="alert"></div>
+
+    <form id="edit-department-form" class="d-none">
+        <input type="hidden" id="departmentId" name="departmentId" />
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="departmentName" class="form-label">Department Name</label>
+                <input type="text" id="departmentName" name="departmentName" class="form-control" required maxlength="100" />
+                <div class="invalid-feedback">Department name is required.</div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label for="managerId" class="form-label">Manager</label>
+                <select id="managerId" name="managerId" class="form-select" required>
+                    <option value="">-- Select Manager --</option>
+                </select>
+                <div class="invalid-feedback">Manager is required.</div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="/Department" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var id = parseInt(window.location.pathname.split('/').pop());
+            if (!id) {
+                $('#loading-spinner').html('<div class="alert alert-danger">Invalid department ID.</div>');
+                return;
+            }
+            loadDepartment(id);
+            loadManagers();
+        });
+
+        function loadDepartment(id) {
+            $.getJSON('/Department/GetById/' + id)
+                .done(function (dept) {
+                    $('#departmentId').val(dept.departmentId);
+                    $('#departmentName').val(dept.departmentName);
+                    if (dept.managerId) $('#managerId').val(dept.managerId);
+
+                    $('#loading-spinner').addClass('d-none');
+                    $('#edit-department-form').removeClass('d-none');
+                })
+                .fail(function (xhr) {
+                    $('#loading-spinner').html('<div class="alert alert-danger">Error loading department: ' + (xhr.responseJSON || xhr.responseText || 'Unknown error') + '</div>');
+                });
+        }
+
+        function loadManagers() {
+            $.getJSON('/User/GetAll')
+                .done(function (users) {
+                    var select = $('#managerId');
+                    select.find('option:not(:first)').remove();
+                    $.each(users, function (i, user) {
+                        select.append('<option value="' + escapeHtml(user.userId) + '">' + escapeHtml(user.username) + '</option>');
+                    });
+                })
+                .fail(function () {
+                    showError('Failed to load managers.');
+                });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return $('<span>').text(str).html();
+        }
+
+        function showError(msg) {
+            var alert = $('#error-alert');
+            alert.removeClass('d-none').html(msg);
+        }
+
+        $('#edit-department-form').submit(function (e) {
+            e.preventDefault();
+
+            var form = $(this);
+            form.find('.is-invalid').removeClass('is-invalid');
+
+            var data = {
+                departmentId: parseInt($('#departmentId').val()),
+                departmentName: $('#departmentName').val().trim(),
+                managerId: $('#managerId').val()
+            };
+
+            if (!data.departmentName) { $('#departmentName').addClass('is-invalid'); return; }
+            if (!data.managerId) { $('#managerId').addClass('is-invalid'); return; }
+
+            $('#error-alert').addClass('d-none');
+
+            $.ajax({
+                type: 'PUT',
+                url: '/Department/Edit',
+                contentType: 'application/json',
+                data: JSON.stringify(data)
+            })
+                .done(function () {
+                    window.location.href = '/Department';
+                })
+                .fail(function (xhr) {
+                    var msg = 'An error occurred while updating the department.';
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        if (resp.title) msg = resp.title;
+                        else if (resp.message) msg = resp.message;
+                        else if (typeof resp === 'string') msg = resp;
+                        else if (resp.errors) {
+                            var errs = [];
+                            $.each(resp.errors, function (key, arr) { errs.push(arr.join(', ')); });
+                            msg = errs.join('<br/>');
+                        }
+                    } catch (e) {
+                        msg = xhr.responseText || msg;
+                    }
+                    showError(msg);
+                });
+        });
+    </script>
+}

@@ -14,9 +14,45 @@ public class UserController : Controller
         _userService = userService;
     }
 
-    // GET: /User
+    // GET: /User (MVC View)
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    // GET: /User/Create (MVC View)
+    [HttpGet]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    // GET: /User/Edit/{id} (MVC View)
+    [HttpGet]
+    public IActionResult Edit(string id)
+    {
+        return View();
+    }
+
+    // GET: /User/Details/{id} (MVC View)
+    [HttpGet]
+    public IActionResult Details(string id)
+    {
+        return View();
+    }
+
+    // GET: /User/Delete/{id} (MVC View)
+    [HttpGet]
+    [ActionName("Delete")]
+    public IActionResult DeleteView(string id)
+    {
+        return View();
+    }
+
+    // API: GET /User/GetAll
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
     {
         try
         {
@@ -34,9 +70,9 @@ public class UserController : Controller
         }
     }
 
-    // GET: /User/Details/EMP001
+    // API: GET /User/GetById/EMP001
     [HttpGet]
-    public async Task<IActionResult> Details(string id)
+    public async Task<IActionResult> GetById(string id)
     {
         try
         {
@@ -58,7 +94,7 @@ public class UserController : Controller
         }
     }
 
-    // POST: /User/Create
+    // API: POST /User/Create
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
     {
@@ -81,7 +117,7 @@ public class UserController : Controller
         }
     }
 
-    // PUT: /User/Edit
+    // API: PUT /User/Edit
     [HttpPut]
     public async Task<IActionResult> Edit([FromBody] EditUserDto dto)
     {
@@ -108,7 +144,7 @@ public class UserController : Controller
         }
     }
 
-    // DELETE: /User/Delete/EMP001
+    // API: DELETE /User/Delete/EMP001
     [HttpDelete]
     public async Task<IActionResult> Delete(string id)
     {

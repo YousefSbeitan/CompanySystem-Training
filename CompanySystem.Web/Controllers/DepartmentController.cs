@@ -14,9 +14,45 @@ public class DepartmentController : Controller
         _departmentService = departmentService;
     }
 
-    // GET: /Department
+    // GET: /Department (MVC View)
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    // GET: /Department/Create (MVC View)
+    [HttpGet]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    // GET: /Department/Edit/{id} (MVC View)
+    [HttpGet]
+    public IActionResult Edit(int id)
+    {
+        return View();
+    }
+
+    // GET: /Department/Details/{id} (MVC View)
+    [HttpGet]
+    public IActionResult Details(int id)
+    {
+        return View();
+    }
+
+    // GET: /Department/Delete/{id} (MVC View)
+    [HttpGet]
+    [ActionName("Delete")]
+    public IActionResult DeleteView(int id)
+    {
+        return View();
+    }
+
+    // API: GET /Department/GetAll
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
     {
         try
         {
@@ -34,9 +70,9 @@ public class DepartmentController : Controller
         }
     }
 
-    // GET: /Department/Details/1
+    // API: GET /Department/GetById/1
     [HttpGet]
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> GetById(int id)
     {
         try
         {
@@ -58,7 +94,7 @@ public class DepartmentController : Controller
         }
     }
 
-    // POST: /Department/Create
+    // API: POST /Department/Create
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDepartmentDto dto)
     {
