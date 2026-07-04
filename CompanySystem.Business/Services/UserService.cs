@@ -69,10 +69,24 @@ public class UserService : IUserService
     {
         try
         {
+            var existingUser =
+                await _userRepository.FirstOrDefaultAsync(
+                    u =>
+                    (u.Username.ToLower() == dto.Username.ToLower()
+                    || u.PhoneNumber == dto.PhoneNumber)
+                    && !u.IsDeleted);
+
+
+            if (existingUser != null)
+                throw new BusinessException(
+                    "Username or phone number already exists.");
+
+
             var department =
                 await _departmentRepository.FirstOrDefaultAsync(
                     d => d.DepartmentId == dto.DepartmentId &&
                          !d.IsDeleted);
+
 
             if (department == null)
                 throw new ResourceNotFoundException(
@@ -83,12 +97,10 @@ public class UserService : IUserService
             var user = UserMapper.ToEntity(dto);
 
 
-            // Generate UserId
             user.UserId =
                 UserIdGenerator.Generate(dto.DepartmentId);
 
 
-            // If this user is department leader
             if (dto.IsLeader)
             {
                 user.LeaderId = user.UserId;
@@ -103,7 +115,9 @@ public class UserService : IUserService
                     throw new BusinessException(
                         "This department does not have a leader yet.");
 
-                user.LeaderId = department.ManagerId;
+
+                user.LeaderId =
+                    department.ManagerId;
             }
 
 
@@ -113,6 +127,7 @@ public class UserService : IUserService
             await _userRepository.AddAsync(user);
 
             await _userRepository.SaveChangesAsync();
+
 
             return UserMapper.ToDto(user);
         }
@@ -141,9 +156,26 @@ public class UserService : IUserService
                     u => u.UserId == dto.UserId &&
                          !u.IsDeleted);
 
+
             if (user == null)
                 throw new ResourceNotFoundException(
                     "User", dto.UserId);
+
+
+            var duplicateUser =
+                await _userRepository.FirstOrDefaultAsync(
+                    u =>
+                    u.UserId != dto.UserId
+                    &&
+                    (u.Username.ToLower() == dto.Username.ToLower()
+                    || u.PhoneNumber == dto.PhoneNumber)
+                    &&
+                    !u.IsDeleted);
+
+
+            if (duplicateUser != null)
+                throw new BusinessException(
+                    "Username or phone number already exists.");
 
 
             UserMapper.UpdateEntity(user, dto);
@@ -160,16 +192,20 @@ public class UserService : IUserService
                         d => d.DepartmentId == dto.DepartmentId &&
                              !d.IsDeleted);
 
+
                 if (department == null)
                     throw new ResourceNotFoundException(
                         "Department",
                         dto.DepartmentId!);
 
+
                 if (string.IsNullOrEmpty(department.ManagerId))
                     throw new BusinessException(
                         "This department does not have a leader yet.");
 
-                user.LeaderId = department.ManagerId;
+
+                user.LeaderId =
+                    department.ManagerId;
             }
 
 
@@ -209,12 +245,14 @@ public class UserService : IUserService
                     u => u.UserId == userId &&
                          !u.IsDeleted);
 
+
             if (user == null)
                 throw new ResourceNotFoundException(
                     "User", userId);
 
 
             user.IsDeleted = true;
+
             user.UpdatedBy = "System";
             user.UpdatedDate = DateTime.UtcNow;
 
