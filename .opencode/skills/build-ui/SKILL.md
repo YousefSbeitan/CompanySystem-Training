@@ -1,25 +1,25 @@
 ---
 name: build-ui
-description: Builds complete ASP.NET Core MVC Razor UI for CompanySystem from existing backend. Converts API Controllers to hybrid MVC + AJAX Controllers and generates Bootstrap Views.
+description: Builds complete ASP.NET Core MVC Razor UI for CompanySystem. Supports CRUD, AJAX, Filtering, Sorting, Pagination and converts API Controllers to hybrid MVC Controllers.
 ---
 
 # Build UI Skill - ASP.NET Core MVC Frontend Agent
 
 You are a Senior ASP.NET Core MVC Engineer.
 
-Your goal:
+Your responsibility:
 
-Generate a fully working Razor MVC frontend.
+Create a complete working Razor MVC frontend from the existing backend.
 
-The backend is already completed.
+Backend is the source of truth.
 
 Do NOT change business logic.
 
 ---
 
-# Architecture
+# Project Architecture
 
-Project:
+Solution:
 
 CompanySystem
 
@@ -30,7 +30,7 @@ Layers:
 - CompanySystem.Data
 - CompanySystem.Shared
 
-Frontend:
+Frontend stack:
 
 - Razor Views
 - Bootstrap 5
@@ -38,38 +38,37 @@ Frontend:
 - AJAX
 - JSON
 
-Pattern:
+Controllers must support:
 
-Controllers must work as:
-
-1. MVC page providers
-2. JSON API providers
+1. MVC Razor pages
+2. JSON API endpoints
 
 ---
 
 # Allowed Changes
 
-You MAY modify:
+You MAY modify ONLY:
 
 CompanySystem.Web/Controllers/{EntityName}Controller.cs
 
-ONLY to:
+Allowed controller changes:
 
-- Add Razor View actions
-- Rename GET API actions
-- Add missing JSON GET endpoints
+- Add MVC View actions
+- Rename GET JSON endpoints
+- Add missing GET API endpoints
+- Fix routing conflicts
 
 You MAY create/update:
 
 CompanySystem.Web/Views/{EntityName}/
 
-Required files:
+Files:
 
-- Index.cshtml
-- Create.cshtml
-- Edit.cshtml
-- Details.cshtml
-- Delete.cshtml
+Index.cshtml
+Create.cshtml
+Edit.cshtml
+Details.cshtml
+Delete.cshtml
 
 ---
 
@@ -87,15 +86,15 @@ NEVER modify:
 - Program.cs
 - appsettings.json
 
-Never change:
+Never modify:
 
+- database schema
 - validation rules
 - business logic
-- database structure
 
 ---
 
-# MAIN RULE
+# Execution Rule
 
 When user runs:
 
@@ -103,25 +102,27 @@ build-ui EntityName
 
 Example:
 
-build-ui Department
+build-ui User
 
-You MUST ALWAYS:
 
-1. Open Controller
-2. Inspect existing actions
-3. Fix routing
-4. Generate Views
-5. Run build
+ALWAYS:
 
-Never generate Views only.
+1. Read Controller
+2. Read DTOs
+3. Detect routes
+4. Detect GetAll parameters
+5. Detect pagination/filter/sort support
+6. Update controller routing
+7. Generate Views
+8. Run dotnet build
+
+Never skip controller inspection.
 
 ---
 
-# Controller Verification (MANDATORY)
+# Controller MVC Requirements
 
-Before finishing, Controller MUST contain:
-
-## MVC Actions
+Controller MUST contain:
 
 ```csharp
 [HttpGet]
@@ -130,53 +131,62 @@ public IActionResult Index()
     return View();
 }
 
+
 [HttpGet]
 public IActionResult Create()
 {
     return View();
 }
 
+
 [HttpGet]
-public IActionResult Edit(string id)
+public IActionResult Edit(id)
 {
     return View();
 }
 
+
 [HttpGet]
-public IActionResult Details(string id)
+public IActionResult Details(id)
 {
     return View();
 }
 
+
 [HttpGet]
-public IActionResult Delete(string id)
+public IActionResult Delete(id)
 {
     return View();
 }
 ```
 
-Use:
+Use correct ID type:
 
-int id
+- string
+- int
+- Guid
 
-instead of string id if entity key is int.
+based on entity.
 
 ---
 
-# JSON GET Rules
+# API GET Requirements
 
-Every Controller MUST have:
+Controller MUST expose:
+
+GetAll:
 
 ```csharp
 [HttpGet]
-public async Task<IActionResult> GetAll()
+public async Task<IActionResult> GetAll(...)
 {
-    var result = await _service.GetAllAsync();
+    var result = await _service.GetAllAsync(...);
     return Ok(result);
 }
 ```
 
-And:
+
+GetById:
 
 ```csharp
 [HttpGet]
@@ -187,86 +197,48 @@ public async Task<IActionResult> GetById(id)
 }
 ```
 
-Use correct ID type:
-
-- UserId / GUID strings → string
-- Identity columns → int
-
 ---
 
-# Convert Existing Controllers
+# Convert Existing API Controllers
 
-If existing:
+If:
 
 ```csharp
-[HttpGet]
-public async Task<IActionResult> Index()
+Index()
 {
-    return Ok(result);
+ return Ok(data);
 }
 ```
 
 Convert:
 
-Index → View
+Index → MVC View
 
-Move old code into:
+Move API code to:
 
 GetAll()
 
 
----
-
-If existing:
+If:
 
 ```csharp
-[HttpGet]
-public async Task<IActionResult> Details(id)
+Details(id)
 {
-    return Ok(result);
+ return Ok(data);
 }
 ```
 
 Convert:
 
-Details → View
+Details → MVC View
 
-Move old code into:
+Move API code to:
 
 GetById(id)
 
 ---
 
-# Important
-
-Never say:
-
-"No controller changes needed"
-
-unless these exist:
-
-✓ Index returns View
-
-✓ Create returns View
-
-✓ Edit returns View
-
-✓ Details returns View
-
-✓ Delete returns View
-
-✓ GetAll returns JSON
-
-✓ GetById returns JSON
-
-
-If missing:
-
-ADD THEM.
-
----
-
-# Keep Existing API Commands
+# Keep Existing Commands
 
 Never rename:
 
@@ -276,25 +248,25 @@ PUT Edit(dto)
 
 DELETE Delete(id)
 
-They stay AJAX endpoints.
+They remain AJAX endpoints.
 
 ---
 
 # DTO Rules
 
-Always read:
+Always inspect:
 
 CompanySystem.Business/DTOs/
 
 Use:
 
-Create DTO → Create page
+CreateDto → Create page
 
-Update/Edit DTO → Edit page
+UpdateDto → Edit page
 
-Read DTO → Index + Details
+ReadDto → Index + Details
 
-Never invent properties.
+Never invent fields.
 
 ---
 
@@ -304,57 +276,173 @@ NEVER use:
 
 @model
 
-NEVER use:
-
 Html.BeginForm
 
-NEVER use:
-
-normal form submit
+Normal form submit
 
 
-Use only:
+Use:
 
 - HTML
 - Bootstrap
-- jQuery AJAX
+- jQuery
+- AJAX
 
 ---
 
-# Index.cshtml
+# Index.cshtml Rules
 
-Must:
+Index must support:
 
-Load:
+CRUD table
 
-```javascript
-$.getJSON('/Entity/GetAll')
-```
+PLUS:
+
+- Search
+- Filtering
+- Sorting
+- Pagination
+
+---
+
+# GetAll Detection Rules
+
+Before writing Index:
+
+Inspect GetAllAsync parameters.
+
+Detect:
+
+- search
+- keyword
+- filter
+- pageNumber
+- pageSize
+- sortBy
+- sortColumn
+- sortDirection
+- orderBy
+
+Generate matching UI.
+
+---
+
+# Search UI
+
+If search exists:
 
 Generate:
 
-- Bootstrap table
-- Create button
-- Edit button
-- Details button
-- Delete button
-
-Navigation:
-
+```html
+<input id="searchInput"
+       class="form-control"
+       placeholder="Search..." />
 ```
-/Entity/Create
-/Entity/Edit/id
-/Entity/Details/id
-/Entity/Delete/id
+
+Send:
+
+```javascript
+search: $("#searchInput").val()
 ```
+
+---
+
+# Pagination Rules
+
+If pagination exists:
+
+Generate:
+
+Bootstrap pagination:
+
+```html
+<ul class="pagination"></ul>
+```
+
+AJAX:
+
+```javascript
+$.getJSON('/Entity/GetAll',
+{
+ pageNumber: currentPage,
+ pageSize: pageSize
+})
+```
+
+Support responses:
+
+```json
+{
+ items: [],
+ totalPages: 5,
+ pageNumber: 1,
+ totalCount: 50
+}
+```
+
+OR:
+
+```json
+{
+ data: [],
+ totalPages: 5
+}
+```
+
+Never assume GetAll returns array.
+
+---
+
+# Sorting Rules
+
+Tables must support sorting.
+
+Headers should be clickable.
+
+Example:
+
+Name ↑ ↓
+
+Send:
+
+```javascript
+sortBy: columnName,
+sortDirection: "asc"
+```
+
+or:
+
+```javascript
+sortDirection: "desc"
+```
+
+---
+
+# Table Loading Rules
+
+Detect collection:
+
+Try:
+
+response.items
+
+then:
+
+response.data
+
+then:
+
+response.results
+
+then:
+
+response directly
 
 ---
 
 # Create.cshtml
 
-Generate fields from:
-
-CreateEntityDto
+Generate fields from CreateDto.
 
 Submit:
 
@@ -386,7 +474,7 @@ window.location.pathname.split('/').pop()
 Load:
 
 ```javascript
-/Entity/GetById/id
+GET /Entity/GetById/id
 ```
 
 Submit:
@@ -402,10 +490,10 @@ PUT /Entity/Edit
 Load:
 
 ```javascript
-/Entity/GetById/id
+GET /Entity/GetById/id
 ```
 
-Display readonly information.
+Show readonly data.
 
 ---
 
@@ -414,7 +502,7 @@ Display readonly information.
 Load:
 
 ```javascript
-/Entity/GetById/id
+GET /Entity/GetById/id
 ```
 
 Delete:
@@ -427,57 +515,45 @@ DELETE /Entity/Delete/id
 
 # Foreign Keys
 
-NEVER use textboxes for:
+Never textbox:
 
 - RoleId
 - DepartmentId
 - ManagerId
 - LeaderId
-- UserId references
 - CreatedBy
 - UpdatedBy
 
+Always:
 
-Always generate:
-
-```html
 <select>
-```
 
 Load:
 
 Role:
 
-```javascript
 /Role/GetAll
-```
 
 Department:
 
-```javascript
 /Department/GetAll
-```
 
 Users:
 
-```javascript
 /User/GetAll
-```
 
-Show names.
-
-Do not show raw IDs unless no name exists.
+Display names not IDs.
 
 ---
 
-# Type Mapping
+# Input Mapping
 
 string:
 
-text input
+text
 
 
-long string:
+large string:
 
 textarea
 
@@ -510,7 +586,7 @@ select
 
 # Validation
 
-Read DTO DataAnnotations.
+Read DataAnnotations.
 
 Support:
 
@@ -520,63 +596,60 @@ Support:
 - Phone
 - Display
 
-Generate:
+Generate HTML validation.
 
-- required
-- maxlength
-- min
-- max
+Show errors using:
 
-Errors:
+Bootstrap alert
 
-Use Bootstrap alerts.
-
-Never use:
+Never:
 
 alert()
 
 ---
 
-# Styling
+# UI Style
 
 Use Bootstrap 5:
 
-- container
-- row
-- col-md
-- form-control
-- form-label
-- table
-- btn
-- alert
+container
+row
+col-md
+form-control
+form-label
+table
+btn
+alert
+pagination
 
-Professional simple layout.
+Clean admin dashboard style.
 
 ---
 
-# Final Check
+# Final Verification
 
-Before saying completed:
+Before finishing:
 
-Verify:
+Check:
 
-✓ Controller updated
+✓ Controller supports MVC
 
-✓ MVC routes work
+✓ API still works
 
-✓ JSON routes work
+✓ GetAll supports filters
 
-✓ All 5 Views exist
+✓ Sorting works
 
-✓ AJAX URLs correct
+✓ Pagination works
+
+✓ 5 Views created
 
 ✓ FK dropdowns load
 
-Then run:
+Run:
 
 dotnet build
 
-
-Success:
+Required result:
 
 0 errors
