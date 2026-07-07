@@ -26,8 +26,9 @@ public class UserService : IUserService
     {
         try
         {
-            var users = await _userRepository.FindAsync(
-                u => !u.IsDeleted);
+            var users =
+                await _userRepository.FindAsync(
+                    u => !u.IsDeleted);
 
             return users.Select(UserMapper.ToDto);
         }
@@ -43,17 +44,29 @@ public class UserService : IUserService
     {
         try
         {
-            var user = await _userRepository.FirstOrDefaultAsync(
-                u => u.UserId == userId &&
-                     !u.IsDeleted);
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new BusinessException(
+                    "User id is required.");
+
+
+            var user =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.UserId == userId &&
+                         !u.IsDeleted);
+
 
             if (user == null)
                 throw new ResourceNotFoundException(
                     "User", userId);
 
+
             return UserMapper.ToDto(user);
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }
@@ -69,12 +82,53 @@ public class UserService : IUserService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "User data is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Username))
+                throw new BusinessException(
+                    "Username is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+                throw new BusinessException(
+                    "Password is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                throw new BusinessException(
+                    "Phone number is required.");
+
+
+            if (dto.DepartmentId == null ||
+                dto.DepartmentId <= 0)
+                throw new BusinessException(
+                    "Department is required.");
+
+
+            if (dto.Salary < 0)
+                throw new BusinessException(
+                    "Salary cannot be negative.");
+
+
+            dto.Username = dto.Username.Trim();
+            dto.PhoneNumber = dto.PhoneNumber.Trim();
+
+
             var existingUser =
                 await _userRepository.FirstOrDefaultAsync(
                     u =>
-                    (u.Username.ToLower() == dto.Username.ToLower()
-                    || u.PhoneNumber == dto.PhoneNumber)
-                    && !u.IsDeleted);
+                    (
+                        u.Username.ToLower()
+                        == dto.Username.ToLower()
+                        ||
+                        u.PhoneNumber
+                        == dto.PhoneNumber
+                    )
+                    &&
+                    !u.IsDeleted);
 
 
             if (existingUser != null)
@@ -91,14 +145,16 @@ public class UserService : IUserService
             if (department == null)
                 throw new ResourceNotFoundException(
                     "Department",
-                    dto.DepartmentId!);
+                    dto.DepartmentId);
 
 
-            var user = UserMapper.ToEntity(dto);
+            var user =
+                UserMapper.ToEntity(dto);
 
 
             user.UserId =
-                UserIdGenerator.Generate(dto.DepartmentId);
+                UserIdGenerator.Generate(
+                    dto.DepartmentId);
 
 
             if (dto.IsLeader)
@@ -107,11 +163,13 @@ public class UserService : IUserService
 
                 department.ManagerId = user.UserId;
 
-                _departmentRepository.Update(department);
+                _departmentRepository.Update(
+                    department);
             }
             else
             {
-                if (string.IsNullOrEmpty(department.ManagerId))
+                if (string.IsNullOrEmpty(
+                    department.ManagerId))
                     throw new BusinessException(
                         "This department does not have a leader yet.");
 
@@ -151,6 +209,30 @@ public class UserService : IUserService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "User data is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.UserId))
+                throw new BusinessException(
+                    "User id is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Username))
+                throw new BusinessException(
+                    "Username is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                throw new BusinessException(
+                    "Phone number is required.");
+
+
+            dto.Username = dto.Username.Trim();
+            dto.PhoneNumber = dto.PhoneNumber.Trim();
+
+
             var user =
                 await _userRepository.FirstOrDefaultAsync(
                     u => u.UserId == dto.UserId &&
@@ -159,7 +241,8 @@ public class UserService : IUserService
 
             if (user == null)
                 throw new ResourceNotFoundException(
-                    "User", dto.UserId);
+                    "User",
+                    dto.UserId);
 
 
             var duplicateUser =
@@ -167,8 +250,13 @@ public class UserService : IUserService
                     u =>
                     u.UserId != dto.UserId
                     &&
-                    (u.Username.ToLower() == dto.Username.ToLower()
-                    || u.PhoneNumber == dto.PhoneNumber)
+                    (
+                        u.Username.ToLower()
+                        == dto.Username.ToLower()
+                        ||
+                        u.PhoneNumber
+                        == dto.PhoneNumber
+                    )
                     &&
                     !u.IsDeleted);
 
@@ -178,7 +266,9 @@ public class UserService : IUserService
                     "Username or phone number already exists.");
 
 
-            UserMapper.UpdateEntity(user, dto);
+            UserMapper.UpdateEntity(
+                user,
+                dto);
 
 
             if (dto.IsLeader)
@@ -196,10 +286,11 @@ public class UserService : IUserService
                 if (department == null)
                     throw new ResourceNotFoundException(
                         "Department",
-                        dto.DepartmentId!);
+                        dto.DepartmentId);
 
 
-                if (string.IsNullOrEmpty(department.ManagerId))
+                if (string.IsNullOrEmpty(
+                    department.ManagerId))
                     throw new BusinessException(
                         "This department does not have a leader yet.");
 
@@ -240,6 +331,11 @@ public class UserService : IUserService
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new BusinessException(
+                    "User id is required.");
+
+
             var user =
                 await _userRepository.FirstOrDefaultAsync(
                     u => u.UserId == userId &&
@@ -248,7 +344,8 @@ public class UserService : IUserService
 
             if (user == null)
                 throw new ResourceNotFoundException(
-                    "User", userId);
+                    "User",
+                    userId);
 
 
             user.IsDeleted = true;
@@ -265,6 +362,10 @@ public class UserService : IUserService
             return true;
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }

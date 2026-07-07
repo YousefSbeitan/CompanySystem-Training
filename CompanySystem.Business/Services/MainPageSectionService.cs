@@ -22,8 +22,9 @@ public class MainPageSectionService : IMainPageSectionService
     {
         try
         {
-            var sections = await _repository.FindAsync(
-                s => !s.IsDeleted);
+            var sections =
+                await _repository.FindAsync(
+                    s => !s.IsDeleted);
 
             return sections.Select(
                 MainPageSectionMapper.ToDto);
@@ -36,14 +37,21 @@ public class MainPageSectionService : IMainPageSectionService
     }
 
 
-    public async Task<MainPageSectionDto?> GetByIdAsync(int sectionId)
+    public async Task<MainPageSectionDto?> GetByIdAsync(
+        int sectionId)
     {
         try
         {
+            if (sectionId <= 0)
+                throw new BusinessException(
+                    "Invalid section id.");
+
+
             var section =
                 await _repository.FirstOrDefaultAsync(
                     s => s.SectionId == sectionId &&
                          !s.IsDeleted);
+
 
             if (section == null)
                 throw new ResourceNotFoundException(
@@ -51,9 +59,14 @@ public class MainPageSectionService : IMainPageSectionService
                     sectionId);
 
 
-            return MainPageSectionMapper.ToDto(section);
+            return MainPageSectionMapper.ToDto(
+                section);
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }
@@ -70,6 +83,28 @@ public class MainPageSectionService : IMainPageSectionService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Section data is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                throw new BusinessException(
+                    "Title is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Content))
+                throw new BusinessException(
+                    "Content is required.");
+
+
+            dto.Title =
+                dto.Title.Trim();
+
+            dto.Content =
+                dto.Content.Trim();
+
+
             var existingSection =
                 await _repository.FirstOrDefaultAsync(
                     s =>
@@ -89,18 +124,22 @@ public class MainPageSectionService : IMainPageSectionService
 
 
             var section =
-                MainPageSectionMapper.ToEntity(dto);
+                MainPageSectionMapper.ToEntity(
+                    dto);
 
 
-            section.CreatedBy = "System";
+            section.CreatedBy =
+                "System";
 
 
-            await _repository.AddAsync(section);
+            await _repository.AddAsync(
+                section);
 
             await _repository.SaveChangesAsync();
 
 
-            return MainPageSectionMapper.ToDto(section);
+            return MainPageSectionMapper.ToDto(
+                section);
         }
         catch (BusinessException)
         {
@@ -119,6 +158,33 @@ public class MainPageSectionService : IMainPageSectionService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Section data is required.");
+
+
+            if (dto.SectionId <= 0)
+                throw new BusinessException(
+                    "Invalid section id.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                throw new BusinessException(
+                    "Title is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Content))
+                throw new BusinessException(
+                    "Content is required.");
+
+
+            dto.Title =
+                dto.Title.Trim();
+
+            dto.Content =
+                dto.Content.Trim();
+
+
             var section =
                 await _repository.FirstOrDefaultAsync(
                     s => s.SectionId == dto.SectionId &&
@@ -156,16 +222,21 @@ public class MainPageSectionService : IMainPageSectionService
                 dto);
 
 
-            section.UpdatedBy = "System";
-            section.UpdatedDate = DateTime.UtcNow;
+            section.UpdatedBy =
+                "System";
+
+            section.UpdatedDate =
+                DateTime.UtcNow;
 
 
-            _repository.Update(section);
+            _repository.Update(
+                section);
 
             await _repository.SaveChangesAsync();
 
 
-            return MainPageSectionMapper.ToDto(section);
+            return MainPageSectionMapper.ToDto(
+                section);
         }
         catch (ResourceNotFoundException)
         {
@@ -183,10 +254,16 @@ public class MainPageSectionService : IMainPageSectionService
     }
 
 
-    public async Task<bool> DeleteAsync(int sectionId)
+    public async Task<bool> DeleteAsync(
+        int sectionId)
     {
         try
         {
+            if (sectionId <= 0)
+                throw new BusinessException(
+                    "Invalid section id.");
+
+
             var section =
                 await _repository.FirstOrDefaultAsync(
                     s => s.SectionId == sectionId &&
@@ -201,11 +278,15 @@ public class MainPageSectionService : IMainPageSectionService
 
             section.IsDeleted = true;
 
-            section.UpdatedBy = "System";
-            section.UpdatedDate = DateTime.UtcNow;
+            section.UpdatedBy =
+                "System";
+
+            section.UpdatedDate =
+                DateTime.UtcNow;
 
 
-            _repository.Update(section);
+            _repository.Update(
+                section);
 
             await _repository.SaveChangesAsync();
 
@@ -213,6 +294,10 @@ public class MainPageSectionService : IMainPageSectionService
             return true;
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }
