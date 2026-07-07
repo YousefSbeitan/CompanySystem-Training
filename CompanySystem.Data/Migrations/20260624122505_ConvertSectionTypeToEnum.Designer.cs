@@ -4,6 +4,7 @@ using CompanySystem.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CompanySystem.Data.Migrations
 {
     [DbContext(typeof(CompanySystemDbContext))]
-    partial class CompanySystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624122505_ConvertSectionTypeToEnum")]
+    partial class ConvertSectionTypeToEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,6 +48,7 @@ namespace CompanySystem.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ManagerId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")
@@ -56,26 +60,6 @@ namespace CompanySystem.Data.Migrations
                     b.HasKey("DepartmentId");
 
                     b.ToTable("Departments");
-
-                    b.HasData(
-                        new
-                        {
-                            DepartmentId = 1,
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DepartmentName = "Human Resources",
-                            IsDeleted = false,
-                            ManagerId = "admin"
-                        },
-                        new
-                        {
-                            DepartmentId = 2,
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DepartmentName = "Information Technology",
-                            IsDeleted = false,
-                            ManagerId = "admin"
-                        });
                 });
 
             modelBuilder.Entity("CompanySystem.Data.Entities.MainPageSection", b =>
@@ -116,28 +100,6 @@ namespace CompanySystem.Data.Migrations
                     b.HasKey("SectionId");
 
                     b.ToTable("MainPageSections");
-
-                    b.HasData(
-                        new
-                        {
-                            SectionId = 1,
-                            Content = "Welcome to Company System.",
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsDeleted = false,
-                            SectionType = 1,
-                            Title = "About Us"
-                        },
-                        new
-                        {
-                            SectionId = 2,
-                            Content = "Our professional services.",
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsDeleted = false,
-                            SectionType = 2,
-                            Title = "Services"
-                        });
                 });
 
             modelBuilder.Entity("CompanySystem.Data.Entities.Note", b =>
@@ -215,32 +177,6 @@ namespace CompanySystem.Data.Migrations
                     b.HasKey("RoleId");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            RoleId = 1,
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsDeleted = false,
-                            RoleName = "Admin"
-                        },
-                        new
-                        {
-                            RoleId = 2,
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsDeleted = false,
-                            RoleName = "Manager"
-                        },
-                        new
-                        {
-                            RoleId = 3,
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsDeleted = false,
-                            RoleName = "Employee"
-                        });
                 });
 
             modelBuilder.Entity("CompanySystem.Data.Entities.User", b =>

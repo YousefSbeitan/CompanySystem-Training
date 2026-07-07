@@ -7,8 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CompanySystem.Data\CompanySystem.Data.csproj" />
-    <ProjectReference Include="..\CompanySystem.Shared\CompanySystem.Shared.csproj" />
+    <Folder Include="Constants\" />
   </ItemGroup>
 
 </Project>

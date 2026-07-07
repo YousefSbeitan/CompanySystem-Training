@@ -14,12 +14,14 @@ public class UserController : Controller
         _userService = userService;
     }
 
+
     // GET: /User (MVC View)
     [HttpGet]
     public IActionResult Index()
     {
         return View();
     }
+
 
     // GET: /User/Create (MVC View)
     [HttpGet]
@@ -28,6 +30,7 @@ public class UserController : Controller
         return View();
     }
 
+
     // GET: /User/Edit/{id} (MVC View)
     [HttpGet]
     public IActionResult Edit(string id)
@@ -35,12 +38,14 @@ public class UserController : Controller
         return View();
     }
 
+
     // GET: /User/Details/{id} (MVC View)
     [HttpGet]
     public IActionResult Details(string id)
     {
         return View();
     }
+
 
     // GET: /User/Delete/{id} (MVC View)
     [HttpGet]
@@ -50,13 +55,15 @@ public class UserController : Controller
         return View();
     }
 
+
     // API: GET /User/GetAll
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         try
         {
-            var users = await _userService.GetAllAsync();
+            var users =
+                await _userService.GetAllAsync();
 
             return Ok(users);
         }
@@ -70,13 +77,15 @@ public class UserController : Controller
         }
     }
 
+
     // API: GET /User/GetById/EMP001
     [HttpGet]
     public async Task<IActionResult> GetById(string id)
     {
         try
         {
-            var user = await _userService.GetByIdAsync(id);
+            var user =
+                await _userService.GetByIdAsync(id);
 
             return Ok(user);
         }
@@ -93,17 +102,21 @@ public class UserController : Controller
             return StatusCode(500, ex.Message);
         }
     }
+
 
     // API: POST /User/Create
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateUserDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var user = await _userService.CreateAsync(dto);
+            var user =
+                await _userService.CreateAsync(dto);
 
             return Ok(user);
         }
@@ -117,16 +130,20 @@ public class UserController : Controller
         }
     }
 
+
     // API: PUT /User/Edit
     [HttpPut]
-    public async Task<IActionResult> Edit([FromBody] EditUserDto dto)
+    public async Task<IActionResult> Edit(
+        [FromBody] EditUserDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var user = await _userService.UpdateAsync(dto);
+            var user =
+                await _userService.UpdateAsync(dto);
 
             return Ok(user);
         }
@@ -144,9 +161,11 @@ public class UserController : Controller
         }
     }
 
+
     // API: DELETE /User/Delete/EMP001
     [HttpDelete]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(
+        string id)
     {
         try
         {
@@ -154,7 +173,8 @@ public class UserController : Controller
 
             return Ok(new
             {
-                Message = "User deleted successfully."
+                Message =
+                    "User deleted successfully."
             });
         }
         catch (ResourceNotFoundException ex)

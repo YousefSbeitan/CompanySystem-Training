@@ -5,67 +5,24 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
 
-public class DepartmentController : Controller
+public class RoleController : Controller
 {
-    private readonly IDepartmentService _departmentService;
+    private readonly IRoleService _roleService;
 
-    public DepartmentController(IDepartmentService departmentService)
+    public RoleController(IRoleService roleService)
     {
-        _departmentService = departmentService;
+        _roleService = roleService;
     }
 
-
-    // GET: /Department (MVC View)
+    // GET: /Role
     [HttpGet]
-    public IActionResult Index()
-    {
-        return View();
-    }
-
-
-    // GET: /Department/Create (MVC View)
-    [HttpGet]
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-
-    // GET: /Department/Edit/{id} (MVC View)
-    [HttpGet]
-    public IActionResult Edit(int id)
-    {
-        return View();
-    }
-
-
-    // GET: /Department/Details/{id} (MVC View)
-    [HttpGet]
-    public IActionResult Details(int id)
-    {
-        return View();
-    }
-
-
-    // GET: /Department/Delete/{id} (MVC View)
-    [HttpGet]
-    [ActionName("Delete")]
-    public IActionResult DeleteView(int id)
-    {
-        return View();
-    }
-
-
-    // API: GET /Department/GetAll
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> Index()
     {
         try
         {
-            var departments =
-                await _departmentService.GetAllAsync();
+            var roles = await _roleService.GetAllAsync();
 
-            return Ok(departments);
+            return Ok(roles);
         }
         catch (BusinessException ex)
         {
@@ -77,17 +34,15 @@ public class DepartmentController : Controller
         }
     }
 
-
-    // API: GET /Department/GetById/1
+    // GET: /Role/Details/1
     [HttpGet]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> Details(int id)
     {
         try
         {
-            var department =
-                await _departmentService.GetByIdAsync(id);
+            var role = await _roleService.GetByIdAsync(id);
 
-            return Ok(department);
+            return Ok(role);
         }
         catch (ResourceNotFoundException ex)
         {
@@ -103,21 +58,18 @@ public class DepartmentController : Controller
         }
     }
 
-
-    // API: POST /Department/Create
+    // POST: /Role/Create
     [HttpPost]
-    public async Task<IActionResult> Create(
-        [FromBody] CreateDepartmentDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateRoleDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         try
         {
-            var department =
-                await _departmentService.CreateAsync(dto);
+            var role = await _roleService.CreateAsync(dto);
 
-            return Ok(department);
+            return Ok(role);
         }
         catch (BusinessException ex)
         {
@@ -129,21 +81,18 @@ public class DepartmentController : Controller
         }
     }
 
-
-    // API: PUT /Department/Edit
+    // PUT: /Role/Edit
     [HttpPut]
-    public async Task<IActionResult> Edit(
-        [FromBody] EditDepartmentDto dto)
+    public async Task<IActionResult> Edit([FromBody] EditRoleDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         try
         {
-            var department =
-                await _departmentService.UpdateAsync(dto);
+            var role = await _roleService.UpdateAsync(dto);
 
-            return Ok(department);
+            return Ok(role);
         }
         catch (ResourceNotFoundException ex)
         {
@@ -159,19 +108,17 @@ public class DepartmentController : Controller
         }
     }
 
-
-    // API: DELETE /Department/Delete/1
+    // DELETE: /Role/Delete/1
     [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
         try
         {
-            await _departmentService.DeleteAsync(id);
+            await _roleService.DeleteAsync(id);
 
             return Ok(new
             {
-                Message =
-                    "Department deleted successfully."
+                Message = "Role deleted successfully."
             });
         }
         catch (ResourceNotFoundException ex)
