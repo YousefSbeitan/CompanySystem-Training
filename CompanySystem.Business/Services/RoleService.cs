@@ -4,6 +4,8 @@ using CompanySystem.Business.Mappers;
 using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
+using CompanySystem.Shared.Responses;
 
 namespace CompanySystem.Business.Services;
 
@@ -16,14 +18,58 @@ public class RoleService : IRoleService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<RoleDto>> GetAllAsync()
+
+    public async Task<PagedResponse<RoleDto>> GetAllAsync(
+        PaginationFilterRequest request)
     {
         try
         {
             var roles = await _repository.FindAsync(
                 r => !r.IsDeleted);
 
-            return roles.Select(RoleMapper.ToDto);
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                roles = roles.Where(
+                    r => r.RoleName.ToLower()
+                    .Contains(request.Search.ToLower()));
+            }
+
+
+            // Sorting
+            roles = request.SortBy?.ToLower() switch
+            {
+                "rolename" => request.IsDescending
+                    ? roles.OrderByDescending(r => r.RoleName)
+                    : roles.OrderBy(r => r.RoleName),
+
+                "createddate" => request.IsDescending
+                    ? roles.OrderByDescending(r => r.CreatedDate)
+                    : roles.OrderBy(r => r.CreatedDate),
+
+                _ => roles.OrderBy(r => r.RoleId)
+            };
+
+
+            var totalRecords = roles.Count();
+
+
+            // Pagination
+            var pagedRoles = roles
+                .Skip(
+                    (request.PageNumber - 1)
+                    * request.PageSize)
+                .Take(request.PageSize)
+                .Select(RoleMapper.ToDto)
+                .ToList();
+
+
+            return new PagedResponse<RoleDto>(
+                pagedRoles,
+                request.PageNumber,
+                request.PageSize,
+                totalRecords);
         }
         catch (Exception ex)
         {
@@ -44,6 +90,7 @@ public class RoleService : IRoleService
             if (role == null)
                 throw new ResourceNotFoundException(
                     "Role", roleId);
+
 
             return RoleMapper.ToDto(role);
         }
@@ -67,7 +114,9 @@ public class RoleService : IRoleService
                 await _repository.FirstOrDefaultAsync(
                     r => r.RoleName.ToLower()
                          == dto.RoleName.ToLower()
-                         && !r.IsDeleted);
+                         &&
+                         !r.IsDeleted);
+
 
             if (existingRole != null)
                 throw new BusinessException(
@@ -75,6 +124,7 @@ public class RoleService : IRoleService
 
 
             var role = RoleMapper.ToEntity(dto);
+
 
             role.CreatedBy = "System";
 
@@ -107,6 +157,7 @@ public class RoleService : IRoleService
                     r => r.RoleId == dto.RoleId &&
                          !r.IsDeleted);
 
+
             if (role == null)
                 throw new ResourceNotFoundException(
                     "Role", dto.RoleId);
@@ -120,6 +171,7 @@ public class RoleService : IRoleService
                          r.RoleId != dto.RoleId
                          &&
                          !r.IsDeleted);
+
 
             if (existingRole != null)
                 throw new BusinessException(
@@ -165,12 +217,14 @@ public class RoleService : IRoleService
                     r => r.RoleId == roleId &&
                          !r.IsDeleted);
 
+
             if (role == null)
                 throw new ResourceNotFoundException(
                     "Role", roleId);
 
 
             role.IsDeleted = true;
+
             role.UpdatedBy = "System";
             role.UpdatedDate = DateTime.UtcNow;
 

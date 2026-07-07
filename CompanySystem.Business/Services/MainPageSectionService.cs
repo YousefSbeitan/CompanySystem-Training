@@ -4,6 +4,8 @@ using CompanySystem.Business.Mappers;
 using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
+using CompanySystem.Shared.Responses;
 
 namespace CompanySystem.Business.Services;
 
@@ -18,15 +20,79 @@ public class MainPageSectionService : IMainPageSectionService
     }
 
 
-    public async Task<IEnumerable<MainPageSectionDto>> GetAllAsync()
+    public async Task<PagedResponse<MainPageSectionDto>> GetAllAsync(
+        PaginationFilterRequest request)
     {
         try
         {
-            var sections = await _repository.FindAsync(
-                s => !s.IsDeleted);
+            var sections =
+                await _repository.FindAsync(
+                    s => !s.IsDeleted);
 
-            return sections.Select(
-                MainPageSectionMapper.ToDto);
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                sections = sections.Where(
+                    s =>
+                    s.Title.ToLower()
+                        .Contains(request.Search.ToLower())
+                    ||
+                    s.Content.ToLower()
+                        .Contains(request.Search.ToLower())
+                    ||
+                    s.SectionType.ToString()
+                        .ToLower()
+                        .Contains(request.Search.ToLower()));
+            }
+
+
+            // Sorting
+            sections = request.SortBy?.ToLower() switch
+            {
+                "title" => request.IsDescending
+                    ? sections.OrderByDescending(s => s.Title)
+                    : sections.OrderBy(s => s.Title),
+
+
+                "sectiontype" => request.IsDescending
+                    ? sections.OrderByDescending(s => s.SectionType)
+                    : sections.OrderBy(s => s.SectionType),
+
+
+                "updateddate" => request.IsDescending
+                    ? sections.OrderByDescending(s => s.UpdatedDate)
+                    : sections.OrderBy(s => s.UpdatedDate),
+
+
+                "createddate" => request.IsDescending
+                    ? sections.OrderByDescending(s => s.CreatedDate)
+                    : sections.OrderBy(s => s.CreatedDate),
+
+
+                _ => sections.OrderBy(s => s.SectionId)
+            };
+
+
+            var totalRecords =
+                sections.Count();
+
+
+            var pagedSections =
+                sections
+                .Skip(
+                    (request.PageNumber - 1)
+                    * request.PageSize)
+                .Take(request.PageSize)
+                .Select(MainPageSectionMapper.ToDto)
+                .ToList();
+
+
+            return new PagedResponse<MainPageSectionDto>(
+                pagedSections,
+                request.PageNumber,
+                request.PageSize,
+                totalRecords);
         }
         catch (Exception ex)
         {
@@ -36,7 +102,8 @@ public class MainPageSectionService : IMainPageSectionService
     }
 
 
-    public async Task<MainPageSectionDto?> GetByIdAsync(int sectionId)
+    public async Task<MainPageSectionDto?> GetByIdAsync(
+        int sectionId)
     {
         try
         {
@@ -44,6 +111,7 @@ public class MainPageSectionService : IMainPageSectionService
                 await _repository.FirstOrDefaultAsync(
                     s => s.SectionId == sectionId &&
                          !s.IsDeleted);
+
 
             if (section == null)
                 throw new ResourceNotFoundException(
@@ -96,6 +164,7 @@ public class MainPageSectionService : IMainPageSectionService
 
 
             await _repository.AddAsync(section);
+
 
             await _repository.SaveChangesAsync();
 
@@ -162,6 +231,7 @@ public class MainPageSectionService : IMainPageSectionService
 
             _repository.Update(section);
 
+
             await _repository.SaveChangesAsync();
 
 
@@ -183,7 +253,8 @@ public class MainPageSectionService : IMainPageSectionService
     }
 
 
-    public async Task<bool> DeleteAsync(int sectionId)
+    public async Task<bool> DeleteAsync(
+        int sectionId)
     {
         try
         {
@@ -206,6 +277,7 @@ public class MainPageSectionService : IMainPageSectionService
 
 
             _repository.Update(section);
+
 
             await _repository.SaveChangesAsync();
 

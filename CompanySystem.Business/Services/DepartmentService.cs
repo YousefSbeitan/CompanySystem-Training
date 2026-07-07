@@ -4,6 +4,8 @@ using CompanySystem.Business.Mappers;
 using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
+using CompanySystem.Shared.Responses;
 
 namespace CompanySystem.Business.Services;
 
@@ -11,20 +13,67 @@ public class DepartmentService : IDepartmentService
 {
     private readonly IGenericRepository<Department> _repository;
 
-    public DepartmentService(IGenericRepository<Department> repository)
+    public DepartmentService(
+        IGenericRepository<Department> repository)
     {
         _repository = repository;
     }
 
 
-    public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
+    public async Task<PagedResponse<DepartmentDto>> GetAllAsync(
+        PaginationFilterRequest request)
     {
         try
         {
-            var departments = await _repository.FindAsync(
-                d => !d.IsDeleted);
+            var departments =
+                await _repository.FindAsync(
+                    d => !d.IsDeleted);
 
-            return departments.Select(DepartmentMapper.ToDto);
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                departments = departments.Where(
+                    d => d.DepartmentName.ToLower()
+                        .Contains(request.Search.ToLower()));
+            }
+
+
+            // Sorting
+            departments = request.SortBy?.ToLower() switch
+            {
+                "departmentname" => request.IsDescending
+                    ? departments.OrderByDescending(d => d.DepartmentName)
+                    : departments.OrderBy(d => d.DepartmentName),
+
+                "createddate" => request.IsDescending
+                    ? departments.OrderByDescending(d => d.CreatedDate)
+                    : departments.OrderBy(d => d.CreatedDate),
+
+                _ => departments.OrderBy(d => d.DepartmentId)
+            };
+
+
+            var totalRecords =
+                departments.Count();
+
+
+            // Pagination
+            var pagedDepartments =
+                departments
+                    .Skip(
+                        (request.PageNumber - 1)
+                        * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(DepartmentMapper.ToDto)
+                    .ToList();
+
+
+            return new PagedResponse<DepartmentDto>(
+                pagedDepartments,
+                request.PageNumber,
+                request.PageSize,
+                totalRecords);
         }
         catch (Exception ex)
         {
@@ -43,9 +92,11 @@ public class DepartmentService : IDepartmentService
                     d => d.DepartmentId == departmentId &&
                          !d.IsDeleted);
 
+
             if (department == null)
                 throw new ResourceNotFoundException(
-                    "Department", departmentId);
+                    "Department",
+                    departmentId);
 
 
             return DepartmentMapper.ToDto(department);
@@ -62,7 +113,8 @@ public class DepartmentService : IDepartmentService
     }
 
 
-    public async Task<DepartmentDto> CreateAsync(CreateDepartmentDto dto)
+    public async Task<DepartmentDto> CreateAsync(
+        CreateDepartmentDto dto)
     {
         try
         {
@@ -72,6 +124,7 @@ public class DepartmentService : IDepartmentService
                          == dto.DepartmentName.ToLower()
                          &&
                          !d.IsDeleted);
+
 
             if (existingDepartment != null)
                 throw new BusinessException(
@@ -104,7 +157,8 @@ public class DepartmentService : IDepartmentService
     }
 
 
-    public async Task<DepartmentDto?> UpdateAsync(EditDepartmentDto dto)
+    public async Task<DepartmentDto?> UpdateAsync(
+        EditDepartmentDto dto)
     {
         try
         {
@@ -116,7 +170,8 @@ public class DepartmentService : IDepartmentService
 
             if (department == null)
                 throw new ResourceNotFoundException(
-                    "Department", dto.DepartmentId);
+                    "Department",
+                    dto.DepartmentId);
 
 
             var existingDepartment =
@@ -166,7 +221,8 @@ public class DepartmentService : IDepartmentService
     }
 
 
-    public async Task<bool> DeleteAsync(int departmentId)
+    public async Task<bool> DeleteAsync(
+        int departmentId)
     {
         try
         {
@@ -178,7 +234,8 @@ public class DepartmentService : IDepartmentService
 
             if (department == null)
                 throw new ResourceNotFoundException(
-                    "Department", departmentId);
+                    "Department",
+                    departmentId);
 
 
             department.IsDeleted = true;

@@ -1,6 +1,7 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -14,13 +15,17 @@ public class RoleController : Controller
         _roleService = roleService;
     }
 
+
     // GET: /Role
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        [FromQuery] PaginationFilterRequest request)
     {
         try
         {
-            var roles = await _roleService.GetAllAsync();
+            var roles =
+                await _roleService.GetAllAsync(request);
+
 
             return Ok(roles);
         }
@@ -34,13 +39,17 @@ public class RoleController : Controller
         }
     }
 
+
     // GET: /Role/Details/1
     [HttpGet]
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(
+        int id)
     {
         try
         {
-            var role = await _roleService.GetByIdAsync(id);
+            var role =
+                await _roleService.GetByIdAsync(id);
+
 
             return Ok(role);
         }
@@ -57,17 +66,22 @@ public class RoleController : Controller
             return StatusCode(500, ex.Message);
         }
     }
+
 
     // POST: /Role/Create
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateRoleDto dto)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateRoleDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var role = await _roleService.CreateAsync(dto);
+            var role =
+                await _roleService.CreateAsync(dto);
+
 
             return Ok(role);
         }
@@ -81,16 +95,21 @@ public class RoleController : Controller
         }
     }
 
+
     // PUT: /Role/Edit
     [HttpPut]
-    public async Task<IActionResult> Edit([FromBody] EditRoleDto dto)
+    public async Task<IActionResult> Edit(
+        [FromBody] EditRoleDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var role = await _roleService.UpdateAsync(dto);
+            var role =
+                await _roleService.UpdateAsync(dto);
+
 
             return Ok(role);
         }
@@ -108,17 +127,21 @@ public class RoleController : Controller
         }
     }
 
+
     // DELETE: /Role/Delete/1
     [HttpDelete]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id)
     {
         try
         {
             await _roleService.DeleteAsync(id);
 
+
             return Ok(new
             {
-                Message = "Role deleted successfully."
+                Message =
+                    "Role deleted successfully."
             });
         }
         catch (ResourceNotFoundException ex)

@@ -1,6 +1,7 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -9,18 +10,24 @@ public class DepartmentController : Controller
 {
     private readonly IDepartmentService _departmentService;
 
-    public DepartmentController(IDepartmentService departmentService)
+    public DepartmentController(
+        IDepartmentService departmentService)
     {
         _departmentService = departmentService;
     }
 
+
     // GET: /Department
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        [FromQuery] PaginationFilterRequest request)
     {
         try
         {
-            var departments = await _departmentService.GetAllAsync();
+            var departments =
+                await _departmentService.GetAllAsync(
+                    request);
+
 
             return Ok(departments);
         }
@@ -34,13 +41,18 @@ public class DepartmentController : Controller
         }
     }
 
+
     // GET: /Department/Details/1
     [HttpGet]
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(
+        int id)
     {
         try
         {
-            var department = await _departmentService.GetByIdAsync(id);
+            var department =
+                await _departmentService.GetByIdAsync(
+                    id);
+
 
             return Ok(department);
         }
@@ -57,17 +69,23 @@ public class DepartmentController : Controller
             return StatusCode(500, ex.Message);
         }
     }
+
 
     // POST: /Department/Create
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateDepartmentDto dto)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateDepartmentDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var department = await _departmentService.CreateAsync(dto);
+            var department =
+                await _departmentService.CreateAsync(
+                    dto);
+
 
             return Ok(department);
         }
@@ -81,16 +99,22 @@ public class DepartmentController : Controller
         }
     }
 
+
     // PUT: /Department/Edit
     [HttpPut]
-    public async Task<IActionResult> Edit([FromBody] EditDepartmentDto dto)
+    public async Task<IActionResult> Edit(
+        [FromBody] EditDepartmentDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var department = await _departmentService.UpdateAsync(dto);
+            var department =
+                await _departmentService.UpdateAsync(
+                    dto);
+
 
             return Ok(department);
         }
@@ -108,17 +132,22 @@ public class DepartmentController : Controller
         }
     }
 
+
     // DELETE: /Department/Delete/1
     [HttpDelete]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id)
     {
         try
         {
-            await _departmentService.DeleteAsync(id);
+            await _departmentService.DeleteAsync(
+                id);
+
 
             return Ok(new
             {
-                Message = "Department deleted successfully."
+                Message =
+                    "Department deleted successfully."
             });
         }
         catch (ResourceNotFoundException ex)
