@@ -17,9 +17,50 @@ public class DepartmentController : Controller
     }
 
 
-    // GET: /Department
+    // GET: /Department (MVC View)
     [HttpGet]
-    public async Task<IActionResult> Index(
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+
+    // GET: /Department/Create (MVC View)
+    [HttpGet]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+
+    // GET: /Department/Edit/{id} (MVC View)
+    [HttpGet]
+    public IActionResult Edit(int id)
+    {
+        return View();
+    }
+
+
+    // GET: /Department/Details/{id} (MVC View)
+    [HttpGet]
+    public IActionResult Details(int id)
+    {
+        return View();
+    }
+
+
+    // GET: /Department/Delete/{id} (MVC View)
+    [HttpGet]
+    [ActionName("Delete")]
+    public IActionResult DeleteView(int id)
+    {
+        return View();
+    }
+
+
+    // API: GET /Department/GetAll
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -42,9 +83,9 @@ public class DepartmentController : Controller
     }
 
 
-    // GET: /Department/Details/1
+    // API: GET /Department/GetById/1
     [HttpGet]
-    public async Task<IActionResult> Details(
+    public async Task<IActionResult> GetById(
         int id)
     {
         try
@@ -71,7 +112,7 @@ public class DepartmentController : Controller
     }
 
 
-    // POST: /Department/Create
+    // API: POST /Department/Create
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateDepartmentDto dto)
@@ -100,7 +141,7 @@ public class DepartmentController : Controller
     }
 
 
-    // PUT: /Department/Edit
+    // API: PUT /Department/Edit
     [HttpPut]
     public async Task<IActionResult> Edit(
         [FromBody] EditDepartmentDto dto)
@@ -133,7 +174,7 @@ public class DepartmentController : Controller
     }
 
 
-    // DELETE: /Department/Delete/1
+    // API: DELETE /Department/Delete/1
     [HttpDelete]
     public async Task<IActionResult> Delete(
         int id)
