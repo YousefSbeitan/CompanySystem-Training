@@ -191,24 +191,29 @@ public class AuthService : IAuthService
 
 
     public async Task<AuthResponseDto> RefreshTokenAsync(
-        string refreshToken)
+    string refreshToken)
     {
         try
         {
             var token =
                 await _refreshTokenRepository.FirstOrDefaultAsync(
-                    t => t.Token == refreshToken
-                         &&
+                    t => t.Token == refreshToken &&
                          !t.IsDeleted);
 
 
-            if (token == null ||
-                token.IsRevoked ||
-                token.ExpiresAt < DateTime.UtcNow)
-            {
+            if (token == null)
                 throw new BusinessException(
                     "Invalid refresh token.");
-            }
+
+
+            if (token.IsRevoked)
+                throw new BusinessException(
+                    "Refresh token already revoked.");
+
+
+            if (token.ExpiresAt < DateTime.UtcNow)
+                throw new BusinessException(
+                    "Refresh token expired.");
 
 
             var user =
@@ -229,14 +234,37 @@ public class AuthService : IAuthService
                          !r.IsDeleted);
 
 
+            if (role == null)
+                throw new ResourceNotFoundException(
+                    "Role",
+                    user.RoleId);
+
+
+            // Revoke old refresh token
             token.IsRevoked = true;
 
-            _refreshTokenRepository.Update(token);
+            token.UpdatedBy =
+                "System";
+
+            token.UpdatedDate =
+                DateTime.UtcNow;
 
 
+            _refreshTokenRepository.Update(
+                token);
+
+
+            await _refreshTokenRepository.SaveChangesAsync();
+
+
+            // Generate new access + refresh token
             return await GenerateAuthResponse(
                 user,
-                role!.RoleName);
+                role.RoleName);
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw;
         }
         catch (BusinessException)
         {
@@ -245,7 +273,8 @@ public class AuthService : IAuthService
         catch (Exception ex)
         {
             throw new BusinessException(
-                "Failed to refresh token.", ex);
+                "Failed to refresh token.",
+                ex);
         }
     }
 
