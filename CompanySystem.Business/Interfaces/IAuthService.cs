@@ -17,5 +17,6 @@ public interface IAuthService
 
 
     Task<bool> LogoutAsync(
-        string refreshToken);
+        string refreshToken,
+        string userId);
 }

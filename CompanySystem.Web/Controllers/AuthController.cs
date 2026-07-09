@@ -3,6 +3,7 @@ using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CompanySystem.Web.Controllers;
 
@@ -144,8 +145,23 @@ public class AuthController : ControllerBase
 
         try
         {
+            var currentUserId =
+                User.FindFirst(
+                    ClaimTypes.NameIdentifier)
+                ?.Value;
+
+
+            if (string.IsNullOrEmpty(
+                    currentUserId))
+            {
+                return Unauthorized(
+                    "Invalid access token.");
+            }
+
+
             await _authService.LogoutAsync(
-                dto.RefreshToken);
+                dto.RefreshToken,
+                currentUserId);
 
 
             return Ok(new

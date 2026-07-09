@@ -23,6 +23,7 @@ public class DepartmentController : Controller
 
     // GET: /Department (MVC View)
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
     public IActionResult Index()
     {
         return View();
@@ -59,7 +60,7 @@ public class DepartmentController : Controller
 
     // GET: /Department/Delete/{id} (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Manager")]
     [ActionName("Delete")]
     public IActionResult DeleteView(
         int id)
@@ -70,6 +71,7 @@ public class DepartmentController : Controller
 
     // API: GET /Department/GetAll
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -99,6 +101,7 @@ public class DepartmentController : Controller
 
     // API: GET /Department/GetById/1
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> GetById(
         int id)
     {

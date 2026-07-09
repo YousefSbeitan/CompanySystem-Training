@@ -22,7 +22,6 @@ public class UserController : Controller
     }
 
 
-    // GET: /User (MVC View)
     [HttpGet]
     public IActionResult Index()
     {
@@ -30,7 +29,6 @@ public class UserController : Controller
     }
 
 
-    // GET: /User/Create (MVC View)
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public IActionResult Create()
@@ -39,12 +37,11 @@ public class UserController : Controller
     }
 
 
-    // GET: /User/Edit/{id} (MVC View)
     [HttpGet]
-    public IActionResult Edit(
+    public async Task<IActionResult> Edit(
         string id)
     {
-        if (!CanAccessUser(id))
+        if (!await CanAccessUserAsync(id))
             return Forbid();
 
 
@@ -52,12 +49,11 @@ public class UserController : Controller
     }
 
 
-    // GET: /User/Details/{id} (MVC View)
     [HttpGet]
-    public IActionResult Details(
+    public async Task<IActionResult> Details(
         string id)
     {
-        if (!CanAccessUser(id))
+        if (!await CanAccessUserAsync(id))
             return Forbid();
 
 
@@ -65,7 +61,6 @@ public class UserController : Controller
     }
 
 
-    // GET: /User/Delete/{id} (MVC View)
     [HttpGet]
     [Authorize(Roles = "Admin")]
     [ActionName("Delete")]
@@ -76,7 +71,7 @@ public class UserController : Controller
     }
 
 
-    // API: GET /User/GetAll
+    // Admin + Manager
     [HttpGet]
     [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> GetAll(
@@ -84,12 +79,35 @@ public class UserController : Controller
     {
         try
         {
+            var currentUserId =
+                User.FindFirst(
+                    ClaimTypes.NameIdentifier)
+                ?.Value;
+
+
+            var currentUserRole =
+                User.FindFirst(
+                    ClaimTypes.Role)
+                ?.Value;
+
+
+            if (string.IsNullOrEmpty(currentUserId) ||
+                string.IsNullOrEmpty(currentUserRole))
+            {
+                return Unauthorized(
+                    "Invalid access token.");
+            }
+
+
             var users =
                 await _userService.GetAllAsync(
-                    request);
+                    request,
+                    currentUserId,
+                    currentUserRole);
 
 
-            return Ok(users);
+            return Ok(
+                users);
         }
         catch (BusinessException ex)
         {
@@ -105,12 +123,11 @@ public class UserController : Controller
     }
 
 
-    // API: GET /User/GetById/EMP001
     [HttpGet]
     public async Task<IActionResult> GetById(
         string id)
     {
-        if (!CanAccessUser(id))
+        if (!await CanAccessUserAsync(id))
             return Forbid();
 
 
@@ -143,7 +160,6 @@ public class UserController : Controller
     }
 
 
-    // API: POST /User/Create
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(
@@ -178,15 +194,12 @@ public class UserController : Controller
     }
 
 
-    // API: PUT /User/Edit
+    // Admin only because DTO contains Role, Salary, Department
     [HttpPut]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(
         [FromBody] EditUserDto dto)
     {
-        if (!CanAccessUser(dto.UserId))
-            return Forbid();
-
-
         if (!ModelState.IsValid)
             return BadRequest(
                 ModelState);
@@ -221,7 +234,6 @@ public class UserController : Controller
     }
 
 
-    // API: DELETE /User/Delete/EMP001
     [HttpDelete]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(
@@ -259,7 +271,7 @@ public class UserController : Controller
 
 
 
-    private bool CanAccessUser(
+    private async Task<bool> CanAccessUserAsync(
         string userId)
     {
         var currentUserId =
@@ -272,13 +284,26 @@ public class UserController : Controller
             return false;
 
 
-        if (User.IsInRole("Admin") ||
-            User.IsInRole("Manager"))
-        {
+        // Admin can access everyone
+        if (User.IsInRole("Admin"))
             return true;
+
+
+        // User can access himself
+        if (currentUserId == userId)
+            return true;
+
+
+        // Manager can access his employees only
+        if (User.IsInRole("Manager"))
+        {
+            return await _userService
+                .CanManageUserAsync(
+                    currentUserId,
+                    userId);
         }
 
 
-        return currentUserId == userId;
+        return false;
     }
 }

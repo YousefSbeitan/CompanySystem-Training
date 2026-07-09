@@ -25,7 +25,9 @@ public class UserService : IUserService
 
 
     public async Task<PagedResponse<UserDto>> GetAllAsync(
-        PaginationFilterRequest request)
+    PaginationFilterRequest request,
+    string currentUserId,
+    string currentUserRole)
     {
         try
         {
@@ -34,44 +36,76 @@ public class UserService : IUserService
                     u => !u.IsDeleted);
 
 
-            if (!string.IsNullOrWhiteSpace(request.Search))
+            // Manager can see himself + his employees only
+            if (currentUserRole == "Manager")
             {
-                users = users.Where(
-                    u =>
-                    u.UserId.ToLower()
-                        .Contains(request.Search.ToLower())
-                    ||
-                    u.Username.ToLower()
-                        .Contains(request.Search.ToLower())
-                    ||
-                    u.PhoneNumber.Contains(request.Search));
+                users =
+                    users.Where(
+                        u =>
+                        u.UserId == currentUserId
+                        ||
+                        u.LeaderId == currentUserId);
             }
 
 
-            users = request.SortBy?.ToLower() switch
+            if (!string.IsNullOrWhiteSpace(
+                    request.Search))
             {
-                "username" => request.IsDescending
-                    ? users.OrderByDescending(u => u.Username)
-                    : users.OrderBy(u => u.Username),
+                users =
+                    users.Where(
+                        u =>
+                        u.UserId.ToLower()
+                            .Contains(
+                                request.Search.ToLower())
+                        ||
+                        u.Username.ToLower()
+                            .Contains(
+                                request.Search.ToLower())
+                        ||
+                        u.PhoneNumber.Contains(
+                            request.Search));
+            }
 
 
-                "salary" => request.IsDescending
-                    ? users.OrderByDescending(u => u.Salary)
-                    : users.OrderBy(u => u.Salary),
+            users =
+                request.SortBy?.ToLower() switch
+                {
+                    "username" =>
+                        request.IsDescending
+                            ? users.OrderByDescending(
+                                u => u.Username)
+                            : users.OrderBy(
+                                u => u.Username),
 
 
-                "startdate" => request.IsDescending
-                    ? users.OrderByDescending(u => u.StartDate)
-                    : users.OrderBy(u => u.StartDate),
+                    "salary" =>
+                        request.IsDescending
+                            ? users.OrderByDescending(
+                                u => u.Salary)
+                            : users.OrderBy(
+                                u => u.Salary),
 
 
-                "createddate" => request.IsDescending
-                    ? users.OrderByDescending(u => u.CreatedDate)
-                    : users.OrderBy(u => u.CreatedDate),
+                    "startdate" =>
+                        request.IsDescending
+                            ? users.OrderByDescending(
+                                u => u.StartDate)
+                            : users.OrderBy(
+                                u => u.StartDate),
 
 
-                _ => users.OrderBy(u => u.UserId)
-            };
+                    "createddate" =>
+                        request.IsDescending
+                            ? users.OrderByDescending(
+                                u => u.CreatedDate)
+                            : users.OrderBy(
+                                u => u.CreatedDate),
+
+
+                    _ =>
+                        users.OrderBy(
+                            u => u.UserId)
+                };
 
 
             var totalRecords =
@@ -82,9 +116,12 @@ public class UserService : IUserService
                 users
                 .Skip(
                     (request.PageNumber - 1)
-                    * request.PageSize)
-                .Take(request.PageSize)
-                .Select(UserMapper.ToDto)
+                    *
+                    request.PageSize)
+                .Take(
+                    request.PageSize)
+                .Select(
+                    UserMapper.ToDto)
                 .ToList();
 
 
@@ -97,7 +134,8 @@ public class UserService : IUserService
         catch (Exception ex)
         {
             throw new BusinessException(
-                "Failed to retrieve users.", ex);
+                "Failed to retrieve users.",
+                ex);
         }
     }
 
@@ -447,6 +485,39 @@ public class UserService : IUserService
         {
             throw new BusinessException(
                 "Failed to delete the user.", ex);
+        }
+    }
+
+    public async Task<bool> CanManageUserAsync(
+    string managerId,
+    string userId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(managerId) ||
+                string.IsNullOrWhiteSpace(userId))
+            {
+                return false;
+            }
+
+
+            var user =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.UserId == userId &&
+                         !u.IsDeleted);
+
+
+            if (user == null)
+                return false;
+
+
+            return user.LeaderId == managerId;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to check user permission.",
+                ex);
         }
     }
 }

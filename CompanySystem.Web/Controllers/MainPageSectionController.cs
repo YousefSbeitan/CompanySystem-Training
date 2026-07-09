@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
 
-
+[Authorize]
 public class MainPageSectionController : Controller
 {
     private readonly IMainPageSectionService _mainPageSectionService;

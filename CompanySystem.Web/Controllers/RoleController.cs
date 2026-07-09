@@ -23,7 +23,7 @@ public class RoleController : Controller
 
     // GET: /Role
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -53,7 +53,7 @@ public class RoleController : Controller
 
     // GET: /Role/Details/1
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Details(
         int id)
     {

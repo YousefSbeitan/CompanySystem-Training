@@ -13,29 +13,46 @@ namespace CompanySystem.Web.Controllers;
 public class NoteController : Controller
 {
     private readonly INoteService _noteService;
+    private readonly IUserService _userService;
 
 
     public NoteController(
-        INoteService noteService)
+    INoteService noteService,
+    IUserService userService)
     {
         _noteService = noteService;
+        _userService = userService;
     }
 
 
     // GET: /Note
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+                return Unauthorized();
+
+
             var notes =
                 await _noteService.GetAllAsync(
-                    request);
+                    request,
+                    currentUserId,
+                    currentUserRole);
 
 
-            return Ok(notes);
+            return Ok(
+                notes);
         }
         catch (BusinessException ex)
         {
@@ -51,6 +68,7 @@ public class NoteController : Controller
     }
 
 
+
     // GET: /Note/Details/1
     [HttpGet]
     public async Task<IActionResult> Details(
@@ -58,13 +76,32 @@ public class NoteController : Controller
     {
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+                return Unauthorized();
+
+
+            var canAccess =
+                await _noteService.CanAccessNoteAsync(
+                    id,
+                    currentUserId,
+                    currentUserRole);
+
+
+            if (!canAccess)
+                return Forbid();
+
+
             var note =
                 await _noteService.GetByIdAsync(
                     id);
-
-
-            if (!CanAccessNote(note.UserId))
-                return Forbid();
 
 
             return Ok(
@@ -89,6 +126,7 @@ public class NoteController : Controller
     }
 
 
+
     // POST: /Note/Create
     [HttpPost]
     [Authorize(Roles = "Admin,Manager")]
@@ -102,6 +140,37 @@ public class NoteController : Controller
 
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+            {
+                return Unauthorized();
+            }
+
+
+            if (currentUserRole == "Manager")
+            {
+                var canCreate =
+                    dto.UserId == currentUserId
+                    ||
+                    await _userService
+                        .CanManageUserAsync(
+                            currentUserId,
+                            dto.UserId);
+
+
+                if (!canCreate)
+                    return Forbid();
+            }
+
+
             var note =
                 await _noteService.CreateAsync(
                     dto);
@@ -129,6 +198,7 @@ public class NoteController : Controller
     }
 
 
+
     // PUT: /Note/Edit
     [HttpPut]
     [Authorize(Roles = "Admin,Manager")]
@@ -142,6 +212,29 @@ public class NoteController : Controller
 
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+                return Unauthorized();
+
+
+            var canAccess =
+                await _noteService.CanAccessNoteAsync(
+                    dto.NoteId,
+                    currentUserId,
+                    currentUserRole);
+
+
+            if (!canAccess)
+                return Forbid();
+
+
             var note =
                 await _noteService.UpdateAsync(
                     dto);
@@ -167,6 +260,7 @@ public class NoteController : Controller
                 ex.Message);
         }
     }
+
 
 
     // DELETE: /Note/Delete/1
@@ -207,26 +301,18 @@ public class NoteController : Controller
 
 
 
-    private bool CanAccessNote(
-        string noteUserId)
+    private string? GetCurrentUserId()
     {
-        var currentUserId =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier)
+        return User.FindFirst(
+            ClaimTypes.NameIdentifier)
             ?.Value;
+    }
 
 
-        if (currentUserId == null)
-            return false;
-
-
-        if (User.IsInRole("Admin") ||
-            User.IsInRole("Manager"))
-        {
-            return true;
-        }
-
-
-        return currentUserId == noteUserId;
+    private string? GetCurrentUserRole()
+    {
+        return User.FindFirst(
+            ClaimTypes.Role)
+            ?.Value;
     }
 }

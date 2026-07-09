@@ -304,7 +304,8 @@ public class AuthService : IAuthService
 
 
     public async Task<bool> LogoutAsync(
-    string refreshToken)
+    string refreshToken,
+    string userId)
     {
         try
         {
@@ -319,6 +320,12 @@ public class AuthService : IAuthService
                     "Invalid refresh token.");
 
 
+            // Check token owner
+            if (token.UserId != userId)
+                throw new BusinessException(
+                    "You cannot logout another user.");
+
+
             if (token.IsRevoked)
                 throw new BusinessException(
                     "Refresh token already revoked.");
@@ -329,11 +336,13 @@ public class AuthService : IAuthService
                     "Refresh token expired.");
 
 
-            token.IsRevoked = true;
+            token.IsRevoked =
+                true;
 
 
             token.UpdatedBy =
-                "System";
+                userId;
+
 
             token.UpdatedDate =
                 DateTime.UtcNow;
