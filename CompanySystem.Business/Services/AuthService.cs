@@ -1,0 +1,334 @@
+﻿using CompanySystem.Business.DTOs;
+using CompanySystem.Business.Interfaces;
+using CompanySystem.Business.Services.Security;
+using CompanySystem.Data.Entities;
+using CompanySystem.Data.Repositories.Interfaces;
+using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Helpers;
+
+namespace CompanySystem.Business.Services;
+
+public class AuthService : IAuthService
+{
+    private readonly IGenericRepository<User> _userRepository;
+    private readonly IGenericRepository<Role> _roleRepository;
+    private readonly IGenericRepository<RefreshToken> _refreshTokenRepository;
+    private readonly JwtService _jwtService;
+
+
+    public AuthService(
+        IGenericRepository<User> userRepository,
+        IGenericRepository<Role> roleRepository,
+        IGenericRepository<RefreshToken> refreshTokenRepository,
+        JwtService jwtService)
+    {
+        _userRepository = userRepository;
+        _roleRepository = roleRepository;
+        _refreshTokenRepository = refreshTokenRepository;
+        _jwtService = jwtService;
+    }
+
+
+    public async Task<AuthResponseDto> RegisterAsync(
+        RegisterDto dto)
+    {
+        try
+        {
+            if (dto == null)
+                throw new BusinessException(
+                    "User data is required.");
+
+
+            var existingUser =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.Username.ToLower()
+                         == dto.Username.ToLower()
+                         &&
+                         !u.IsDeleted);
+
+
+            if (existingUser != null)
+                throw new BusinessException(
+                    "Username already exists.");
+
+
+            var role =
+                await _roleRepository.FirstOrDefaultAsync(
+                    r => r.RoleId == dto.RoleId &&
+                         !r.IsDeleted);
+
+
+            if (role == null)
+                throw new ResourceNotFoundException(
+                    "Role",
+                    dto.RoleId);
+
+
+            var user =
+                new User
+                {
+                    UserId =
+                        UserIdGenerator.Generate(
+                            dto.DepartmentId),
+
+                    Username =
+                        dto.Username.Trim(),
+
+                    PasswordHash =
+                        PasswordHasher.HashPassword(
+                            dto.Password),
+
+                    RoleId =
+                        dto.RoleId,
+
+                    DepartmentId =
+                        dto.DepartmentId,
+
+                    PhoneNumber =
+                        dto.PhoneNumber,
+
+                    StartDate =
+                        dto.StartDate,
+
+                    Salary =
+                        dto.Salary,
+
+                    IsActive =
+                        true,
+
+                    CreatedBy =
+                        "System"
+                };
+
+
+            await _userRepository.AddAsync(user);
+
+            await _userRepository.SaveChangesAsync();
+
+
+            return await GenerateAuthResponse(
+                user,
+                role.RoleName);
+        }
+        catch (BusinessException)
+        {
+            throw;
+        }
+        catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to register user.", ex);
+        }
+    }
+
+
+
+    public async Task<AuthResponseDto> LoginAsync(
+        LoginDto dto)
+    {
+        try
+        {
+            var user =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.Username.ToLower()
+                         == dto.Username.ToLower()
+                         &&
+                         !u.IsDeleted);
+
+
+            if (user == null)
+                throw new BusinessException(
+                    "Invalid username or password.");
+
+
+            var validPassword =
+                PasswordHasher.VerifyPassword(
+                    dto.Password,
+                    user.PasswordHash);
+
+
+            if (!validPassword)
+                throw new BusinessException(
+                    "Invalid username or password.");
+
+
+            if (!user.IsActive)
+                throw new BusinessException(
+                    "User account is disabled.");
+
+
+            var role =
+                await _roleRepository.FirstOrDefaultAsync(
+                    r => r.RoleId == user.RoleId &&
+                         !r.IsDeleted);
+
+
+            if (role == null)
+                throw new ResourceNotFoundException(
+                    "Role",
+                    user.RoleId);
+
+
+            return await GenerateAuthResponse(
+                user,
+                role.RoleName);
+        }
+        catch (BusinessException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to login.", ex);
+        }
+    }
+
+
+
+    public async Task<AuthResponseDto> RefreshTokenAsync(
+        string refreshToken)
+    {
+        try
+        {
+            var token =
+                await _refreshTokenRepository.FirstOrDefaultAsync(
+                    t => t.Token == refreshToken
+                         &&
+                         !t.IsDeleted);
+
+
+            if (token == null ||
+                token.IsRevoked ||
+                token.ExpiresAt < DateTime.UtcNow)
+            {
+                throw new BusinessException(
+                    "Invalid refresh token.");
+            }
+
+
+            var user =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.UserId == token.UserId &&
+                         !u.IsDeleted);
+
+
+            if (user == null)
+                throw new ResourceNotFoundException(
+                    "User",
+                    token.UserId);
+
+
+            var role =
+                await _roleRepository.FirstOrDefaultAsync(
+                    r => r.RoleId == user.RoleId &&
+                         !r.IsDeleted);
+
+
+            token.IsRevoked = true;
+
+            _refreshTokenRepository.Update(token);
+
+
+            return await GenerateAuthResponse(
+                user,
+                role!.RoleName);
+        }
+        catch (BusinessException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to refresh token.", ex);
+        }
+    }
+
+
+
+    public async Task<bool> LogoutAsync(
+        string refreshToken)
+    {
+        var token =
+            await _refreshTokenRepository.FirstOrDefaultAsync(
+                t => t.Token == refreshToken &&
+                     !t.IsDeleted);
+
+
+        if (token == null)
+            return true;
+
+
+        token.IsRevoked = true;
+
+        _refreshTokenRepository.Update(token);
+
+        await _refreshTokenRepository.SaveChangesAsync();
+
+
+        return true;
+    }
+
+
+
+    private async Task<AuthResponseDto> GenerateAuthResponse(
+        User user,
+        string roleName)
+    {
+        var accessToken =
+            _jwtService.GenerateAccessToken(
+                user,
+                roleName);
+
+
+        var refreshToken =
+            new RefreshToken
+            {
+                Token =
+                    _jwtService.GenerateRefreshToken(),
+
+                UserId =
+                    user.UserId,
+
+                ExpiresAt =
+                    _jwtService.GetRefreshTokenExpiration(),
+
+                CreatedBy =
+                    "System"
+            };
+
+
+        await _refreshTokenRepository.AddAsync(
+            refreshToken);
+
+
+        await _refreshTokenRepository.SaveChangesAsync();
+
+
+        return new AuthResponseDto
+        {
+            UserId =
+                user.UserId,
+
+            Username =
+                user.Username,
+
+            AccessToken =
+                accessToken,
+
+            RefreshToken =
+                refreshToken.Token,
+
+            AccessTokenExpiresAt =
+                _jwtService.GetAccessTokenExpiration(),
+
+            RefreshTokenExpiresAt =
+                refreshToken.ExpiresAt
+        };
+    }
+}

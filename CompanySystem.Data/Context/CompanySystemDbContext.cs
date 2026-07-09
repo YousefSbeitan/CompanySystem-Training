@@ -12,6 +12,7 @@ public class CompanySystemDbContext : DbContext
     {
     }
 
+
     public DbSet<User> Users { get; set; }
 
     public DbSet<Role> Roles { get; set; }
@@ -22,18 +23,26 @@ public class CompanySystemDbContext : DbContext
 
     public DbSet<MainPageSection> MainPageSections { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
 
         modelBuilder.Entity<User>()
             .Property(x => x.Salary)
             .HasPrecision(18, 2);
 
+
         SeedData(modelBuilder);
     }
 
-    private void SeedData(ModelBuilder modelBuilder)
+
+    private void SeedData(
+        ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>().HasData(
             new Role
@@ -61,6 +70,7 @@ public class CompanySystemDbContext : DbContext
                 IsDeleted = false
             });
 
+
         modelBuilder.Entity<Department>().HasData(
             new Department
             {
@@ -80,6 +90,7 @@ public class CompanySystemDbContext : DbContext
                 CreatedDate = new DateTime(2026, 1, 1),
                 IsDeleted = false
             });
+
 
         modelBuilder.Entity<MainPageSection>().HasData(
             new MainPageSection
@@ -103,5 +114,4 @@ public class CompanySystemDbContext : DbContext
                 IsDeleted = false
             });
     }
-
 }
