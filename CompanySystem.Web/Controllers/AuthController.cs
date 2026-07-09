@@ -24,7 +24,7 @@ public class AuthController : ControllerBase
 
     // POST: api/Auth/Register
     [HttpPost("Register")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Register(
         [FromBody] RegisterDto dto)
     {
