@@ -252,26 +252,60 @@ public class AuthService : IAuthService
 
 
     public async Task<bool> LogoutAsync(
-        string refreshToken)
+    string refreshToken)
     {
-        var token =
-            await _refreshTokenRepository.FirstOrDefaultAsync(
-                t => t.Token == refreshToken &&
-                     !t.IsDeleted);
+        try
+        {
+            var token =
+                await _refreshTokenRepository.FirstOrDefaultAsync(
+                    t => t.Token == refreshToken &&
+                         !t.IsDeleted);
 
 
-        if (token == null)
+            if (token == null)
+                throw new BusinessException(
+                    "Invalid refresh token.");
+
+
+            if (token.IsRevoked)
+                throw new BusinessException(
+                    "Refresh token already revoked.");
+
+
+            if (token.ExpiresAt < DateTime.UtcNow)
+                throw new BusinessException(
+                    "Refresh token expired.");
+
+
+            token.IsRevoked = true;
+
+
+            token.UpdatedBy =
+                "System";
+
+            token.UpdatedDate =
+                DateTime.UtcNow;
+
+
+            _refreshTokenRepository.Update(
+                token);
+
+
+            await _refreshTokenRepository.SaveChangesAsync();
+
+
             return true;
-
-
-        token.IsRevoked = true;
-
-        _refreshTokenRepository.Update(token);
-
-        await _refreshTokenRepository.SaveChangesAsync();
-
-
-        return true;
+        }
+        catch (BusinessException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to logout.",
+                ex);
+        }
     }
 
 
