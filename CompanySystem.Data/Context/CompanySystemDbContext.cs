@@ -101,7 +101,7 @@ public class CompanySystemDbContext : DbContext
 
                 // Password: Admin@123
                 PasswordHash =
-                    "$2a$12$rNiQUYl1Ap4ZrS/IuZeJOuXkio2fo8esv298m6LzCqr32AgTJbHq2",
+                    "$2a$12$rNjQUYl1Ap4ZrS/IuZeJ0uXkio2fo8esy298m6LzCqr32AqTJJbHq2",
 
                 RoleId = 1,
 
