@@ -2,13 +2,18 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CompanySystem.Web.Controllers;
 
+
+[Authorize]
 public class UserController : Controller
 {
     private readonly IUserService _userService;
+
 
     public UserController(
         IUserService userService)
@@ -27,6 +32,7 @@ public class UserController : Controller
 
     // GET: /User/Create (MVC View)
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public IActionResult Create()
     {
         return View();
@@ -35,24 +41,36 @@ public class UserController : Controller
 
     // GET: /User/Edit/{id} (MVC View)
     [HttpGet]
-    public IActionResult Edit(string id)
+    public IActionResult Edit(
+        string id)
     {
+        if (!CanAccessUser(id))
+            return Forbid();
+
+
         return View();
     }
 
 
     // GET: /User/Details/{id} (MVC View)
     [HttpGet]
-    public IActionResult Details(string id)
+    public IActionResult Details(
+        string id)
     {
+        if (!CanAccessUser(id))
+            return Forbid();
+
+
         return View();
     }
 
 
     // GET: /User/Delete/{id} (MVC View)
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     [ActionName("Delete")]
-    public IActionResult DeleteView(string id)
+    public IActionResult DeleteView(
+        string id)
     {
         return View();
     }
@@ -60,6 +78,7 @@ public class UserController : Controller
 
     // API: GET /User/GetAll
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -74,11 +93,14 @@ public class UserController : Controller
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
@@ -88,6 +110,10 @@ public class UserController : Controller
     public async Task<IActionResult> GetById(
         string id)
     {
+        if (!CanAccessUser(id))
+            return Forbid();
+
+
         try
         {
             var user =
@@ -95,30 +121,37 @@ public class UserController : Controller
                     id);
 
 
-            return Ok(user);
+            return Ok(
+                user);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // API: POST /User/Create
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(
         [FromBody] CreateUserDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -128,15 +161,19 @@ public class UserController : Controller
                     dto);
 
 
-            return Ok(user);
+            return Ok(
+                user);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
@@ -146,8 +183,13 @@ public class UserController : Controller
     public async Task<IActionResult> Edit(
         [FromBody] EditUserDto dto)
     {
+        if (!CanAccessUser(dto.UserId))
+            return Forbid();
+
+
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -157,25 +199,31 @@ public class UserController : Controller
                     dto);
 
 
-            return Ok(user);
+            return Ok(
+                user);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // API: DELETE /User/Delete/EMP001
     [HttpDelete]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(
         string id)
     {
@@ -193,15 +241,44 @@ public class UserController : Controller
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
+    }
+
+
+
+    private bool CanAccessUser(
+        string userId)
+    {
+        var currentUserId =
+            User.FindFirst(
+                ClaimTypes.NameIdentifier)
+            ?.Value;
+
+
+        if (currentUserId == null)
+            return false;
+
+
+        if (User.IsInRole("Admin") ||
+            User.IsInRole("Manager"))
+        {
+            return true;
+        }
+
+
+        return currentUserId == userId;
     }
 }

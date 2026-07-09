@@ -26,13 +26,6 @@ public class RegisterDto
     public string Password { get; set; } = string.Empty;
 
 
-    [Required(
-        ErrorMessage = "Role is required.")]
-    [Display(
-        Name = "Role")]
-    public int RoleId { get; set; }
-
-
     [Display(
         Name = "Department")]
     public int? DepartmentId { get; set; }
@@ -48,24 +41,6 @@ public class RegisterDto
     [Display(
         Name = "Phone Number")]
     public string PhoneNumber { get; set; } = string.Empty;
-
-
-    [Required(
-        ErrorMessage = "Start date is required.")]
-    [DataType(
-        DataType.Date)]
-    [Display(
-        Name = "Start Date")]
-    public DateTime StartDate { get; set; }
-
-
-    [Range(
-        0,
-        1000000000,
-        ErrorMessage = "Salary must be greater than or equal to zero.")]
-    [Display(
-        Name = "Salary")]
-    public decimal Salary { get; set; }
 }
 
 

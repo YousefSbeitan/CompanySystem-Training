@@ -2,23 +2,28 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
+
 
 public class MainPageSectionController : Controller
 {
     private readonly IMainPageSectionService _mainPageSectionService;
 
+
     public MainPageSectionController(
         IMainPageSectionService mainPageSectionService)
     {
-        _mainPageSectionService = mainPageSectionService;
+        _mainPageSectionService =
+            mainPageSectionService;
     }
 
 
     // GET: /MainPageSection
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -29,21 +34,26 @@ public class MainPageSectionController : Controller
                     request);
 
 
-            return Ok(sections);
+            return Ok(
+                sections);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // GET: /MainPageSection/Details/1
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Details(
         int id)
     {
@@ -54,30 +64,37 @@ public class MainPageSectionController : Controller
                     id);
 
 
-            return Ok(section);
+            return Ok(
+                section);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // POST: /MainPageSection/Create
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(
         [FromBody] CreateMainPageSectionDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -87,26 +104,32 @@ public class MainPageSectionController : Controller
                     dto);
 
 
-            return Ok(section);
+            return Ok(
+                section);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // PUT: /MainPageSection/Edit
     [HttpPut]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(
         [FromBody] EditMainPageSectionDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -116,25 +139,31 @@ public class MainPageSectionController : Controller
                     dto);
 
 
-            return Ok(section);
+            return Ok(
+                section);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // DELETE: /MainPageSection/Delete/1
     [HttpDelete]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(
         int id)
     {
@@ -152,15 +181,19 @@ public class MainPageSectionController : Controller
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 }

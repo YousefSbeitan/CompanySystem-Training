@@ -1,9 +1,11 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
+
 
 [ApiController]
 [Route("api/[controller]")]
@@ -21,11 +23,13 @@ public class AuthController : ControllerBase
 
     // POST: api/Auth/Register
     [HttpPost("Register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register(
         [FromBody] RegisterDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -35,15 +39,18 @@ public class AuthController : ControllerBase
                     dto);
 
 
-            return Ok(result);
+            return Ok(
+                result);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
@@ -56,11 +63,13 @@ public class AuthController : ControllerBase
 
     // POST: api/Auth/Login
     [HttpPost("Login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login(
         [FromBody] LoginDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -70,11 +79,13 @@ public class AuthController : ControllerBase
                     dto);
 
 
-            return Ok(result);
+            return Ok(
+                result);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
@@ -87,11 +98,13 @@ public class AuthController : ControllerBase
 
     // POST: api/Auth/RefreshToken
     [HttpPost("RefreshToken")]
+    [AllowAnonymous]
     public async Task<IActionResult> RefreshToken(
         [FromBody] RefreshTokenRequestDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -101,11 +114,13 @@ public class AuthController : ControllerBase
                     dto.RefreshToken);
 
 
-            return Ok(result);
+            return Ok(
+                result);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
@@ -118,11 +133,13 @@ public class AuthController : ControllerBase
 
     // POST: api/Auth/Logout
     [HttpPost("Logout")]
+    [Authorize]
     public async Task<IActionResult> Logout(
         [FromBody] RefreshTokenRequestDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -139,7 +156,8 @@ public class AuthController : ControllerBase
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {

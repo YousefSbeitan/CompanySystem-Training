@@ -30,7 +30,7 @@ public class AuthService : IAuthService
 
 
     public async Task<AuthResponseDto> RegisterAsync(
-        RegisterDto dto)
+    RegisterDto dto)
     {
         try
         {
@@ -41,27 +41,38 @@ public class AuthService : IAuthService
 
             var existingUser =
                 await _userRepository.FirstOrDefaultAsync(
-                    u => u.Username.ToLower()
-                         == dto.Username.ToLower()
-                         &&
-                         !u.IsDeleted);
+                    u =>
+                    (
+                        u.Username.ToLower()
+                        == dto.Username.ToLower()
+                        ||
+                        u.PhoneNumber
+                        == dto.PhoneNumber
+                    )
+                    &&
+                    !u.IsDeleted);
 
 
             if (existingUser != null)
                 throw new BusinessException(
-                    "Username already exists.");
+                    "Username or phone number already exists.");
+
+
+            // Default Register Role = Employee
+            const int employeeRoleId = 3;
 
 
             var role =
                 await _roleRepository.FirstOrDefaultAsync(
-                    r => r.RoleId == dto.RoleId &&
+                    r => r.RoleId == employeeRoleId
+                         &&
                          !r.IsDeleted);
 
 
             if (role == null)
                 throw new ResourceNotFoundException(
                     "Role",
-                    dto.RoleId);
+                    employeeRoleId);
 
 
             var user =
@@ -71,37 +82,48 @@ public class AuthService : IAuthService
                         UserIdGenerator.Generate(
                             dto.DepartmentId),
 
+
                     Username =
                         dto.Username.Trim(),
+
 
                     PasswordHash =
                         PasswordHasher.HashPassword(
                             dto.Password),
 
+
                     RoleId =
-                        dto.RoleId,
+                        employeeRoleId,
+
 
                     DepartmentId =
                         dto.DepartmentId,
 
+
                     PhoneNumber =
                         dto.PhoneNumber,
 
+
                     StartDate =
-                        dto.StartDate,
+                        DateTime.UtcNow,
+
 
                     Salary =
-                        dto.Salary,
+                        0,
+
 
                     IsActive =
                         true,
+
 
                     CreatedBy =
                         "System"
                 };
 
 
-            await _userRepository.AddAsync(user);
+            await _userRepository.AddAsync(
+                user);
+
 
             await _userRepository.SaveChangesAsync();
 
@@ -121,7 +143,8 @@ public class AuthService : IAuthService
         catch (Exception ex)
         {
             throw new BusinessException(
-                "Failed to register user.", ex);
+                "Failed to register user.",
+                ex);
         }
     }
 
