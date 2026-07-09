@@ -78,11 +78,14 @@ public class RoleService : IRoleService
         }
     }
 
-
     public async Task<RoleDto?> GetByIdAsync(int roleId)
     {
         try
         {
+            if (roleId <= 0)
+                throw new BusinessException(
+                    "Invalid role id.");
+
             var role = await _repository.FirstOrDefaultAsync(
                 r => r.RoleId == roleId &&
                      !r.IsDeleted);
@@ -98,6 +101,10 @@ public class RoleService : IRoleService
         {
             throw;
         }
+        catch (BusinessException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             throw new BusinessException(
@@ -105,11 +112,20 @@ public class RoleService : IRoleService
         }
     }
 
-
     public async Task<RoleDto> CreateAsync(CreateRoleDto dto)
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Role data is required.");
+
+            if (string.IsNullOrWhiteSpace(dto.RoleName))
+                throw new BusinessException(
+                    "Role name is required.");
+
+            dto.RoleName = dto.RoleName.Trim();
+
             var existingRole =
                 await _repository.FirstOrDefaultAsync(
                     r => r.RoleName.ToLower()
@@ -117,22 +133,18 @@ public class RoleService : IRoleService
                          &&
                          !r.IsDeleted);
 
-
             if (existingRole != null)
                 throw new BusinessException(
                     "Role name already exists.");
-
 
             var role = RoleMapper.ToEntity(dto);
 
 
             role.CreatedBy = "System";
 
-
             await _repository.AddAsync(role);
 
             await _repository.SaveChangesAsync();
-
 
             return RoleMapper.ToDto(role);
         }
@@ -147,11 +159,24 @@ public class RoleService : IRoleService
         }
     }
 
-
     public async Task<RoleDto?> UpdateAsync(EditRoleDto dto)
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Role data is required.");
+
+            if (dto.RoleId <= 0)
+                throw new BusinessException(
+                    "Invalid role id.");
+
+            if (string.IsNullOrWhiteSpace(dto.RoleName))
+                throw new BusinessException(
+                    "Role name is required.");
+
+            dto.RoleName = dto.RoleName.Trim();
+
             var role =
                 await _repository.FirstOrDefaultAsync(
                     r => r.RoleId == dto.RoleId &&
@@ -161,7 +186,6 @@ public class RoleService : IRoleService
             if (role == null)
                 throw new ResourceNotFoundException(
                     "Role", dto.RoleId);
-
 
             var existingRole =
                 await _repository.FirstOrDefaultAsync(
@@ -177,18 +201,14 @@ public class RoleService : IRoleService
                 throw new BusinessException(
                     "Role name already exists.");
 
-
             RoleMapper.UpdateEntity(role, dto);
-
 
             role.UpdatedBy = "System";
             role.UpdatedDate = DateTime.UtcNow;
 
-
             _repository.Update(role);
 
             await _repository.SaveChangesAsync();
-
 
             return RoleMapper.ToDto(role);
         }
@@ -207,11 +227,14 @@ public class RoleService : IRoleService
         }
     }
 
-
     public async Task<bool> DeleteAsync(int roleId)
     {
         try
         {
+            if (roleId <= 0)
+                throw new BusinessException(
+                    "Invalid role id.");
+
             var role =
                 await _repository.FirstOrDefaultAsync(
                     r => r.RoleId == roleId &&
@@ -222,21 +245,22 @@ public class RoleService : IRoleService
                 throw new ResourceNotFoundException(
                     "Role", roleId);
 
-
             role.IsDeleted = true;
 
             role.UpdatedBy = "System";
             role.UpdatedDate = DateTime.UtcNow;
 
-
             _repository.Update(role);
 
             await _repository.SaveChangesAsync();
 
-
             return true;
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }

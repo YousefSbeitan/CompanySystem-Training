@@ -22,6 +22,7 @@ public class DepartmentService : IDepartmentService
 
     public async Task<PagedResponse<DepartmentDto>> GetAllAsync(
         PaginationFilterRequest request)
+
     {
         try
         {
@@ -74,6 +75,7 @@ public class DepartmentService : IDepartmentService
                 request.PageNumber,
                 request.PageSize,
                 totalRecords);
+
         }
         catch (Exception ex)
         {
@@ -82,11 +84,15 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
-    public async Task<DepartmentDto?> GetByIdAsync(int departmentId)
+    public async Task<DepartmentDto?> GetByIdAsync(
+        int departmentId)
     {
         try
         {
+            if (departmentId <= 0)
+                throw new BusinessException(
+                    "Invalid department id.");
+
             var department =
                 await _repository.FirstOrDefaultAsync(
                     d => d.DepartmentId == departmentId &&
@@ -98,10 +104,14 @@ public class DepartmentService : IDepartmentService
                     "Department",
                     departmentId);
 
-
-            return DepartmentMapper.ToDto(department);
+            return DepartmentMapper.ToDto(
+                department);
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }
@@ -112,18 +122,31 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
     public async Task<DepartmentDto> CreateAsync(
         CreateDepartmentDto dto)
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Department data is required.");
+
+            if (string.IsNullOrWhiteSpace(
+                    dto.DepartmentName))
+                throw new BusinessException(
+                    "Department name is required.");
+
+            dto.DepartmentName =
+                dto.DepartmentName.Trim();
+
+
             var existingDepartment =
                 await _repository.FirstOrDefaultAsync(
-                    d => d.DepartmentName.ToLower()
-                         == dto.DepartmentName.ToLower()
-                         &&
-                         !d.IsDeleted);
+                    d =>
+                    d.DepartmentName.ToLower()
+                    == dto.DepartmentName.ToLower()
+                    &&
+                    !d.IsDeleted);
 
 
             if (existingDepartment != null)
@@ -138,12 +161,14 @@ public class DepartmentService : IDepartmentService
             department.CreatedBy = "System";
 
 
-            await _repository.AddAsync(department);
+            await _repository.AddAsync(
+                department);
 
             await _repository.SaveChangesAsync();
 
 
-            return DepartmentMapper.ToDto(department);
+            return DepartmentMapper.ToDto(
+                department);
         }
         catch (BusinessException)
         {
@@ -156,12 +181,28 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
     public async Task<DepartmentDto?> UpdateAsync(
         EditDepartmentDto dto)
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Department data is required.");
+
+            if (dto.DepartmentId <= 0)
+                throw new BusinessException(
+                    "Invalid department id.");
+
+            if (string.IsNullOrWhiteSpace(
+                    dto.DepartmentName))
+                throw new BusinessException(
+                    "Department name is required.");
+
+            dto.DepartmentName =
+                dto.DepartmentName.Trim();
+
+
             var department =
                 await _repository.FirstOrDefaultAsync(
                     d => d.DepartmentId == dto.DepartmentId &&
@@ -176,12 +217,13 @@ public class DepartmentService : IDepartmentService
 
             var existingDepartment =
                 await _repository.FirstOrDefaultAsync(
-                    d => d.DepartmentName.ToLower()
-                         == dto.DepartmentName.ToLower()
-                         &&
-                         d.DepartmentId != dto.DepartmentId
-                         &&
-                         !d.IsDeleted);
+                    d =>
+                    d.DepartmentName.ToLower()
+                    == dto.DepartmentName.ToLower()
+                    &&
+                    d.DepartmentId != dto.DepartmentId
+                    &&
+                    !d.IsDeleted);
 
 
             if (existingDepartment != null)
@@ -198,12 +240,14 @@ public class DepartmentService : IDepartmentService
             department.UpdatedDate = DateTime.UtcNow;
 
 
-            _repository.Update(department);
+            _repository.Update(
+                department);
 
             await _repository.SaveChangesAsync();
 
 
-            return DepartmentMapper.ToDto(department);
+            return DepartmentMapper.ToDto(
+                department);
         }
         catch (ResourceNotFoundException)
         {
@@ -220,12 +264,15 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
     public async Task<bool> DeleteAsync(
         int departmentId)
     {
         try
         {
+            if (departmentId <= 0)
+                throw new BusinessException(
+                    "Invalid department id.");
+
             var department =
                 await _repository.FirstOrDefaultAsync(
                     d => d.DepartmentId == departmentId &&
@@ -244,7 +291,8 @@ public class DepartmentService : IDepartmentService
             department.UpdatedDate = DateTime.UtcNow;
 
 
-            _repository.Update(department);
+            _repository.Update(
+                department);
 
             await _repository.SaveChangesAsync();
 
@@ -252,6 +300,10 @@ public class DepartmentService : IDepartmentService
             return true;
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }

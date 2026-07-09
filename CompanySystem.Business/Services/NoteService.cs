@@ -105,6 +105,11 @@ public class NoteService : INoteService
     {
         try
         {
+            if (noteId <= 0)
+                throw new BusinessException(
+                    "Invalid note id.");
+
+
             var note =
                 await _noteRepository.FirstOrDefaultAsync(
                     n => n.NoteId == noteId &&
@@ -123,6 +128,10 @@ public class NoteService : INoteService
         {
             throw;
         }
+        catch (BusinessException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             throw new BusinessException(
@@ -136,6 +145,31 @@ public class NoteService : INoteService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Note data is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.UserId))
+                throw new BusinessException(
+                    "User id is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                throw new BusinessException(
+                    "Title is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Content))
+                throw new BusinessException(
+                    "Content is required.");
+
+
+            dto.UserId = dto.UserId.Trim();
+            dto.Title = dto.Title.Trim();
+            dto.Content = dto.Content.Trim();
+
+
             var user =
                 await _userRepository.FirstOrDefaultAsync(
                     u => u.UserId == dto.UserId &&
@@ -167,6 +201,10 @@ public class NoteService : INoteService
         {
             throw;
         }
+        catch (BusinessException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             throw new BusinessException(
@@ -180,6 +218,30 @@ public class NoteService : INoteService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Note data is required.");
+
+
+            if (dto.NoteId <= 0)
+                throw new BusinessException(
+                    "Invalid note id.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                throw new BusinessException(
+                    "Title is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Content))
+                throw new BusinessException(
+                    "Content is required.");
+
+
+            dto.Title = dto.Title.Trim();
+            dto.Content = dto.Content.Trim();
+
+
             var note =
                 await _noteRepository.FirstOrDefaultAsync(
                     n => n.NoteId == dto.NoteId &&
@@ -213,6 +275,10 @@ public class NoteService : INoteService
         {
             throw;
         }
+        catch (BusinessException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             throw new BusinessException(
@@ -226,6 +292,11 @@ public class NoteService : INoteService
     {
         try
         {
+            if (noteId <= 0)
+                throw new BusinessException(
+                    "Invalid note id.");
+
+
             var note =
                 await _noteRepository.FirstOrDefaultAsync(
                     n => n.NoteId == noteId &&
@@ -253,6 +324,10 @@ public class NoteService : INoteService
             return true;
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }

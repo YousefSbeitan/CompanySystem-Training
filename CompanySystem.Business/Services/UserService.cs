@@ -106,6 +106,10 @@ public class UserService : IUserService
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new BusinessException(
+                    "User id is required.");
+
             var user =
                 await _userRepository.FirstOrDefaultAsync(
                     u => u.UserId == userId &&
@@ -118,9 +122,14 @@ public class UserService : IUserService
                     userId);
 
 
+
             return UserMapper.ToDto(user);
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }
@@ -136,6 +145,41 @@ public class UserService : IUserService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "User data is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Username))
+                throw new BusinessException(
+                    "Username is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+                throw new BusinessException(
+                    "Password is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                throw new BusinessException(
+                    "Phone number is required.");
+
+
+            if (dto.DepartmentId == null ||
+                dto.DepartmentId <= 0)
+                throw new BusinessException(
+                    "Department is required.");
+
+
+            if (dto.Salary < 0)
+                throw new BusinessException(
+                    "Salary cannot be negative.");
+
+
+            dto.Username = dto.Username.Trim();
+            dto.PhoneNumber = dto.PhoneNumber.Trim();
+
+
             var existingUser =
                 await _userRepository.FirstOrDefaultAsync(
                     u =>
@@ -144,6 +188,7 @@ public class UserService : IUserService
                         == dto.Username.ToLower()
                         ||
                         u.PhoneNumber == dto.PhoneNumber
+
                     )
                     &&
                     !u.IsDeleted);
@@ -163,7 +208,7 @@ public class UserService : IUserService
             if (department == null)
                 throw new ResourceNotFoundException(
                     "Department",
-                    dto.DepartmentId!);
+                    dto.DepartmentId);
 
 
             var user =
@@ -193,6 +238,7 @@ public class UserService : IUserService
                 if (string.IsNullOrEmpty(
                     department.ManagerId))
                 {
+
                     throw new BusinessException(
                         "This department does not have a leader yet.");
                 }
@@ -235,6 +281,30 @@ public class UserService : IUserService
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "User data is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.UserId))
+                throw new BusinessException(
+                    "User id is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.Username))
+                throw new BusinessException(
+                    "Username is required.");
+
+
+            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                throw new BusinessException(
+                    "Phone number is required.");
+
+
+            dto.Username = dto.Username.Trim();
+            dto.PhoneNumber = dto.PhoneNumber.Trim();
+
+
             var user =
                 await _userRepository.FirstOrDefaultAsync(
                     u => u.UserId == dto.UserId &&
@@ -288,8 +358,13 @@ public class UserService : IUserService
                 if (department == null)
                     throw new ResourceNotFoundException(
                         "Department",
-                        dto.DepartmentId!);
+                        dto.DepartmentId);
 
+
+                if (string.IsNullOrEmpty(
+                    department.ManagerId))
+                    throw new BusinessException(
+                        "This department does not have a leader yet.");
 
                 user.LeaderId =
                     department.ManagerId;
@@ -329,6 +404,11 @@ public class UserService : IUserService
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new BusinessException(
+                    "User id is required.");
+
+
             var user =
                 await _userRepository.FirstOrDefaultAsync(
                     u => u.UserId == userId &&
@@ -356,6 +436,10 @@ public class UserService : IUserService
             return true;
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }

@@ -3,7 +3,7 @@ using CompanySystem.Data.Entities.Enums;
 
 namespace CompanySystem.Business.DTOs;
 
-public class NoteDto
+public class NoteDto : TrackingDto
 {
     public int NoteId { get; set; }
 
@@ -14,14 +14,6 @@ public class NoteDto
     public string Title { get; set; } = string.Empty;
 
     public string Content { get; set; } = string.Empty;
-
-    public string CreatedBy { get; set; } = string.Empty;
-
-    public DateTime CreatedDate { get; set; }
-
-    public string? UpdatedBy { get; set; }
-
-    public DateTime? UpdatedDate { get; set; }
 }
 
 public class CreateNoteDto
