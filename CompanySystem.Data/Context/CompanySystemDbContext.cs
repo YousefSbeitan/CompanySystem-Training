@@ -76,7 +76,7 @@ public class CompanySystemDbContext : DbContext
             {
                 DepartmentId = 1,
                 DepartmentName = "Human Resources",
-                ManagerId = "admin",
+                ManagerId = "ADMIN_001",
                 CreatedBy = "System",
                 CreatedDate = new DateTime(2026, 1, 1),
                 IsDeleted = false
@@ -85,9 +85,50 @@ public class CompanySystemDbContext : DbContext
             {
                 DepartmentId = 2,
                 DepartmentName = "Information Technology",
-                ManagerId = "admin",
+                ManagerId = "ADMIN_001",
                 CreatedBy = "System",
                 CreatedDate = new DateTime(2026, 1, 1),
+                IsDeleted = false
+            });
+
+
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                UserId = "ADMIN_001",
+
+                Username = "admin",
+
+                // Password: Admin@123
+                PasswordHash =
+                    "$2a$12$rNiQUYl1Ap4ZrS/IuZeJOuXkio2fo8esv298m6LzCqr32AgTJbHq2",
+
+                RoleId = 1,
+
+                LeaderId = "ADMIN_001",
+
+                DepartmentId = 1,
+
+                PhoneNumber = "0000000000",
+
+                StartDate =
+                    new DateTime(
+                        2026,
+                        1,
+                        1),
+
+                Salary = 0,
+
+                IsActive = true,
+
+                CreatedBy = "System",
+
+                CreatedDate =
+                    new DateTime(
+                        2026,
+                        1,
+                        1),
+
                 IsDeleted = false
             });
 
