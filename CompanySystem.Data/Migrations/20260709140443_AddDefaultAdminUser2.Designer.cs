@@ -4,6 +4,7 @@ using CompanySystem.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CompanySystem.Data.Migrations
 {
     [DbContext(typeof(CompanySystemDbContext))]
-    partial class CompanySystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709140443_AddDefaultAdminUser2")]
+    partial class AddDefaultAdminUser2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -353,7 +356,7 @@ namespace CompanySystem.Data.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             LeaderId = "ADMIN_001",
-                            PasswordHash = "$2a$12$0abb8Tyz65y2IVbOZh8eReGMQNUXrk9L4.BbE5uNjWIp6dmXzml7q",
+                            PasswordHash = "$2a$12$rNjQUYl1Ap4ZrS/IuZeJ0uXkio2fo8esy298m6LzCqr32AqTJJbHq2",
                             PhoneNumber = "0000000000",
                             RoleId = 1,
                             Salary = 0m,

@@ -4,6 +4,7 @@ using CompanySystem.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CompanySystem.Data.Migrations
 {
     [DbContext(typeof(CompanySystemDbContext))]
-    partial class CompanySystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709120142_AddAuthenticationTables")]
+    partial class AddAuthenticationTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,7 +68,7 @@ namespace CompanySystem.Data.Migrations
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DepartmentName = "Human Resources",
                             IsDeleted = false,
-                            ManagerId = "ADMIN_001"
+                            ManagerId = "admin"
                         },
                         new
                         {
@@ -74,7 +77,7 @@ namespace CompanySystem.Data.Migrations
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DepartmentName = "Information Technology",
                             IsDeleted = false,
-                            ManagerId = "ADMIN_001"
+                            ManagerId = "admin"
                         });
                 });
 
@@ -342,24 +345,6 @@ namespace CompanySystem.Data.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = "ADMIN_001",
-                            CreatedBy = "System",
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DepartmentId = 1,
-                            IsActive = true,
-                            IsDeleted = false,
-                            LeaderId = "ADMIN_001",
-                            PasswordHash = "$2a$12$0abb8Tyz65y2IVbOZh8eReGMQNUXrk9L4.BbE5uNjWIp6dmXzml7q",
-                            PhoneNumber = "0000000000",
-                            RoleId = 1,
-                            Salary = 0m,
-                            StartDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "admin"
-                        });
                 });
 #pragma warning restore 612, 618
         }

@@ -2,19 +2,11 @@
 
 namespace CompanySystem.Business.DTOs;
 
-public class RoleDto
+public class RoleDto : TrackingDto
 {
     public int RoleId { get; set; }
 
     public string RoleName { get; set; } = string.Empty;
-
-    public string CreatedBy { get; set; } = string.Empty;
-
-    public DateTime CreatedDate { get; set; }
-
-    public string? UpdatedBy { get; set; }
-
-    public DateTime? UpdatedDate { get; set; }
 }
 
 public class CreateRoleDto

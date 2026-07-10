@@ -12,6 +12,7 @@ public class CompanySystemDbContext : DbContext
     {
     }
 
+
     public DbSet<User> Users { get; set; }
 
     public DbSet<Role> Roles { get; set; }
@@ -22,18 +23,26 @@ public class CompanySystemDbContext : DbContext
 
     public DbSet<MainPageSection> MainPageSections { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
 
         modelBuilder.Entity<User>()
             .Property(x => x.Salary)
             .HasPrecision(18, 2);
 
+
         SeedData(modelBuilder);
     }
 
-    private void SeedData(ModelBuilder modelBuilder)
+
+    private void SeedData(
+        ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>().HasData(
             new Role
@@ -61,12 +70,13 @@ public class CompanySystemDbContext : DbContext
                 IsDeleted = false
             });
 
+
         modelBuilder.Entity<Department>().HasData(
             new Department
             {
                 DepartmentId = 1,
                 DepartmentName = "Human Resources",
-                ManagerId = "admin",
+                ManagerId = "ADMIN_001",
                 CreatedBy = "System",
                 CreatedDate = new DateTime(2026, 1, 1),
                 IsDeleted = false
@@ -75,11 +85,53 @@ public class CompanySystemDbContext : DbContext
             {
                 DepartmentId = 2,
                 DepartmentName = "Information Technology",
-                ManagerId = "admin",
+                ManagerId = "ADMIN_001",
                 CreatedBy = "System",
                 CreatedDate = new DateTime(2026, 1, 1),
                 IsDeleted = false
             });
+
+
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                UserId = "ADMIN_001",
+
+                Username = "admin",
+
+                // Password: Admin@123
+                PasswordHash =
+                    "$2a$12$0abb8Tyz65y2IVbOZh8eReGMQNUXrk9L4.BbE5uNjWIp6dmXzml7q",
+
+                RoleId = 1,
+
+                LeaderId = "ADMIN_001",
+
+                DepartmentId = 1,
+
+                PhoneNumber = "0000000000",
+
+                StartDate =
+                    new DateTime(
+                        2026,
+                        1,
+                        1),
+
+                Salary = 0,
+
+                IsActive = true,
+
+                CreatedBy = "System",
+
+                CreatedDate =
+                    new DateTime(
+                        2026,
+                        1,
+                        1),
+
+                IsDeleted = false
+            });
+
 
         modelBuilder.Entity<MainPageSection>().HasData(
             new MainPageSection
@@ -103,5 +155,4 @@ public class CompanySystemDbContext : DbContext
                 IsDeleted = false
             });
     }
-
 }
