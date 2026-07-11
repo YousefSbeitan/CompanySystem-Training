@@ -142,8 +142,13 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var isAdmin = (window.currentUserRole === 'Admin');
-            if (!isAdmin) {
+            var currentRole = window.currentUserRole;
+
+            var canCreate =
+                currentRole === 'Admin' ||
+                currentRole === 'HR';
+
+            if (!canCreate) {
                 $('#alertContainer').html(
                     '<div class="alert alert-danger">You do not have permission to create users.</div>'
                 );

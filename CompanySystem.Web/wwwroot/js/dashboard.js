@@ -1,11 +1,16 @@
 // ── CompanySystem – Role-Based Dashboard ────────────────────────────
-// Renders Admin, Manager, Employee dashboards according to user role.
+// Supports Admin, Manager, HR, Employee (User) roles.
+// Module visibility is inferred from controllers via Authorize attributes.
 
 (function () {
     'use strict';
 
-    // ── Module Definitions ─────────────────────────────────────────
-    // Each module: id, title, desc, url, icon, roles (who can see it)
+    // ── Module Definitions (inferred from controller Authorize attributes) ──
+    // Users:     Index=[Authorize], GetAll=[Authorize(Roles="Admin,Manager,HR")]
+    // Departments: Index=[Authorize(Roles="Admin,Manager")]
+    // Roles:     All actions=[Authorize(Roles="Admin")]
+    // Notes:     Index=[Authorize] (all authenticated), but Employee explicitly excluded per business rule
+    // MainPageSections: Index=[AllowAnonymous]
     var modules = [
         {
             id: 'users',
@@ -13,7 +18,7 @@
             desc: 'Manage system users and employees',
             url: '/User',
             icon: 'users',
-            roles: ['Admin', 'Manager']
+            roles: ['Admin', 'Manager', 'HR']
         },
         {
             id: 'departments',
@@ -37,7 +42,7 @@
             desc: 'View and manage notes',
             url: '/Note',
             icon: 'notes',
-            roles: ['Admin', 'Manager', 'User']
+            roles: ['Admin', 'Manager', 'HR']
         },
         {
             id: 'content',
@@ -45,25 +50,27 @@
             desc: 'Edit homepage content blocks',
             url: '/MainPageSection',
             icon: 'content',
-            roles: ['Admin', 'Manager', 'User']
+            roles: ['Admin', 'Manager', 'HR', 'User']
         }
     ];
 
-    // ── SVG Icons (for sidebar) ────────────────────────────────────
-    var icons = {
-        dashboard: '<svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>',
-        users: '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
-        departments: '<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>',
-        roles: '<svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
-        notes: '<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z"/></svg>',
-        content: '<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7v-2zm0 4h6v2H7v-2zm0-8h10v2H7V6z"/></svg>',
-        menu: '<svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>',
-        logout: '<svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>'
+    // ── Icon Map ──
+    var iconMap = {
+        'dashboard': 'bi-speedometer2',
+        'users': 'bi-people-fill',
+        'departments': 'bi-building-fill',
+        'roles': 'bi-shield-fill-check',
+        'notes': 'bi-sticky-fill',
+        'content': 'bi-layout-text-window-reverse'
     };
 
-    // ═══════════════════════════════════════════════════════════════
+    function getModuleIcon(iconName) {
+        return iconMap[iconName] || 'bi-circle-fill';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     //  INITIALIZATION
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function initDashboard() {
         var user = window.currentUser || { id: '', username: '', role: '' };
@@ -83,9 +90,10 @@
             renderRoleDashboard(role, user);
         }
 
-        // Toggle body classes
-        document.body.classList.toggle('has-admin', role === 'Admin');
-        document.body.classList.toggle('is-manager', role === 'Manager');
+        // Toggle body classes for role-based CSS
+        document.body.classList.remove('role-admin', 'role-manager', 'role-hr', 'role-user');
+        var roleClass = 'role-' + (role || 'user').toLowerCase();
+        document.body.classList.add(roleClass);
 
         // Update footer year
         var yearEl = document.getElementById('footerYear');
@@ -94,160 +102,77 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  ROLE DISPATCH
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function renderRoleDashboard(role, user) {
         var roleLower = (role || '').toLowerCase();
 
-        if (roleLower === 'admin') {
-            renderAdminDashboard(user);
-        } else if (roleLower === 'manager') {
-            renderManagerDashboard(user);
-        } else {
-            renderEmployeeDashboard(user);
+        switch (roleLower) {
+            case 'admin':
+                renderAdminDashboard(user);
+                break;
+            case 'manager':
+                renderManagerDashboard(user);
+                break;
+            case 'hr':
+                renderHRDashboard(user);
+                break;
+            default:
+                renderEmployeeDashboard(user);
+                break;
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  ADMIN DASHBOARD
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ═══════════════════════════════════════════════════════════════════
 
-    function renderAdminDashboard(user) {
-        // Update welcome
-        setWelcome('Administration Dashboard', 'Full system control and management');
-
-        // Render profile
-        renderUserProfile(user);
-
-        var container = document.getElementById('dashboardContent');
-        if (!container) return;
-
-        var html = '';
-
-        // ── Statistics Cards ──
-        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
-        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
-        html += buildStatCard('departments', 'Total Departments', 'bi-building-fill', 'departments', '/Department');
-        html += buildStatCard('roles', 'Total Roles', 'bi-shield-fill-check', 'roles', '/Role');
-        html += buildStatCard('content', 'Content Sections', 'bi-layout-text-window-reverse', 'content', '/MainPageSection');
-        html += '</div>';
-
-        // ── Quick Actions ──
-        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
-        html += '<div class="row g-3 mb-4">';
-        html += buildQuickAction('New User', 'bi-person-plus-fill', 'primary', '/User/Create', 'Create a new user account');
-        html += buildQuickAction('New Department', 'bi-building-add-fill', 'success', '/Department/Create', 'Add a new department');
-        html += buildQuickAction('New Role', 'bi-shield-plus-fill', 'warning', '/Role/Create', 'Create a new role');
-        html += buildQuickAction('New Section', 'bi-file-plus-fill', 'info', '/MainPageSection/Create', 'Add homepage content');
-        html += '</div>';
-
-        // ── Management Modules ──
-        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
-        html += '<div class="row g-4" id="dashboardModulesContainer">';
-        var adminModules = modules.filter(function (m) { return hasAccess(m.roles, 'Admin'); });
-        adminModules.forEach(function (mod) {
-            html += buildModuleCard(mod);
-        });
-        html += '</div>';
-
-        container.innerHTML = html;
-
-        // Load statistics after rendering
-        loadAdminStatistics();
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //  MANAGER DASHBOARD
-    // ═══════════════════════════════════════════════════════════════
-
-    function renderManagerDashboard(user) {
-        setWelcome('Team Management Dashboard', 'Manage your team and departments');
-
-        renderUserProfile(user);
-
-        var container = document.getElementById('dashboardContent');
-        if (!container) return;
-
-        var html = '';
-
-        // ── Statistics Cards ──
-        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
-        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
-        html += buildStatCard('departments', 'Total Departments', 'bi-building-fill', 'departments', '/Department');
-        html += '</div>';
-
-        // ── Quick Actions ──
-        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
-        html += '<div class="row g-3 mb-4">';
-        html += buildQuickAction('Add Note', 'bi-plus-circle-fill', 'purple', '/Note/Create', 'Create a new note');
-        html += buildQuickAction('View Team', 'bi-people-fill', 'primary', '/User', 'See all team members');
-        html += buildQuickAction('Departments', 'bi-building-fill', 'success', '/Department', 'View departments');
-        html += '</div>';
-
-        // ── Management Modules ──
-        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
-        html += '<div class="row g-4" id="dashboardModulesContainer">';
-        var managerModules = modules.filter(function (m) { return hasAccess(m.roles, 'Manager'); });
-        managerModules.forEach(function (mod) {
-            html += buildModuleCard(mod);
-        });
-        html += '</div>';
-
-        container.innerHTML = html;
-
-        // Load statistics
-        loadManagerStatistics();
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //  EMPLOYEE DASHBOARD
-    // ═══════════════════════════════════════════════════════════════
-
-    function renderEmployeeDashboard(user) {
-        setWelcome('Employee Portal', 'Welcome back! Here\'s your personal workspace');
-
-        // Show basic profile immediately, then enhance with details from API
-        renderUserProfile(user);
-        if (user.id) {
-            loadEmployeeProfile(user);
+    function setWelcome(title, subtitle) {
+        var subEl = document.getElementById('welcomeSubtitle');
+        if (subEl) {
+            subEl.textContent = subtitle || '';
         }
-
-        var container = document.getElementById('dashboardContent');
-        if (!container) return;
-
-        var html = '';
-
-        // ── Quick Personal Actions ──
-        html += '<h2 class="section-title"><i class="bi bi-person-lines-fill me-2"></i>Quick Actions</h2>';
-        html += '<div class="row g-3 mb-4">';
-        html += buildQuickAction('My Notes', 'bi-sticky-fill', 'purple', '/Note', 'View and manage your notes');
-        html += buildQuickAction('Company Info', 'bi-building-fill', 'info', '/MainPageSection', 'Browse company information');
-        html += '</div>';
-
-        // ── Recent Notes ──
-        html += '<h2 class="section-title"><i class="bi bi-clock-history me-2"></i>Recent Notes</h2>';
-        html += '<div class="row g-4 mb-4" id="recentNotesContainer">';
-        html += '<div class="col-12"><div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading notes...</div></div>';
-        html += '</div>';
-
-        // ── Company Information ──
-        html += '<h2 class="section-title"><i class="bi bi-megaphone-fill me-2"></i>Company Information</h2>';
-        html += '<div class="row g-4" id="companyInfoContainer">';
-        html += '<div class="col-12"><div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading company info...</div></div>';
-        html += '</div>';
-
-        container.innerHTML = html;
-
-        // Load data
-        loadRecentNotes(user);
-        loadCompanyInfo();
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    function hasAccess(allowedRoles, userRole) {
+        if (!userRole) return false;
+        return allowedRoles.some(function (r) {
+            return r.toLowerCase() === userRole.toLowerCase();
+        });
+    }
+
+    function getRoleBadgeClass(role) {
+        var r = (role || '').toLowerCase();
+        if (r === 'admin') return 'bg-danger';
+        if (r === 'manager') return 'bg-warning text-dark';
+        if (r === 'hr') return 'bg-purple text-white';
+        return 'bg-info text-dark';
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+    function setActiveNavLink() {
+        var currentPath = window.location.pathname;
+        var links = document.querySelectorAll('.sidebar-nav .nav-link');
+        links.forEach(function (link) {
+            link.classList.remove('active');
+            var href = link.getAttribute('href');
+            if (href === currentPath || (currentPath.indexOf(href + '/') === 0 && href !== '/')) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     //  USER PROFILE
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function renderUserProfile(user) {
         var avatarLetter = user.username ? user.username.charAt(0).toUpperCase() : '?';
@@ -274,8 +199,7 @@
         }
     }
 
-    function loadEmployeeProfile(user) {
-        // Load full user details from API for richer profile
+    function loadDetailedProfile(user) {
         $.ajax({
             url: '/User/GetById?id=' + encodeURIComponent(user.id),
             type: 'GET',
@@ -283,7 +207,6 @@
                 renderDetailedProfile(response);
             },
             error: function () {
-                // Fallback to basic profile
                 renderUserProfile(user);
             }
         });
@@ -298,7 +221,6 @@
         var avatarLetter = username.charAt(0).toUpperCase();
         var roleBadgeClass = getRoleBadgeClass(roleDisplay);
 
-        // Calculate years of experience from start date
         var yearsExp = '—';
         if (userData.startDate) {
             var startDate = new Date(userData.startDate);
@@ -327,12 +249,12 @@
         html += '</div>';
         html += '</div>';
 
-        // Additional details section
+        // Additional details
         html += '<div class="row mt-3 g-3">';
         html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Phone</span><span class="detail-value">' + escapeHtml(userData.phoneNumber || '—') + '</span></div></div>';
         html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Experience</span><span class="detail-value">' + escapeHtml(yearsExp) + '</span></div></div>';
-        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Department ID</span><span class="detail-value">' + (userData.departmentId || '—') + '</span></div></div>';
-        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Leader ID</span><span class="detail-value">' + escapeHtml(userData.leaderId || 'None') + '</span></div></div>';
+        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Department</span><span class="detail-value">' + escapeHtml(userData.departmentName || userData.departmentId || '—') + '</span></div></div>';
+        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Leader</span><span class="detail-value">' + escapeHtml(userData.leaderName || userData.leaderId || 'None') + '</span></div></div>';
         html += '</div>';
 
         html += '</div>';
@@ -343,16 +265,173 @@
         }
     }
 
-    function getRoleBadgeClass(role) {
-        var r = (role || '').toLowerCase();
-        if (r === 'admin') return 'bg-danger';
-        if (r === 'manager') return 'bg-warning text-dark';
-        return 'bg-info text-dark';
+    // ═══════════════════════════════════════════════════════════════════
+    //  ADMIN DASHBOARD
+    // ═══════════════════════════════════════════════════════════════════
+
+    function renderAdminDashboard(user) {
+        setWelcome('Administration Dashboard', 'Full system control and management');
+        renderUserProfile(user);
+
+        var container = document.getElementById('dashboardContent');
+        if (!container) return;
+
+        var html = '';
+
+        // Statistics Cards
+        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
+        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
+        html += buildStatCard('departments', 'Total Departments', 'bi-building-fill', 'departments', '/Department');
+        html += buildStatCard('roles', 'Total Roles', 'bi-shield-fill-check', 'roles', '/Role');
+        html += buildStatCard('content', 'Content Sections', 'bi-layout-text-window-reverse', 'content', '/MainPageSection');
+        html += '</div>';
+
+        // Quick Actions
+        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
+        html += '<div class="row g-3 mb-4">';
+        html += buildQuickAction('New User', 'bi-person-plus-fill', 'primary', '/User/Create', 'Create a new user account');
+        html += buildQuickAction('New Department', 'bi-building-add-fill', 'success', '/Department/Create', 'Add a new department');
+        html += buildQuickAction('New Role', 'bi-shield-plus-fill', 'warning', '/Role/Create', 'Create a new role');
+        html += buildQuickAction('New Section', 'bi-file-plus-fill', 'info', '/MainPageSection/Create', 'Add homepage content');
+        html += '</div>';
+
+        // Management Modules
+        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
+        html += '<div class="row g-4" id="dashboardModulesContainer">';
+        var adminModules = modules.filter(function (m) { return hasAccess(m.roles, 'Admin'); });
+        adminModules.forEach(function (mod) {
+            html += buildModuleCard(mod);
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Load statistics
+        loadAdminStatistics();
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
+    //  MANAGER DASHBOARD
+    // ═══════════════════════════════════════════════════════════════════
+
+    function renderManagerDashboard(user) {
+        setWelcome('Team Management Dashboard', 'Manage your team and departments');
+        renderUserProfile(user);
+
+        var container = document.getElementById('dashboardContent');
+        if (!container) return;
+
+        var html = '';
+
+        // Statistics Cards
+        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
+        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
+        html += buildStatCard('departments', 'Total Departments', 'bi-building-fill', 'departments', '/Department');
+        html += '</div>';
+
+        // Quick Actions
+        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
+        html += '<div class="row g-3 mb-4">';
+        html += buildQuickAction('Add Note', 'bi-plus-circle-fill', 'purple', '/Note/Create', 'Create a new note');
+        html += buildQuickAction('View Team', 'bi-people-fill', 'primary', '/User', 'See all team members');
+        html += buildQuickAction('Departments', 'bi-building-fill', 'success', '/Department', 'View departments');
+        html += '</div>';
+
+        // Management Modules
+        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
+        html += '<div class="row g-4" id="dashboardModulesContainer">';
+        var managerModules = modules.filter(function (m) { return hasAccess(m.roles, 'Manager'); });
+        managerModules.forEach(function (mod) {
+            html += buildModuleCard(mod);
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Load statistics
+        loadManagerStatistics();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  HR DASHBOARD
+    // ═══════════════════════════════════════════════════════════════════
+
+    function renderHRDashboard(user) {
+        setWelcome('Human Resources Dashboard', 'Manage personnel and company content');
+        renderUserProfile(user);
+
+        var container = document.getElementById('dashboardContent');
+        if (!container) return;
+
+        var html = '';
+
+        // Statistics Cards
+        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
+        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
+        html += buildStatCard('content', 'Content Sections', 'bi-layout-text-window-reverse', 'content', '/MainPageSection');
+        html += '</div>';
+
+        // Quick Actions
+        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
+        html += '<div class="row g-3 mb-4">';
+        html += buildQuickAction('New User', 'bi-person-plus-fill', 'primary', '/User/Create', 'Create a new user account');
+        html += buildQuickAction('Add Note', 'bi-plus-circle-fill', 'purple', '/Note/Create', 'Create a new note');
+        html += '</div>';
+
+        // Management Modules
+        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
+        html += '<div class="row g-4" id="dashboardModulesContainer">';
+        var hrModules = modules.filter(function (m) { return hasAccess(m.roles, 'HR'); });
+        hrModules.forEach(function (mod) {
+            html += buildModuleCard(mod);
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Load statistics
+        loadHRStatistics();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  EMPLOYEE DASHBOARD
+    // ═══════════════════════════════════════════════════════════════════
+
+    function renderEmployeeDashboard(user) {
+        setWelcome('Employee Portal', 'Welcome back! Here\'s your personal workspace');
+
+        // Show basic profile immediately, enhance with details from API
+        renderUserProfile(user);
+        if (user.id) {
+            loadDetailedProfile(user);
+        }
+
+        var container = document.getElementById('dashboardContent');
+        if (!container) return;
+
+        var html = '';
+
+        // Quick Personal Actions
+        html += '<h2 class="section-title"><i class="bi bi-person-lines-fill me-2"></i>Quick Actions</h2>';
+        html += '<div class="row g-3 mb-4">';
+        html += buildQuickAction('Company Info', 'bi-building-fill', 'info', '/MainPageSection', 'Browse company information');
+        html += '</div>';
+
+        // Company Information
+        html += '<h2 class="section-title"><i class="bi bi-megaphone-fill me-2"></i>Company Information</h2>';
+        html += '<div class="row g-4" id="companyInfoContainer">';
+        html += '<div class="col-12"><div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading company info...</div></div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Load data
+        loadCompanyInfo();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     //  BUILDERS – Stat Card, Quick Action, Module Card
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function buildStatCard(key, label, icon, iconColor, link) {
         var colorClass = 'icon-' + iconColor;
@@ -393,20 +472,9 @@
             '</a></div>';
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  WELCOME HELPER
-    // ═══════════════════════════════════════════════════════════════
-
-    function setWelcome(title, subtitle) {
-        var subEl = document.getElementById('welcomeSubtitle');
-        if (subEl) {
-            subEl.textContent = subtitle || '';
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  STATISTICS
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function loadAdminStatistics() {
         var endpoints = [
@@ -422,6 +490,14 @@
         var endpoints = [
             { key: 'users', url: '/User/GetAll?pageNumber=1&pageSize=1' },
             { key: 'departments', url: '/Department/GetAll?pageNumber=1&pageSize=1' }
+        ];
+        loadStatValues(endpoints);
+    }
+
+    function loadHRStatistics() {
+        var endpoints = [
+            { key: 'users', url: '/User/GetAll?pageNumber=1&pageSize=1' },
+            { key: 'content', url: '/MainPageSection/GetAll?pageNumber=1&pageSize=1' }
         ];
         loadStatValues(endpoints);
     }
@@ -485,72 +561,9 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  RECENT NOTES (Employee)
-    // ═══════════════════════════════════════════════════════════════
-
-    function loadRecentNotes(user) {
-        $.ajax({
-            url: '/Note/GetAll?pageNumber=1&pageSize=5&sortBy=CreatedDate&isDescending=true',
-            type: 'GET',
-            success: function (response) {
-                var notes = [];
-                if (response && response.data && Array.isArray(response.data)) {
-                    notes = response.data;
-                } else if (Array.isArray(response)) {
-                    notes = response;
-                }
-                renderRecentNotes(notes);
-            },
-            error: function () {
-                var container = document.getElementById('recentNotesContainer');
-                if (container) {
-                    container.innerHTML = '<div class="col-12"><div class="empty-state"><i class="bi bi-journal-text empty-icon"></i><h4>No Notes Available</h4><p>You don\'t have any notes yet.</p><a href="/Note" class="btn btn-primary btn-sm">Go to Notes</a></div></div>';
-                }
-            }
-        });
-    }
-
-    function renderRecentNotes(notes) {
-        var container = document.getElementById('recentNotesContainer');
-        if (!container) return;
-
-        if (!notes || notes.length === 0) {
-            container.innerHTML = '<div class="col-12"><div class="empty-state"><i class="bi bi-journal-text empty-icon"></i><h4>No Notes Yet</h4><p>You don\'t have any recent notes.</p><a href="/Note" class="btn btn-primary btn-sm">Go to Notes</a></div></div>';
-            return;
-        }
-
-        var html = '';
-        notes.forEach(function (note) {
-            var title = note.title || 'Untitled';
-            var content = note.content || '';
-            var truncatedContent = content.length > 120 ? content.substring(0, 120) + '...' : content;
-            var noteType = note.noteType || 'General';
-            var createdDate = note.createdDate ? new Date(note.createdDate).toLocaleDateString() : '—';
-
-            html += '<div class="col-md-6">';
-            html += '<div class="note-mini-card">';
-            html += '<div class="note-mini-header">';
-            html += '<span class="note-mini-type badge bg-purple-light">' + escapeHtml(noteType) + '</span>';
-            html += '<small class="text-muted">' + escapeHtml(createdDate) + '</small>';
-            html += '</div>';
-            html += '<h5 class="note-mini-title">' + escapeHtml(title) + '</h5>';
-            html += '<p class="note-mini-content">' + escapeHtml(truncatedContent) + '</p>';
-            html += '<a href="/Note/Details/' + note.noteId + '" class="note-mini-link">View Details <i class="bi bi-arrow-right"></i></a>';
-            html += '</div></div>';
-        });
-
-        // Add "View All" link
-        html += '<div class="col-12 text-center mt-2">';
-        html += '<a href="/Note" class="btn btn-outline-primary btn-sm">View All Notes <i class="bi bi-arrow-right"></i></a>';
-        html += '</div>';
-
-        container.innerHTML = html;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  COMPANY INFORMATION (Employee)
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function loadCompanyInfo() {
         $.ajax({
@@ -603,9 +616,9 @@
         container.innerHTML = html;
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  SIDEBAR NAVIGATION
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function buildSidebarNav(role) {
         var navContainer = document.getElementById('sidebarNav');
@@ -624,7 +637,7 @@
         html += '</a>';
         html += '</li>';
 
-        // Render accessible modules directly (no section headers for cleaner look)
+        // Render accessible modules
         var accessibleModules = modules.filter(function (mod) {
             return hasAccess(mod.roles, role);
         });
@@ -642,21 +655,9 @@
         navContainer.innerHTML = html;
     }
 
-    function getModuleIcon(iconName) {
-        var iconMap = {
-            'dashboard': 'bi-speedometer2',
-            'users': 'bi-people-fill',
-            'departments': 'bi-building-fill',
-            'roles': 'bi-shield-fill-check',
-            'notes': 'bi-sticky-fill',
-            'content': 'bi-layout-text-window-reverse'
-        };
-        return iconMap[iconName] || 'bi-circle-fill';
-    }
-
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  USER MENU (Top Navbar)
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function buildUserMenu(user, isLoggedIn) {
         var container = document.getElementById('topNavRight');
@@ -728,20 +729,9 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  ACCESS CONTROL
-    // ═══════════════════════════════════════════════════════════════
-
-    function hasAccess(allowedRoles, userRole) {
-        if (!userRole) return false;
-        return allowedRoles.some(function (r) {
-            return r.toLowerCase() === userRole.toLowerCase();
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  LOGOUT
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function performLogout() {
         var refreshToken = window.auth
@@ -781,9 +771,9 @@
         window.location.href = '/Auth/Login';
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  SIDEBAR TOGGLE
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     function initSidebarToggle() {
         var toggleBtn = document.getElementById('sidebarToggle');
@@ -826,32 +816,9 @@
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  UTILITY
-    // ═══════════════════════════════════════════════════════════════
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-    }
-
-    function setActiveNavLink() {
-        var currentPath = window.location.pathname;
-        var links = document.querySelectorAll('.sidebar-nav .nav-link');
-        links.forEach(function (link) {
-            link.classList.remove('active');
-            var href = link.getAttribute('href');
-            if (href === currentPath || (currentPath.indexOf(href + '/') === 0 && href !== '/')) {
-                link.classList.add('active');
-            }
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     //  DOCUMENT READY
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
 
     $(document).ready(function () {
         initSidebarToggle();

@@ -100,12 +100,13 @@
                 var user = window.currentUser || { id: '', username: '', role: '' };
                 var isLoggedIn = !!user.username;
                 var role = user.role || '';
-                var isAdmin = role === 'Admin';
-                var isManager = role === 'Manager';
+                var roleLower = role.toLowerCase();
 
-                // Toggle body classes
-                document.body.classList.toggle('has-admin', isAdmin);
-                document.body.classList.toggle('is-manager', isManager);
+                // Set body role classes (remove old ones first)
+                document.body.classList.remove('role-admin', 'role-manager', 'role-hr', 'role-user', 'has-admin', 'is-manager');
+                document.body.classList.add('role-' + roleLower);
+                if (roleLower === 'admin') { document.body.classList.add('has-admin'); }
+                if (roleLower === 'manager') { document.body.classList.add('is-manager'); }
 
                 // For non-dashboard pages, ensure sidebar nav is updated
                 if (typeof buildSidebarNav === 'function') {

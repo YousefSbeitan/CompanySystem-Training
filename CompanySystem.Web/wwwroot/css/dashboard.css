@@ -367,6 +367,11 @@ body {
     color: #047857;
 }
 
+.user-role-badge.role-hr {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
 /* User Dropdown */
 .user-dropdown {
     position: absolute;
@@ -807,6 +812,10 @@ body {
     color: #fff;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.bg-purple {
+    background: #7c3aed !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
