@@ -99,14 +99,17 @@
             function updateNav() {
                 var user = window.currentUser || { id: '', username: '', role: '' };
                 var isLoggedIn = !!user.username;
-                var isAdmin = user.role === 'Admin';
+                var role = user.role || '';
+                var isAdmin = role === 'Admin';
+                var isManager = role === 'Manager';
 
-                // Toggle body class for admin
+                // Toggle body classes
                 document.body.classList.toggle('has-admin', isAdmin);
+                document.body.classList.toggle('is-manager', isManager);
 
                 // For non-dashboard pages, ensure sidebar nav is updated
                 if (typeof buildSidebarNav === 'function') {
-                    buildSidebarNav(user.role, isAdmin);
+                    buildSidebarNav(role);
                 }
 
                 // Re-build user menu in navbar
