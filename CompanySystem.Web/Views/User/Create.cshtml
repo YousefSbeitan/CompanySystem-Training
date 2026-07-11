@@ -26,8 +26,13 @@
                             <label for="createPassword" class="form-label">
                                 Password <span class="text-danger">*</span>
                             </label>
-                            <input type="password" class="form-control" id="createPassword" name="PasswordHash"
-                                   maxlength="255" required placeholder="Enter password" />
+                            <input type="password"
+                                   class="form-control"
+                                   id="createPassword"
+                                   name="Password"
+                                   maxlength="255"
+                                   required
+                                   placeholder="Enter password" />
                             <div class="invalid-feedback">
                                 Password is required and must not exceed 255 characters.
                             </div>
@@ -214,18 +219,18 @@
                 }
 
                 var dto = {
-                    username: $('#createUsername').val().trim(),
-                    passwordHash: $('#createPassword').val(),
-                    roleId: parseInt($('#createRoleId').val()),
-                    departmentId: $('#createDepartmentId').val()
+                        username: $('#createUsername').val().trim(),
+                        password: $('#createPassword').val(),
+                        roleId: parseInt($('#createRoleId').val()),
+                        departmentId: $('#createDepartmentId').val()
                         ? parseInt($('#createDepartmentId').val())
                         : null,
-                    isLeader: $('#createIsLeader').is(':checked'),
-                    phoneNumber: $('#createPhoneNumber').val().trim(),
-                    startDate: $('#createStartDate').val(),
-                    salary: parseFloat($('#createSalary').val()) || 0,
-                    isActive: $('#createIsActive').is(':checked')
-                };
+                        isLeader: $('#createIsLeader').is(':checked'),
+                        phoneNumber: $('#createPhoneNumber').val().trim(),
+                        startDate: $('#createStartDate').val(),
+                        salary: parseFloat($('#createSalary').val()) || 0,
+                        isActive: $('#createIsActive').is(':checked')
+                        };
 
                 $('#btnSave').prop('disabled', true);
                 $('#loadingSpinner').show();
