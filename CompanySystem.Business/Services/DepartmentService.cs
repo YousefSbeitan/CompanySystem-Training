@@ -11,20 +11,22 @@ public class DepartmentService : IDepartmentService
 {
     private readonly IGenericRepository<Department> _repository;
 
-    public DepartmentService(IGenericRepository<Department> repository)
+    public DepartmentService(
+        IGenericRepository<Department> repository)
     {
         _repository = repository;
     }
-
 
     public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
     {
         try
         {
-            var departments = await _repository.FindAsync(
-                d => !d.IsDeleted);
+            var departments =
+                await _repository.FindAsync(
+                    d => !d.IsDeleted);
 
-            return departments.Select(DepartmentMapper.ToDto);
+            return departments.Select(
+                DepartmentMapper.ToDto);
         }
         catch (Exception ex)
         {
@@ -33,11 +35,15 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
-    public async Task<DepartmentDto?> GetByIdAsync(int departmentId)
+    public async Task<DepartmentDto?> GetByIdAsync(
+        int departmentId)
     {
         try
         {
+            if (departmentId <= 0)
+                throw new BusinessException(
+                    "Invalid department id.");
+
             var department =
                 await _repository.FirstOrDefaultAsync(
                     d => d.DepartmentId == departmentId &&
@@ -45,12 +51,17 @@ public class DepartmentService : IDepartmentService
 
             if (department == null)
                 throw new ResourceNotFoundException(
-                    "Department", departmentId);
+                    "Department",
+                    departmentId);
 
-
-            return DepartmentMapper.ToDto(department);
+            return DepartmentMapper.ToDto(
+                department);
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }
@@ -61,17 +72,31 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
-    public async Task<DepartmentDto> CreateAsync(CreateDepartmentDto dto)
+    public async Task<DepartmentDto> CreateAsync(
+        CreateDepartmentDto dto)
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Department data is required.");
+
+            if (string.IsNullOrWhiteSpace(
+                    dto.DepartmentName))
+                throw new BusinessException(
+                    "Department name is required.");
+
+            dto.DepartmentName =
+                dto.DepartmentName.Trim();
+
+
             var existingDepartment =
                 await _repository.FirstOrDefaultAsync(
-                    d => d.DepartmentName.ToLower()
-                         == dto.DepartmentName.ToLower()
-                         &&
-                         !d.IsDeleted);
+                    d =>
+                    d.DepartmentName.ToLower()
+                    == dto.DepartmentName.ToLower()
+                    &&
+                    !d.IsDeleted);
 
             if (existingDepartment != null)
                 throw new BusinessException(
@@ -85,12 +110,14 @@ public class DepartmentService : IDepartmentService
             department.CreatedBy = "System";
 
 
-            await _repository.AddAsync(department);
+            await _repository.AddAsync(
+                department);
 
             await _repository.SaveChangesAsync();
 
 
-            return DepartmentMapper.ToDto(department);
+            return DepartmentMapper.ToDto(
+                department);
         }
         catch (BusinessException)
         {
@@ -103,11 +130,28 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
-    public async Task<DepartmentDto?> UpdateAsync(EditDepartmentDto dto)
+    public async Task<DepartmentDto?> UpdateAsync(
+        EditDepartmentDto dto)
     {
         try
         {
+            if (dto == null)
+                throw new BusinessException(
+                    "Department data is required.");
+
+            if (dto.DepartmentId <= 0)
+                throw new BusinessException(
+                    "Invalid department id.");
+
+            if (string.IsNullOrWhiteSpace(
+                    dto.DepartmentName))
+                throw new BusinessException(
+                    "Department name is required.");
+
+            dto.DepartmentName =
+                dto.DepartmentName.Trim();
+
+
             var department =
                 await _repository.FirstOrDefaultAsync(
                     d => d.DepartmentId == dto.DepartmentId &&
@@ -116,17 +160,19 @@ public class DepartmentService : IDepartmentService
 
             if (department == null)
                 throw new ResourceNotFoundException(
-                    "Department", dto.DepartmentId);
+                    "Department",
+                    dto.DepartmentId);
 
 
             var existingDepartment =
                 await _repository.FirstOrDefaultAsync(
-                    d => d.DepartmentName.ToLower()
-                         == dto.DepartmentName.ToLower()
-                         &&
-                         d.DepartmentId != dto.DepartmentId
-                         &&
-                         !d.IsDeleted);
+                    d =>
+                    d.DepartmentName.ToLower()
+                    == dto.DepartmentName.ToLower()
+                    &&
+                    d.DepartmentId != dto.DepartmentId
+                    &&
+                    !d.IsDeleted);
 
 
             if (existingDepartment != null)
@@ -143,12 +189,14 @@ public class DepartmentService : IDepartmentService
             department.UpdatedDate = DateTime.UtcNow;
 
 
-            _repository.Update(department);
+            _repository.Update(
+                department);
 
             await _repository.SaveChangesAsync();
 
 
-            return DepartmentMapper.ToDto(department);
+            return DepartmentMapper.ToDto(
+                department);
         }
         catch (ResourceNotFoundException)
         {
@@ -165,11 +213,15 @@ public class DepartmentService : IDepartmentService
         }
     }
 
-
-    public async Task<bool> DeleteAsync(int departmentId)
+    public async Task<bool> DeleteAsync(
+        int departmentId)
     {
         try
         {
+            if (departmentId <= 0)
+                throw new BusinessException(
+                    "Invalid department id.");
+
             var department =
                 await _repository.FirstOrDefaultAsync(
                     d => d.DepartmentId == departmentId &&
@@ -178,7 +230,8 @@ public class DepartmentService : IDepartmentService
 
             if (department == null)
                 throw new ResourceNotFoundException(
-                    "Department", departmentId);
+                    "Department",
+                    departmentId);
 
 
             department.IsDeleted = true;
@@ -187,7 +240,8 @@ public class DepartmentService : IDepartmentService
             department.UpdatedDate = DateTime.UtcNow;
 
 
-            _repository.Update(department);
+            _repository.Update(
+                department);
 
             await _repository.SaveChangesAsync();
 
@@ -195,6 +249,10 @@ public class DepartmentService : IDepartmentService
             return true;
         }
         catch (ResourceNotFoundException)
+        {
+            throw;
+        }
+        catch (BusinessException)
         {
             throw;
         }
