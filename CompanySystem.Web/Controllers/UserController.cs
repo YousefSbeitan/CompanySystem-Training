@@ -32,7 +32,7 @@ public class UserController : Controller
 
     // GET: /User/Create (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,HR")]
     public IActionResult Create()
     {
         return View();
@@ -76,7 +76,7 @@ public class UserController : Controller
     // API: GET /User/GetAll
     // Admin + Manager
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Manager,HR")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -164,7 +164,7 @@ public class UserController : Controller
 
     // API: POST /User/Create
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,HR")]
     public async Task<IActionResult> Create(
         [FromBody] CreateUserDto dto)
     {
@@ -200,7 +200,7 @@ public class UserController : Controller
     // API: PUT /User/Edit
     // Admin only because DTO contains Role, Salary, Department
     [HttpPut]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,HR")]
     public async Task<IActionResult> Edit(
         [FromBody] EditUserDto dto)
     {
@@ -286,9 +286,12 @@ public class UserController : Controller
             return false;
 
 
-        // Admin can access everyone
-        if (User.IsInRole("Admin"))
+        // Admin and HR can access everyone
+        if (User.IsInRole("Admin") ||
+            User.IsInRole("HR"))
+        {
             return true;
+        }
 
 
         // User can access himself

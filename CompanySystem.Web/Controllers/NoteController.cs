@@ -174,7 +174,7 @@ public class NoteController : Controller
 
     // POST: /Note/Create
     [HttpPost]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Manager,HR")]
     public async Task<IActionResult> Create(
         [FromBody] CreateNoteDto dto)
     {
@@ -246,7 +246,7 @@ public class NoteController : Controller
 
     // PUT: /Note/Edit
     [HttpPut]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Manager,HR")]
     public async Task<IActionResult> Edit(
         [FromBody] EditNoteDto dto)
     {
