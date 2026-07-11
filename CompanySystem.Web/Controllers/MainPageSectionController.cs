@@ -21,10 +21,59 @@ public class MainPageSectionController : Controller
     }
 
 
-    // GET: /MainPageSection
+    // MVC: GET /MainPageSection
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> Index(
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+
+    // MVC: GET /MainPageSection/Create
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+
+    // MVC: GET /MainPageSection/Edit/{id}
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public IActionResult Edit(
+        int id)
+    {
+        return View();
+    }
+
+
+    // MVC: GET /MainPageSection/Details/{id}
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult Details(
+        int id)
+    {
+        return View();
+    }
+
+
+    // MVC: GET /MainPageSection/Delete/{id}
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [ActionName("Delete")]
+    public IActionResult DeleteView(
+        int id)
+    {
+        return View();
+    }
+
+
+    // API: GET /MainPageSection/GetAll
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -51,10 +100,10 @@ public class MainPageSectionController : Controller
     }
 
 
-    // GET: /MainPageSection/Details/1
+    // API: GET /MainPageSection/GetById/1
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> Details(
+    public async Task<IActionResult> GetById(
         int id)
     {
         try

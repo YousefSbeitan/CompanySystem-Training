@@ -1,8 +1,29 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<script>
+    // Redirect authenticated users to the dashboard
+    $(document).ready(function () {
+        var user = window.currentUser || { id: '', username: '', role: '' };
+        if (user.username) {
+            window.location.href = '/Home/Dashboard';
+        }
+    });
+</script>
+
+<div class="text-center py-5">
+    <div class="mb-4">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" fill="#1a3a5c"/>
+            <path d="M12 11h7c-.53 4.12-3.28 7.79-7 8.94V11z" fill="#00a8e8" opacity="0.6"/>
+            <path d="M10 11v8.94c-3.72-1.15-6.47-4.82-7-8.94h7z" fill="#00a8e8" opacity="0.3"/>
+        </svg>
+    </div>
+    <h1 class="display-4 fw-bold" style="color: var(--asal-primary);">ASAL Technologies</h1>
+    <p class="lead text-muted mb-4">Company Management System</p>
+    <p class="text-muted mb-4">Please <a href="/Auth/Login" class="fw-bold" style="color: var(--asal-accent);">log in</a> to access the dashboard.</p>
+    <div class="mt-4">
+        <a href="/Auth/Login" class="btn btn-primary btn-lg px-5" style="background: var(--asal-primary); border-color: var(--asal-primary);">Login</a>
+    </div>
 </div>

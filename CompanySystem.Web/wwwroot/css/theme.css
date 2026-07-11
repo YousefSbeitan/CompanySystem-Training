@@ -1,0 +1,67 @@
+/* ── ASAL Technologies – Company Theme ───────────────────────────── */
+
+:root {
+    /* Primary Brand Colors */
+    --asal-primary: #1a3a5c;
+    --asal-primary-light: #2a5a8c;
+    --asal-primary-dark: #0f2440;
+
+    /* Accent Colors */
+    --asal-accent: #00a8e8;
+    --asal-accent-light: #33c0f0;
+    --asal-accent-dark: #0085b8;
+
+    /* Neutral Palette */
+    --asal-gray-50: #f8f9fa;
+    --asal-gray-100: #f0f2f5;
+    --asal-gray-200: #e2e6ea;
+    --asal-gray-300: #c4c9d0;
+    --asal-gray-400: #9ca3af;
+    --asal-gray-500: #6b7280;
+    --asal-gray-600: #4b5563;
+    --asal-gray-700: #374151;
+    --asal-gray-800: #1f2937;
+    --asal-gray-900: #111827;
+
+    /* Semantic Colors */
+    --asal-success: #10b981;
+    --asal-warning: #f59e0b;
+    --asal-danger: #ef4444;
+    --asal-info: #3b82f6;
+
+    /* Typography */
+    --asal-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --asal-font-size-xs: 0.75rem;
+    --asal-font-size-sm: 0.875rem;
+    --asal-font-size-base: 0.9375rem;
+    --asal-font-size-lg: 1.125rem;
+    --asal-font-size-xl: 1.25rem;
+    --asal-font-size-2xl: 1.5rem;
+    --asal-font-size-3xl: 1.875rem;
+
+    /* Sidebar */
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 0px;
+    --sidebar-bg: var(--asal-primary);
+    --sidebar-text: #cbd5e1;
+    --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+    --sidebar-active-bg: rgba(255, 255, 255, 0.15);
+    --sidebar-brand-height: 64px;
+
+    /* Top Navbar */
+    --topnav-height: 60px;
+    --topnav-bg: #ffffff;
+
+    /* Layout */
+    --content-bg: var(--asal-gray-50);
+    --border-color: var(--asal-gray-200);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+    /* Transitions */
+    --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
+}

@@ -1,9 +1,9 @@
 @{
-    ViewData["Title"] = "Create Department";
+    ViewData["Title"] = "Create Role";
 }
 
 <div class="container-fluid">
-    <h1 class="h3 mb-3">Create Department</h1>
+    <h1 class="h3 mb-3">Create Role</h1>
 
     <div class="card">
         <div class="card-body">
@@ -11,26 +11,13 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="createDepartmentName" class="form-label">
-                                Department Name <span class="text-danger">*</span>
+                            <label for="createRoleName" class="form-label">
+                                Role Name <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control" id="createDepartmentName" name="DepartmentName"
-                                   maxlength="100" required placeholder="Enter department name" />
+                            <input type="text" class="form-control" id="createRoleName" name="RoleName"
+                                   maxlength="100" required placeholder="Enter role name" />
                             <div class="invalid-feedback">
-                                Department name is required and must not exceed 100 characters.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="createManagerId" class="form-label">Manager</label>
-                            <input type="text" class="form-control" id="createManagerId" name="ManagerId"
-                                   maxlength="50" placeholder="Enter manager ID (optional)" />
-                            <div class="invalid-feedback">
-                                Manager ID must not exceed 50 characters.
+                                Role name is required and must not exceed 100 characters.
                             </div>
                         </div>
                     </div>
@@ -40,7 +27,7 @@
                     <button type="submit" class="btn btn-primary" id="btnSave">
                         <i class="bi bi-check-lg"></i> Save
                     </button>
-                    <a href="/Department" class="btn btn-secondary">Cancel</a>
+                    <a href="/Role" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
 
@@ -49,7 +36,7 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Saving...</span>
                 </div>
-                <p class="mt-2 text-muted">Saving department...</p>
+                <p class="mt-2 text-muted">Saving role...</p>
             </div>
         </div>
     </div>
@@ -64,7 +51,7 @@
             var isAdmin = (window.currentUserRole === 'Admin');
             if (!isAdmin) {
                 $('#alertContainer').html(
-                    '<div class="alert alert-danger">You do not have permission to create departments.</div>'
+                    '<div class="alert alert-danger">You do not have permission to create roles.</div>'
                 );
                 $('#btnSave').prop('disabled', true);
                 return;
@@ -80,8 +67,7 @@
                 }
 
                 var dto = {
-                    departmentName: $('#createDepartmentName').val().trim(),
-                    managerId: $('#createManagerId').val().trim() || null
+                    roleName: $('#createRoleName').val().trim()
                 };
 
                 $('#btnSave').prop('disabled', true);
@@ -89,24 +75,24 @@
                 $('#alertContainer').empty();
 
                 $.ajax({
-                    url: '/Department/Create',
+                    url: '/Role/Create',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(dto),
                     success: function (response) {
                         $('#loadingSpinner').hide();
                         $('#alertContainer').html(
-                            '<div class="alert alert-success">Department created successfully! Redirecting...</div>'
+                            '<div class="alert alert-success">Role created successfully! Redirecting...</div>'
                         );
                         setTimeout(function () {
-                            window.location.href = '/Department';
+                            window.location.href = '/Role';
                         }, 1000);
                     },
                     error: function (xhr) {
                         $('#loadingSpinner').hide();
                         $('#btnSave').prop('disabled', false);
 
-                        var msg = 'Failed to create department.';
+                        var msg = 'Failed to create role.';
                         if (xhr.responseJSON) {
                             if (xhr.responseJSON.title) {
                                 msg = xhr.responseJSON.title;

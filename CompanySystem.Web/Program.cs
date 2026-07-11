@@ -4,6 +4,7 @@ using CompanySystem.Business.Services.Security;
 using CompanySystem.Data.Context;
 using CompanySystem.Data.Repositories.Implementations;
 using CompanySystem.Data.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -48,16 +49,37 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<JwtService>();
 
 
-// JWT Authentication
+// Composite Authentication: Cookie for MVC pages, JWT for API calls
 builder.Services
     .AddAuthentication(
         options =>
         {
-            options.DefaultAuthenticateScheme =
-                JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultAuthenticateScheme = "Composite";
+            options.DefaultChallengeScheme = "Composite";
+        })
+    .AddPolicyScheme("Composite", "Composite",
+        options =>
+        {
+            options.ForwardDefaultSelector = context =>
+            {
+                // API routes use JWT Bearer
+                if (context.Request.Path.StartsWithSegments("/api"))
+                    return JwtBearerDefaults.AuthenticationScheme;
 
-            options.DefaultChallengeScheme =
-                JwtBearerDefaults.AuthenticationScheme;
+                // MVC pages use Cookie
+                return CookieAuthenticationDefaults.AuthenticationScheme;
+            };
+        })
+    .AddCookie(
+        options =>
+        {
+            options.LoginPath = "/Auth/Login";
+            options.AccessDeniedPath = "/Auth/AccessDenied";
+            options.Cookie.Name = "CompanySystem.Auth";
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.ExpireTimeSpan = TimeSpan.FromHours(8);
+            options.SlidingExpiration = true;
         })
     .AddJwtBearer(
         options =>
@@ -90,6 +112,20 @@ builder.Services
                                 builder.Configuration[
                                     "Jwt:Key"]!))
                 };
+
+            // Also accept JWT from cookie for MVC requests that carry it
+            options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var token = context.Request.Cookies["CompanySystem.Jwt"];
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        context.Token = token;
+                    }
+                    return Task.CompletedTask;
+                }
+            };
         });
 
 var app = builder.Build();

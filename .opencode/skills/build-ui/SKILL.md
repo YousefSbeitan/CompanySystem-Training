@@ -1,19 +1,24 @@
 ---
 name: build-ui
-description: Builds complete ASP.NET Core MVC Razor UI for CompanySystem. Supports CRUD, AJAX, Filtering, Sorting, Pagination and converts API Controllers to hybrid MVC Controllers.
+description: Builds ASP.NET Core MVC Razor CRUD UI for CompanySystem. Supports AJAX CRUD, Filtering, Sorting, Pagination and Role Based UI. Works together with build-auth-ui without modifying Authentication or Authorization.
 ---
 
-# Build UI Skill - ASP.NET Core MVC Frontend Agent
+# Build UI Skill - ASP.NET Core MVC CRUD Frontend Agent
 
-You are a Senior ASP.NET Core MVC Engineer.
+You are a Senior ASP.NET Core MVC Frontend Engineer.
 
 Your responsibility:
 
-Create a complete working Razor MVC frontend from the existing backend.
+Generate CRUD Razor MVC frontend only.
 
-Backend is the source of truth.
+The backend is the source of truth.
 
-Do NOT change business logic.
+Do NOT change:
+
+- Authentication
+- Authorization
+- Security
+- Business logic
 
 ---
 
@@ -30,7 +35,7 @@ Layers:
 - CompanySystem.Data
 - CompanySystem.Shared
 
-Frontend stack:
+Frontend:
 
 - Razor Views
 - Bootstrap 5
@@ -38,31 +43,67 @@ Frontend stack:
 - AJAX
 - JSON
 
-Controllers must support:
+---
 
-1. MVC Razor pages
-2. JSON API endpoints
+# Agent Responsibility Boundary
+
+This agent handles:
+
+CRUD UI:
+
+- Index
+- Create
+- Edit
+- Details
+- Delete
+
+Features:
+
+- AJAX loading
+- Searching
+- Filtering
+- Sorting
+- Pagination
+- FK dropdowns
+- Role based visibility
+
+---
+
+# Cooperation With build-auth-ui
+
+Authentication UI is handled by:
+
+build-auth-ui
+
+This agent MUST NOT create or modify:
+
+- Login pages
+- Register pages
+- Logout functionality
+- Authentication flow
+- Token handling
+- Cookie handling
+- Claims creation
 
 ---
 
 # Allowed Changes
 
-You MAY modify ONLY:
+You MAY modify:
 
 CompanySystem.Web/Controllers/{EntityName}Controller.cs
 
-Allowed controller changes:
+ONLY for:
 
-- Add MVC View actions
-- Rename GET JSON endpoints
-- Add missing GET API endpoints
-- Fix routing conflicts
+- Add missing Razor View actions
+- Separate MVC GET pages from JSON GET endpoints
+- Fix routing conflicts between MVC and API
 
 You MAY create/update:
 
 CompanySystem.Web/Views/{EntityName}/
 
-Files:
+Required:
 
 Index.cshtml
 Create.cshtml
@@ -76,6 +117,14 @@ Delete.cshtml
 
 NEVER modify:
 
+- AuthController
+- Authentication services
+- Authorization services
+- JWT logic
+- Cookie configuration
+- Claims
+- Password hashing
+- Role management logic
 - Entities
 - DTOs
 - Services
@@ -86,11 +135,110 @@ NEVER modify:
 - Program.cs
 - appsettings.json
 
-Never modify:
+---
 
-- database schema
-- validation rules
-- business logic
+# Security Rules (CRITICAL)
+
+Authentication and Authorization already exist.
+
+NEVER remove or edit:
+
+```csharp
+[Authorize]
+
+[Authorize(Roles="...")]
+```
+
+NEVER add permissions.
+
+NEVER reduce permissions.
+
+NEVER change backend security.
+
+Backend permissions are the source of truth.
+
+---
+
+# Role Based UI Rules
+
+Always inspect Controller attributes.
+
+Examples:
+
+```csharp
+[Authorize(Roles="Admin")]
+```
+
+means:
+
+Only Admin should see related buttons.
+
+Example:
+
+Admin:
+
+Show:
+
+- Create
+- Edit
+- Delete
+
+Normal User:
+
+Hide:
+
+- Create
+- Edit
+- Delete
+
+but backend remains protected.
+
+---
+
+# Frontend Authorization Handling
+
+Generated Views should read current user role.
+
+Use data provided by build-auth-ui:
+
+Example:
+
+```javascript
+let role = window.currentUserRole;
+
+if(role === "Admin"){
+    $(".admin-only").show();
+}
+else{
+    $(".admin-only").hide();
+}
+```
+
+If role is unavailable:
+
+Hide restricted actions by default.
+
+Never expose buttons first.
+
+---
+
+# Button Permission Rules
+
+Create button:
+
+Follow POST Create authorization.
+
+Edit button:
+
+Follow PUT Edit authorization.
+
+Delete button:
+
+Follow DELETE Delete authorization.
+
+Details button:
+
+Usually visible if user has read permission.
 
 ---
 
@@ -100,6 +248,7 @@ When user runs:
 
 build-ui EntityName
 
+
 Example:
 
 build-ui User
@@ -108,21 +257,46 @@ build-ui User
 ALWAYS:
 
 1. Read Controller
-2. Read DTOs
-3. Detect routes
-4. Detect GetAll parameters
-5. Detect pagination/filter/sort support
-6. Update controller routing
-7. Generate Views
-8. Run dotnet build
 
-Never skip controller inspection.
+2. Detect:
+
+- Routes
+- HTTP verbs
+- Authorization attributes
+- Roles
+
+3. Read DTOs
+
+4. Detect:
+
+- Pagination
+- Sorting
+- Filtering
+
+5. Generate Views
+
+6. Run:
+
+dotnet build
+
+
+Never skip inspection.
 
 ---
 
-# Controller MVC Requirements
+# Controller Rules
 
-Controller MUST contain:
+Controllers must support:
+
+1. MVC pages
+
+2. JSON AJAX endpoints
+
+---
+
+# MVC Actions Required
+
+Controller needs:
 
 ```csharp
 [HttpGet]
@@ -160,19 +334,13 @@ public IActionResult Delete(id)
 }
 ```
 
-Use correct ID type:
-
-- string
-- int
-- Guid
-
-based on entity.
+Use correct ID type.
 
 ---
 
-# API GET Requirements
+# JSON Endpoints
 
-Controller MUST expose:
+Required:
 
 GetAll:
 
@@ -180,11 +348,9 @@ GetAll:
 [HttpGet]
 public async Task<IActionResult> GetAll(...)
 {
-    var result = await _service.GetAllAsync(...);
     return Ok(result);
 }
 ```
-
 
 GetById:
 
@@ -192,63 +358,21 @@ GetById:
 [HttpGet]
 public async Task<IActionResult> GetById(id)
 {
-    var result = await _service.GetByIdAsync(id);
     return Ok(result);
 }
 ```
 
 ---
 
-# Convert Existing API Controllers
+# Keep Existing API Actions
 
-If:
+NEVER rename:
 
-```csharp
-Index()
-{
- return Ok(data);
-}
-```
+POST Create
 
-Convert:
+PUT Edit
 
-Index → MVC View
-
-Move API code to:
-
-GetAll()
-
-
-If:
-
-```csharp
-Details(id)
-{
- return Ok(data);
-}
-```
-
-Convert:
-
-Details → MVC View
-
-Move API code to:
-
-GetById(id)
-
----
-
-# Keep Existing Commands
-
-Never rename:
-
-POST Create(dto)
-
-PUT Edit(dto)
-
-DELETE Delete(id)
-
-They remain AJAX endpoints.
+DELETE Delete
 
 ---
 
@@ -260,11 +384,22 @@ CompanySystem.Business/DTOs/
 
 Use:
 
-CreateDto → Create page
+CreateDto
 
-UpdateDto → Edit page
+for:
 
-ReadDto → Index + Details
+Create page
+
+
+UpdateDto:
+
+Edit page
+
+
+ReadDto:
+
+Index + Details
+
 
 Never invent fields.
 
@@ -285,31 +420,26 @@ Use:
 
 - HTML
 - Bootstrap
-- jQuery
-- AJAX
+- jQuery AJAX
 
 ---
 
-# Index.cshtml Rules
+# Index Page Rules
 
-Index must support:
+Must support:
 
-CRUD table
-
-PLUS:
-
+- Table
 - Search
-- Filtering
+- Filters
 - Sorting
 - Pagination
+- Role based buttons
 
 ---
 
-# GetAll Detection Rules
+# GetAll Detection
 
-Before writing Index:
-
-Inspect GetAllAsync parameters.
+Inspect parameters:
 
 Detect:
 
@@ -323,104 +453,50 @@ Detect:
 - sortDirection
 - orderBy
 
-Generate matching UI.
+Generate matching AJAX.
 
 ---
 
-# Search UI
+# Pagination
 
-If search exists:
+Support:
 
-Generate:
-
-```html
-<input id="searchInput"
-       class="form-control"
-       placeholder="Search..." />
+```json
+{
+ items:[],
+ totalPages:5,
+ pageNumber:1
+}
 ```
+
+and:
+
+```json
+{
+ data:[],
+ totalPages:5
+}
+```
+
+Never assume array only.
+
+---
+
+# Sorting
+
+Clickable headers.
 
 Send:
 
 ```javascript
-search: $("#searchInput").val()
+sortBy:name
+
+sortDirection:asc/desc
 ```
 
 ---
 
-# Pagination Rules
-
-If pagination exists:
-
-Generate:
-
-Bootstrap pagination:
-
-```html
-<ul class="pagination"></ul>
-```
-
-AJAX:
-
-```javascript
-$.getJSON('/Entity/GetAll',
-{
- pageNumber: currentPage,
- pageSize: pageSize
-})
-```
-
-Support responses:
-
-```json
-{
- items: [],
- totalPages: 5,
- pageNumber: 1,
- totalCount: 50
-}
-```
-
-OR:
-
-```json
-{
- data: [],
- totalPages: 5
-}
-```
-
-Never assume GetAll returns array.
-
----
-
-# Sorting Rules
-
-Tables must support sorting.
-
-Headers should be clickable.
-
-Example:
-
-Name ↑ ↓
-
-Send:
-
-```javascript
-sortBy: columnName,
-sortDirection: "asc"
-```
-
-or:
-
-```javascript
-sortDirection: "desc"
-```
-
----
-
-# Table Loading Rules
-
-Detect collection:
+# Data Loading
 
 Try:
 
@@ -436,84 +512,73 @@ response.results
 
 then:
 
-response directly
+response
 
 ---
 
-# Create.cshtml
+# Create Page
 
-Generate fields from CreateDto.
+Generate from:
+
+CreateDto
 
 Submit:
 
 ```javascript
-$.ajax({
- type:"POST",
- url:"/Entity/Create",
- contentType:"application/json",
- data:JSON.stringify(data)
-})
+POST /Entity/Create
 ```
 
-Success:
+using:
 
-```javascript
-window.location.href="/Entity";
-```
+JSON AJAX
 
 ---
 
-# Edit.cshtml
-
-Extract id:
-
-```javascript
-window.location.pathname.split('/').pop()
-```
+# Edit Page
 
 Load:
 
-```javascript
+```text
 GET /Entity/GetById/id
 ```
 
 Submit:
 
-```javascript
+```text
 PUT /Entity/Edit
 ```
 
 ---
 
-# Details.cshtml
+# Details Page
 
 Load:
 
-```javascript
+```text
 GET /Entity/GetById/id
 ```
 
-Show readonly data.
+Readonly.
 
 ---
 
-# Delete.cshtml
+# Delete Page
 
 Load:
 
-```javascript
+```text
 GET /Entity/GetById/id
 ```
 
 Delete:
 
-```javascript
+```text
 DELETE /Entity/Delete/id
 ```
 
 ---
 
-# Foreign Keys
+# Foreign Key Rules
 
 Never textbox:
 
@@ -524,9 +589,11 @@ Never textbox:
 - CreatedBy
 - UpdatedBy
 
-Always:
 
-<select>
+Use:
+
+select dropdown
+
 
 Load:
 
@@ -534,19 +601,24 @@ Role:
 
 /Role/GetAll
 
+
 Department:
 
 /Department/GetAll
+
 
 Users:
 
 /User/GetAll
 
-Display names not IDs.
+
+Show names.
+
+Not IDs.
 
 ---
 
-# Input Mapping
+# Type Mapping
 
 string:
 
@@ -596,11 +668,7 @@ Support:
 - Phone
 - Display
 
-Generate HTML validation.
-
-Show errors using:
-
-Bootstrap alert
+Use Bootstrap validation.
 
 Never:
 
@@ -608,48 +676,56 @@ alert()
 
 ---
 
-# UI Style
+# Styling
 
 Use Bootstrap 5:
 
-container
-row
-col-md
-form-control
-form-label
-table
-btn
-alert
-pagination
+- container
+- row
+- col-md
+- form-control
+- form-label
+- table
+- btn
+- alert
+- pagination
 
-Clean admin dashboard style.
+Clean dashboard style.
 
 ---
 
 # Final Verification
 
-Before finishing:
+Before finishing verify:
 
-Check:
+✓ No Auth files modified
 
-✓ Controller supports MVC
+✓ No security attributes changed
 
-✓ API still works
+✓ Controller still protected
 
-✓ GetAll supports filters
+✓ MVC pages work
+
+✓ JSON APIs work
+
+✓ Role UI visibility works
+
+✓ Search works
 
 ✓ Sorting works
 
 ✓ Pagination works
 
-✓ 5 Views created
+✓ FK dropdowns work
 
-✓ FK dropdowns load
+✓ 5 Views exist
+
 
 Run:
 
 dotnet build
 
-Required result:
+
+Required:
 
 0 errors

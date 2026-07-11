@@ -1,0 +1,151 @@
+@{
+    ViewData["Title"] = "Main Page Section Details";
+}
+
+<div class="container-fluid">
+    <h1 class="h3 mb-3">Main Page Section Details</h1>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading section details...</p>
+    </div>
+
+    <!-- Error -->
+    <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
+
+    <!-- Detail Card -->
+    <div id="detailCard" class="card" style="display:none;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Section Information</span>
+            <span class="badge bg-secondary" id="detailSectionIdBadge"></span>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Section ID</dt>
+                <dd class="col-sm-9" id="detailSectionId"></dd>
+
+                <dt class="col-sm-3">Section Type</dt>
+                <dd class="col-sm-9" id="detailSectionType"></dd>
+
+                <dt class="col-sm-3">Title</dt>
+                <dd class="col-sm-9" id="detailTitle"></dd>
+
+                <dt class="col-sm-3">Content</dt>
+                <dd class="col-sm-9" id="detailContent" style="white-space: pre-wrap;"></dd>
+
+                <dt class="col-sm-3">Created By</dt>
+                <dd class="col-sm-9" id="detailCreatedBy"></dd>
+
+                <dt class="col-sm-3">Created Date</dt>
+                <dd class="col-sm-9" id="detailCreatedDate"></dd>
+
+                <dt class="col-sm-3">Updated By</dt>
+                <dd class="col-sm-9" id="detailUpdatedBy"></dd>
+
+                <dt class="col-sm-3">Updated Date</dt>
+                <dd class="col-sm-9" id="detailUpdatedDate"></dd>
+            </dl>
+        </div>
+        <div class="card-footer">
+            <a href="/MainPageSection" class="btn btn-secondary">Back to List</a>
+            <button class="btn btn-warning admin-only" id="btnEditFromDetails" style="display:none;">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+        </div>
+    </div>
+
+    <!-- Not Found -->
+    <div id="notFoundAlert" class="alert alert-warning" style="display:none;">
+        Section not found.
+    </div>
+
+    <!-- Permission Denied -->
+    <div id="permissionDeniedAlert" class="alert alert-danger" style="display:none;">
+        You do not have permission to view section details.
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var currentUserRole = window.currentUserRole || '';
+            var isAdmin = (currentUserRole === 'Admin');
+
+            if (isAdmin) {
+                $('.admin-only').show();
+            }
+
+            // Extract section ID from URL: /MainPageSection/Details/{id}
+            var pathParts = window.location.pathname.split('/');
+            var sectionId = parseInt(pathParts[pathParts.length - 1]);
+
+            if (!sectionId) {
+                $('#loadingSpinner').hide();
+                $('#errorAlert').text('Invalid section ID.').show();
+                return;
+            }
+
+            // ── Section Type Mapping ─────────────────────────────────
+            function getSectionTypeText(type) {
+                switch (type) {
+                    case 1: return 'About Us';
+                    case 2: return 'Services';
+                    case 3: return 'Contact Us';
+                    case 4: return 'Home';
+                    default: return type || '-';
+                }
+            }
+
+            $.ajax({
+                url: '/MainPageSection/GetById/' + sectionId,
+                type: 'GET',
+                success: function (section) {
+                    $('#loadingSpinner').hide();
+
+                    if (!section) {
+                        $('#notFoundAlert').show();
+                        return;
+                    }
+
+                    var sectionType = getSectionTypeText(section.sectionType);
+
+                    $('#detailSectionIdBadge').text('#' + (section.sectionId || ''));
+                    $('#detailSectionId').text(section.sectionId || '');
+                    $('#detailSectionType').text(sectionType);
+                    $('#detailTitle').text(section.title || '');
+                    $('#detailContent').text(section.content || '');
+                    $('#detailCreatedBy').text(section.createdBy || '-');
+                    $('#detailCreatedDate').text(section.createdDate ? new Date(section.createdDate).toLocaleString() : '-');
+                    $('#detailUpdatedBy').text(section.updatedBy || '-');
+                    $('#detailUpdatedDate').text(section.updatedDate ? new Date(section.updatedDate).toLocaleString() : '-');
+
+                    if (isAdmin) {
+                        $('#btnEditFromDetails').data('id', section.sectionId).show();
+                    }
+
+                    $('#detailCard').show();
+                },
+                error: function (xhr) {
+                    $('#loadingSpinner').hide();
+                    if (xhr.status === 404) {
+                        $('#notFoundAlert').show();
+                    } else if (xhr.status === 403) {
+                        $('#permissionDeniedAlert').show();
+                    } else {
+                        var msg = xhr.responseText || 'An error occurred while loading section details.';
+                        $('#errorAlert').text(msg).show();
+                    }
+                }
+            });
+
+            // Edit button on details page
+            $(document).on('click', '#btnEditFromDetails', function () {
+                var id = $(this).data('id');
+                window.location.href = '/MainPageSection/Edit/' + id;
+            });
+        });
+    </script>
+}

@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Welcome Section -->
+<div class="welcome-section">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+    <p class="welcome-subtitle">Welcome to the Company Management System</p>
+</div>
+
+<!-- User Profile Card -->
+<div class="user-profile-card" id="userProfileCard">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="user-avatar-large" id="dashboardAvatar">
+                <i class="bi bi-person-fill"></i>
+            </div>
+        </div>
+        <div class="col">
+            <h3 id="dashboardUserName">
+                <span class="placeholder-glow">
+                    <span class="placeholder col-6"></span>
+                </span>
+            </h3>
+            <div class="user-meta">
+                <span class="badge bg-white text-dark" id="dashboardUserRole">
+                    <span class="placeholder-glow"><span class="placeholder col-4"></span></span>
+                </span>
+                <span class="badge bg-white text-dark" id="dashboardUserId">
+                    <span class="placeholder-glow"><span class="placeholder col-4"></span></span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4" id="statCardsContainer">
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" id="statCard_users">
+            <div class="stat-icon icon-users">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-value" id="statValue_users">
+                <span class="placeholder-glow"><span class="placeholder col-4"></span></span>
+            </div>
+            <div class="stat-label">Total Users</div>
+            <a href="/User" class="stat-link">
+                Manage Users <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" id="statCard_departments">
+            <div class="stat-icon icon-departments">
+                <i class="bi bi-building-fill"></i>
+            </div>
+            <div class="stat-value" id="statValue_departments">
+                <span class="placeholder-glow"><span class="placeholder col-4"></span></span>
+            </div>
+            <div class="stat-label">Total Departments</div>
+            <a href="/Department" class="stat-link">
+                Manage Departments <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" id="statCard_roles">
+            <div class="stat-icon icon-roles">
+                <i class="bi bi-shield-fill-check"></i>
+            </div>
+            <div class="stat-value" id="statValue_roles">
+                <span class="placeholder-glow"><span class="placeholder col-4"></span></span>
+            </div>
+            <div class="stat-label">Total Roles</div>
+            <a href="/Role" class="stat-link">
+                Manage Roles <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card" id="statCard_content">
+            <div class="stat-icon icon-content">
+                <i class="bi bi-layout-text-window-reverse"></i>
+            </div>
+            <div class="stat-value" id="statValue_content">
+                <span class="placeholder-glow"><span class="placeholder col-4"></span></span>
+            </div>
+            <div class="stat-label">Content Sections</div>
+            <a href="/MainPageSection" class="stat-link">
+                Manage Content <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Management Modules -->
+<h2 class="section-title">
+    <i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules
+</h2>
+<div class="row g-4" id="dashboardModulesContainer">
+    <!-- Modules loaded dynamically by dashboard.js -->
+</div>
+
+<script>
+    // ── Update dashboard user info ─────────────────────────────────
+    $(document).ready(function () {
+        var user = window.currentUser || { id: '', username: '', role: '' };
+        if (user.username) {
+            $('#dashboardUserName').text(user.username);
+            $('#dashboardUserRole').text(user.role || 'User');
+            $('#dashboardUserId').text('ID: ' + (user.id || '—'));
+            $('#dashboardAvatar').html('<i class="bi bi-person-fill"></i>');
+        }
+    });
+</script>
+

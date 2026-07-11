@@ -1,12 +1,12 @@
 @{
-    ViewData["Title"] = "User Management";
+    ViewData["Title"] = "Main Page Section Management";
 }
 
 <div class="crud-container">
     <div class="crud-header">
-        <h1><i class="bi bi-people-fill me-2"></i>User Management</h1>
+        <h1><i class="bi bi-layout-text-window-reverse me-2"></i>Main Page Section Management</h1>
         <button class="btn btn-primary admin-only" id="btnCreate" style="display:none;">
-            <i class="bi bi-plus-lg"></i> Create User
+            <i class="bi bi-plus-lg"></i> Create Section
         </button>
     </div>
 
@@ -14,7 +14,7 @@
     <div class="search-filter-row">
         <div class="search-group">
             <div class="input-group">
-                <input type="text" class="form-control" id="inputSearch" placeholder="Search by username, phone..." />
+                <input type="text" class="form-control" id="inputSearch" placeholder="Search by title or content..." />
                 <button class="btn btn-outline-secondary" type="button" id="btnSearch">
                     <i class="bi bi-search"></i> Search
                 </button>
@@ -41,35 +41,29 @@
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p>Loading users...</p>
+        <p>Loading sections...</p>
     </div>
 
     <!-- Table -->
     <div class="crud-table">
         <div class="table-responsive-custom">
-            <table class="table table-hover table-striped" id="usersTable" style="display:none;">
+            <table class="table table-hover table-striped" id="sectionsTable" style="display:none;">
                 <thead>
                     <tr>
-                        <th data-sort="UserId" class="sortable" style="cursor:pointer; width:200px;">
-                            User ID <span class="sort-icon"></span>
+                        <th data-sort="SectionId" class="sortable" style="cursor:pointer; width:80px;">
+                            ID <span class="sort-icon"></span>
                         </th>
-                        <th data-sort="Username" class="sortable" style="cursor:pointer;">
-                            Username <span class="sort-icon"></span>
+                        <th data-sort="SectionType" class="sortable" style="cursor:pointer;">
+                            Section Type <span class="sort-icon"></span>
                         </th>
-                        <th data-sort="RoleId" class="sortable" style="cursor:pointer;">
-                            Role <span class="sort-icon"></span>
+                        <th data-sort="Title" class="sortable" style="cursor:pointer;">
+                            Title <span class="sort-icon"></span>
                         </th>
-                        <th data-sort="PhoneNumber" class="sortable" style="cursor:pointer;">
-                            Phone <span class="sort-icon"></span>
+                        <th data-sort="Content" class="sortable" style="cursor:pointer;">
+                            Content <span class="sort-icon"></span>
                         </th>
-                        <th data-sort="StartDate" class="sortable" style="cursor:pointer;">
-                            Start Date <span class="sort-icon"></span>
-                        </th>
-                        <th data-sort="Salary" class="sortable" style="cursor:pointer;">
-                            Salary <span class="sort-icon"></span>
-                        </th>
-                        <th data-sort="IsActive" class="sortable" style="cursor:pointer;">
-                            Active <span class="sort-icon"></span>
+                        <th data-sort="CreatedBy" class="sortable" style="cursor:pointer;">
+                            Created By <span class="sort-icon"></span>
                         </th>
                         <th data-sort="CreatedDate" class="sortable" style="cursor:pointer;">
                             Created Date <span class="sort-icon"></span>
@@ -91,11 +85,11 @@
 
     <!-- No Data -->
     <div class="empty-state" id="noData" style="display:none;">
-        <i class="bi bi-people empty-icon"></i>
-        <h4>No Users Found</h4>
-        <p>There are no users in the system yet.</p>
+        <i class="bi bi-layout-text-window-reverse empty-icon"></i>
+        <h4>No Sections Found</h4>
+        <p>There are no content sections available yet.</p>
         <button class="btn btn-primary admin-only" id="btnCreateEmpty" style="display:none;">
-            <i class="bi bi-plus-lg"></i> Create User
+            <i class="bi bi-plus-lg"></i> Create Section
         </button>
     </div>
 </div>
@@ -107,10 +101,10 @@
             var currentPage = 1;
             var currentPageSize = 10;
             var currentSearch = '';
-            var currentSortBy = 'UserId';
+            var currentSortBy = 'SectionId';
             var currentIsDescending = false;
-            var isAdmin = (window.currentUserRole === 'Admin');
-            var isManager = (window.currentUserRole === 'Manager');
+            var currentUserRole = window.currentUserRole || '';
+            var isAdmin = (currentUserRole === 'Admin');
 
             // ── Initial Role Visibility ─────────────────────────────
             if (isAdmin) {
@@ -125,16 +119,27 @@
                 }
             }
 
+            // ── Section Type Mapping ─────────────────────────────────
+            function getSectionTypeText(type) {
+                switch (type) {
+                    case 1: return 'About Us';
+                    case 2: return 'Services';
+                    case 3: return 'Contact Us';
+                    case 4: return 'Home';
+                    default: return type || '-';
+                }
+            }
+
             // ── Load Data ───────────────────────────────────────────
-            function loadUsers() {
+            function loadSections() {
                 $('#loadingSpinner').show();
-                $('#usersTable').hide();
+                $('#sectionsTable').hide();
                 $('#paginationNav').hide();
                 $('#noData').hide();
                 $('#errorAlert').hide();
 
                 $.ajax({
-                    url: '/User/GetAll',
+                    url: '/MainPageSection/GetAll',
                     type: 'GET',
                     data: {
                         pageNumber: currentPage,
@@ -153,7 +158,7 @@
                         if (Array.isArray(data) && data.length > 0) {
                             renderTable(data);
                             renderPagination(totalPages, pageNumber);
-                            $('#usersTable').show();
+                            $('#sectionsTable').show();
                             $('#paginationNav').show();
                         } else {
                             $('#noData').show();
@@ -161,9 +166,9 @@
                     },
                     error: function (xhr) {
                         $('#loadingSpinner').hide();
-                        var msg = xhr.responseText || 'An error occurred while loading users.';
+                        var msg = xhr.responseText || 'An error occurred while loading sections.';
                         if (xhr.status === 403) {
-                            msg = 'You do not have permission to view the user list.';
+                            msg = 'You do not have permission to view sections.';
                         }
                         $('#errorAlert').text(msg).show();
                     }
@@ -171,36 +176,29 @@
             }
 
             // ── Render Table ────────────────────────────────────────
-            function renderTable(users) {
+            function renderTable(sections) {
                 var html = '';
-                $.each(users, function (idx, user) {
-                    var startDate = user.startDate
-                        ? new Date(user.startDate).toLocaleDateString()
+                $.each(sections, function (idx, section) {
+                    var createdDate = section.createdDate
+                        ? new Date(section.createdDate).toLocaleDateString()
                         : '-';
-                    var createdDate = user.createdDate
-                        ? new Date(user.createdDate).toLocaleDateString()
+                    var sectionType = getSectionTypeText(section.sectionType);
+                    var contentPreview = section.content
+                        ? (section.content.length > 60 ? section.content.substring(0, 60) + '...' : section.content)
                         : '-';
-                    var salary = user.salary != null
-                        ? parseFloat(user.salary).toFixed(2)
-                        : '-';
-                    var isActive = user.isActive
-                        ? '<span class="badge bg-success">Yes</span>'
-                        : '<span class="badge bg-secondary">No</span>';
 
                     html += '<tr>';
-                    html += '<td><code>' + escapeHtml(user.userId || '') + '</code></td>';
-                    html += '<td><strong>' + escapeHtml(user.username || '') + '</strong></td>';
-                    html += '<td>' + escapeHtml(user.roleId != null ? user.roleId.toString() : '-') + '</td>';
-                    html += '<td>' + escapeHtml(user.phoneNumber || '-') + '</td>';
-                    html += '<td>' + startDate + '</td>';
-                    html += '<td>' + salary + '</td>';
-                    html += '<td>' + isActive + '</td>';
+                    html += '<td>' + escapeHtml(section.sectionId) + '</td>';
+                    html += '<td><span class="badge bg-info">' + escapeHtml(sectionType) + '</span></td>';
+                    html += '<td><strong>' + escapeHtml(section.title || '') + '</strong></td>';
+                    html += '<td class="text-muted">' + escapeHtml(contentPreview) + '</td>';
+                    html += '<td>' + escapeHtml(section.createdBy || '-') + '</td>';
                     html += '<td>' + createdDate + '</td>';
                     html += '<td><div class="action-btns">';
-                    html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(user.userId) + '" title="Details"><i class="bi bi-eye"></i></button>';
+                    html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(section.sectionId) + '" title="Details"><i class="bi bi-eye"></i></button>';
                     if (isAdmin) {
-                        html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(user.userId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
-                        html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(user.userId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
+                        html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(section.sectionId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
+                        html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(section.sectionId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
                     }
                     html += '</div></td>';
                     html += '</tr>';
@@ -255,7 +253,7 @@
                 }
                 currentPage = 1;
                 updateSortIcon();
-                loadUsers();
+                loadSections();
             });
 
             // ── Pagination Click ────────────────────────────────────
@@ -264,7 +262,7 @@
                 var page = parseInt($(this).data('page'));
                 if (page && page > 0) {
                     currentPage = page;
-                    loadUsers();
+                    loadSections();
                 }
             });
 
@@ -272,7 +270,7 @@
             $('#btnSearch').on('click', function () {
                 currentSearch = $('#inputSearch').val().trim();
                 currentPage = 1;
-                loadUsers();
+                loadSections();
             });
 
             $('#inputSearch').on('keypress', function (e) {
@@ -285,42 +283,42 @@
                 $('#inputSearch').val('');
                 currentSearch = '';
                 currentPage = 1;
-                loadUsers();
+                loadSections();
             });
 
             // ── Page Size ───────────────────────────────────────────
             $('#selectPageSize').on('change', function () {
                 currentPageSize = parseInt($(this).val());
                 currentPage = 1;
-                loadUsers();
+                loadSections();
             });
 
             // ── Create ──────────────────────────────────────────────
             $('#btnCreate, #btnCreateEmpty').on('click', function () {
-                window.location.href = '/User/Create';
+                window.location.href = '/MainPageSection/Create';
             });
 
             // ── Details ─────────────────────────────────────────────
             $(document).on('click', '.btn-details', function () {
                 var id = $(this).data('id');
-                window.location.href = '/User/Details/' + encodeURIComponent(id);
+                window.location.href = '/MainPageSection/Details/' + encodeURIComponent(id);
             });
 
             // ── Edit ────────────────────────────────────────────────
             $(document).on('click', '.btn-edit', function () {
                 var id = $(this).data('id');
-                window.location.href = '/User/Edit/' + encodeURIComponent(id);
+                window.location.href = '/MainPageSection/Edit/' + encodeURIComponent(id);
             });
 
             // ── Delete ──────────────────────────────────────────────
             $(document).on('click', '.btn-delete', function () {
                 var id = $(this).data('id');
-                window.location.href = '/User/Delete/' + encodeURIComponent(id);
+                window.location.href = '/MainPageSection/Delete/' + encodeURIComponent(id);
             });
 
             // ── Initial Load ────────────────────────────────────────
             updateSortIcon();
-            loadUsers();
+            loadSections();
         });
     </script>
 }

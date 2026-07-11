@@ -1,53 +1,38 @@
 @{
-    ViewData["Title"] = "Edit Department";
+    ViewData["Title"] = "Edit Role";
 }
 
 <div class="container-fluid">
-    <h1 class="h3 mb-3">Edit Department</h1>
+    <h1 class="h3 mb-3">Edit Role</h1>
 
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="text-center my-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-2 text-muted">Loading department data...</p>
+        <p class="mt-2 text-muted">Loading role data...</p>
     </div>
 
     <!-- Error -->
     <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
-    <div id="notFoundAlert" class="alert alert-warning" style="display:none;">Department not found.</div>
+    <div id="notFoundAlert" class="alert alert-warning" style="display:none;">Role not found.</div>
 
     <!-- Edit Form -->
     <div class="card" id="editCard" style="display:none;">
         <div class="card-body">
             <form id="editForm" novalidate>
-                <input type="hidden" id="editDepartmentId" />
+                <input type="hidden" id="editRoleId" />
 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="editDepartmentName" class="form-label">
-                                Department Name <span class="text-danger">*</span>
+                            <label for="editRoleName" class="form-label">
+                                Role Name <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control" id="editDepartmentName" name="DepartmentName"
-                                   maxlength="100" required placeholder="Enter department name" />
+                            <input type="text" class="form-control" id="editRoleName" name="RoleName"
+                                   maxlength="100" required placeholder="Enter role name" />
                             <div class="invalid-feedback">
-                                Department name is required and must not exceed 100 characters.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="editManagerId" class="form-label">
-                                Manager <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="editManagerId" name="ManagerId"
-                                   maxlength="50" required placeholder="Enter manager ID" />
-                            <div class="invalid-feedback">
-                                Manager ID is required and must not exceed 50 characters.
+                                Role name is required and must not exceed 100 characters.
                             </div>
                         </div>
                     </div>
@@ -57,7 +42,7 @@
                     <button type="submit" class="btn btn-primary" id="btnSave">
                         <i class="bi bi-check-lg"></i> Save Changes
                     </button>
-                    <a href="/Department" class="btn btn-secondary">Cancel</a>
+                    <a href="/Role" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
 
@@ -82,36 +67,35 @@
             if (!isAdmin) {
                 $('#loadingSpinner').hide();
                 $('#alertContainer').html(
-                    '<div class="alert alert-danger">You do not have permission to edit departments.</div>'
+                    '<div class="alert alert-danger">You do not have permission to edit roles.</div>'
                 );
                 return;
             }
 
-            // Extract department ID from URL: /Department/Edit/{id}
+            // Extract role ID from URL: /Role/Edit/{id}
             var pathParts = window.location.pathname.split('/');
-            var departmentId = parseInt(pathParts[pathParts.length - 1]);
+            var roleId = parseInt(pathParts[pathParts.length - 1]);
 
-            if (!departmentId) {
+            if (!roleId) {
                 $('#loadingSpinner').hide();
-                $('#errorAlert').text('Invalid department ID.').show();
+                $('#errorAlert').text('Invalid role ID.').show();
                 return;
             }
 
-            // Load department data
+            // Load role data
             $.ajax({
-                url: '/Department/GetById/' + departmentId,
+                url: '/Role/GetById/' + roleId,
                 type: 'GET',
-                success: function (dept) {
+                success: function (role) {
                     $('#loadingSpinner').hide();
 
-                    if (!dept) {
+                    if (!role) {
                         $('#notFoundAlert').show();
                         return;
                     }
 
-                    $('#editDepartmentId').val(dept.departmentId || dept.departmentID || '');
-                    $('#editDepartmentName').val(dept.departmentName || '');
-                    $('#editManagerId').val(dept.managerId || '');
+                    $('#editRoleId').val(role.roleId || role.roleID || '');
+                    $('#editRoleName').val(role.roleName || '');
                     $('#editCard').show();
                 },
                 error: function (xhr) {
@@ -119,7 +103,7 @@
                     if (xhr.status === 404) {
                         $('#notFoundAlert').show();
                     } else {
-                        var msg = xhr.responseText || 'Failed to load department.';
+                        var msg = xhr.responseText || 'Failed to load role.';
                         $('#errorAlert').text(msg).show();
                     }
                 }
@@ -136,9 +120,8 @@
                 }
 
                 var dto = {
-                    departmentId: parseInt($('#editDepartmentId').val()),
-                    departmentName: $('#editDepartmentName').val().trim(),
-                    managerId: $('#editManagerId').val().trim()
+                    roleId: parseInt($('#editRoleId').val()),
+                    roleName: $('#editRoleName').val().trim()
                 };
 
                 $('#btnSave').prop('disabled', true);
@@ -146,24 +129,24 @@
                 $('#alertContainer').empty();
 
                 $.ajax({
-                    url: '/Department/Edit',
+                    url: '/Role/Edit',
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(dto),
                     success: function (response) {
                         $('#savingSpinner').hide();
                         $('#alertContainer').html(
-                            '<div class="alert alert-success">Department updated successfully! Redirecting...</div>'
+                            '<div class="alert alert-success">Role updated successfully! Redirecting...</div>'
                         );
                         setTimeout(function () {
-                            window.location.href = '/Department';
+                            window.location.href = '/Role';
                         }, 1000);
                     },
                     error: function (xhr) {
                         $('#savingSpinner').hide();
                         $('#btnSave').prop('disabled', false);
 
-                        var msg = 'Failed to update department.';
+                        var msg = 'Failed to update role.';
                         if (xhr.responseJSON) {
                             if (xhr.responseJSON.title) {
                                 msg = xhr.responseJSON.title;

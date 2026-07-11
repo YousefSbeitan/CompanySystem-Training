@@ -1,36 +1,63 @@
 @{
-    ViewData["Title"] = "Create Department";
+    ViewData["Title"] = "Create Main Page Section";
 }
 
 <div class="container-fluid">
-    <h1 class="h3 mb-3">Create Department</h1>
+    <h1 class="h3 mb-3">Create Main Page Section</h1>
 
-    <div class="card">
+    <!-- Permission Denied (hidden by default) -->
+    <div id="permissionDenied" class="alert alert-danger" style="display:none;">
+        You do not have permission to create sections.
+    </div>
+
+    <div class="card" id="createCard">
         <div class="card-body">
             <form id="createForm" novalidate>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="createDepartmentName" class="form-label">
-                                Department Name <span class="text-danger">*</span>
+                            <label for="createSectionType" class="form-label">
+                                Section Type <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control" id="createDepartmentName" name="DepartmentName"
-                                   maxlength="100" required placeholder="Enter department name" />
+                            <select class="form-select" id="createSectionType" name="SectionType" required>
+                                <option value="">-- Select Section Type --</option>
+                                <option value="1">About Us</option>
+                                <option value="2">Services</option>
+                                <option value="3">Contact Us</option>
+                                <option value="4">Home</option>
+                            </select>
                             <div class="invalid-feedback">
-                                Department name is required and must not exceed 100 characters.
+                                Section type is required.
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="mb-3">
-                            <label for="createManagerId" class="form-label">Manager</label>
-                            <input type="text" class="form-control" id="createManagerId" name="ManagerId"
-                                   maxlength="50" placeholder="Enter manager ID (optional)" />
+                            <label for="createTitle" class="form-label">
+                                Title <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="createTitle" name="Title"
+                                   maxlength="200" required placeholder="Enter section title" />
                             <div class="invalid-feedback">
-                                Manager ID must not exceed 50 characters.
+                                Title is required and must not exceed 200 characters.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="createContent" class="form-label">
+                                Content <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="createContent" name="Content"
+                                      rows="6" required placeholder="Enter section content"></textarea>
+                            <div class="invalid-feedback">
+                                Content is required.
                             </div>
                         </div>
                     </div>
@@ -40,7 +67,7 @@
                     <button type="submit" class="btn btn-primary" id="btnSave">
                         <i class="bi bi-check-lg"></i> Save
                     </button>
-                    <a href="/Department" class="btn btn-secondary">Cancel</a>
+                    <a href="/MainPageSection" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
 
@@ -49,7 +76,7 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Saving...</span>
                 </div>
-                <p class="mt-2 text-muted">Saving department...</p>
+                <p class="mt-2 text-muted">Saving section...</p>
             </div>
         </div>
     </div>
@@ -61,15 +88,17 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var isAdmin = (window.currentUserRole === 'Admin');
+            var currentUserRole = window.currentUserRole || '';
+            var isAdmin = (currentUserRole === 'Admin');
+
+            // Check permission
             if (!isAdmin) {
-                $('#alertContainer').html(
-                    '<div class="alert alert-danger">You do not have permission to create departments.</div>'
-                );
-                $('#btnSave').prop('disabled', true);
+                $('#createCard').hide();
+                $('#permissionDenied').show();
                 return;
             }
 
+            // ── Form Submit ────────────────────────────────────────
             $('#createForm').on('submit', function (e) {
                 e.preventDefault();
 
@@ -80,8 +109,9 @@
                 }
 
                 var dto = {
-                    departmentName: $('#createDepartmentName').val().trim(),
-                    managerId: $('#createManagerId').val().trim() || null
+                    sectionType: parseInt($('#createSectionType').val()),
+                    title: $('#createTitle').val().trim(),
+                    content: $('#createContent').val().trim()
                 };
 
                 $('#btnSave').prop('disabled', true);
@@ -89,24 +119,24 @@
                 $('#alertContainer').empty();
 
                 $.ajax({
-                    url: '/Department/Create',
+                    url: '/MainPageSection/Create',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(dto),
                     success: function (response) {
                         $('#loadingSpinner').hide();
                         $('#alertContainer').html(
-                            '<div class="alert alert-success">Department created successfully! Redirecting...</div>'
+                            '<div class="alert alert-success">Section created successfully! Redirecting...</div>'
                         );
                         setTimeout(function () {
-                            window.location.href = '/Department';
+                            window.location.href = '/MainPageSection';
                         }, 1000);
                     },
                     error: function (xhr) {
                         $('#loadingSpinner').hide();
                         $('#btnSave').prop('disabled', false);
 
-                        var msg = 'Failed to create department.';
+                        var msg = 'Failed to create section.';
                         if (xhr.responseJSON) {
                             if (xhr.responseJSON.title) {
                                 msg = xhr.responseJSON.title;

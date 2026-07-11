@@ -25,9 +25,56 @@ public class NoteController : Controller
     }
 
 
-    // GET: /Note
+    // GET: /Note (MVC View)
     [HttpGet]
-    public async Task<IActionResult> Index(
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+
+    // GET: /Note/Create (MVC View)
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+
+    // GET: /Note/Edit/{id} (MVC View)
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public IActionResult Edit(
+        int id)
+    {
+        return View();
+    }
+
+
+    // GET: /Note/Details/{id} (MVC View)
+    [HttpGet]
+    public IActionResult Details(
+        int id)
+    {
+        return View();
+    }
+
+
+    // GET: /Note/Delete/{id} (MVC View)
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [ActionName("Delete")]
+    public IActionResult DeleteView(
+        int id)
+    {
+        return View();
+    }
+
+
+    // API: GET /Note/GetAll
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -68,10 +115,9 @@ public class NoteController : Controller
     }
 
 
-
-    // GET: /Note/Details/1
+    // API: GET /Note/GetById/1
     [HttpGet]
-    public async Task<IActionResult> Details(
+    public async Task<IActionResult> GetById(
         int id)
     {
         try
@@ -124,7 +170,6 @@ public class NoteController : Controller
                 ex.Message);
         }
     }
-
 
 
     // POST: /Note/Create

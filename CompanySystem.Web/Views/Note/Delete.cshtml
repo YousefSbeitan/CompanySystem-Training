@@ -1,21 +1,24 @@
 @{
-    ViewData["Title"] = "Delete User";
+    ViewData["Title"] = "Delete Note";
 }
 
 <div class="container-fluid">
-    <h1 class="h3 mb-3">Delete User</h1>
+    <h1 class="h3 mb-3">Delete Note</h1>
 
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="text-center my-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-2 text-muted">Loading user data...</p>
+        <p class="mt-2 text-muted">Loading note data...</p>
     </div>
 
     <!-- Error -->
     <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
-    <div id="notFoundAlert" class="alert alert-warning" style="display:none;">User not found.</div>
+    <div id="notFoundAlert" class="alert alert-warning" style="display:none;">Note not found.</div>
+    <div id="permissionDenied" class="alert alert-danger" style="display:none;">
+        You do not have permission to delete notes.
+    </div>
 
     <!-- Delete Confirmation Card -->
     <div class="card border-danger" id="deleteCard" style="display:none;">
@@ -24,30 +27,21 @@
         </div>
         <div class="card-body">
             <div class="alert alert-warning">
-                <strong>Warning:</strong> This action cannot be undone. Are you sure you want to delete this user?
+                <strong>Warning:</strong> This action cannot be undone. Are you sure you want to delete this note?
             </div>
 
             <dl class="row">
-                <dt class="col-sm-3">User ID</dt>
+                <dt class="col-sm-3">Note ID</dt>
+                <dd class="col-sm-9" id="deleteNoteId"></dd>
+
+                <dt class="col-sm-3">User</dt>
                 <dd class="col-sm-9" id="deleteUserId"></dd>
 
-                <dt class="col-sm-3">Username</dt>
-                <dd class="col-sm-9" id="deleteUsername"></dd>
+                <dt class="col-sm-3">Note Type</dt>
+                <dd class="col-sm-9" id="deleteNoteType"></dd>
 
-                <dt class="col-sm-3">Role</dt>
-                <dd class="col-sm-9" id="deleteRoleId"></dd>
-
-                <dt class="col-sm-3">Phone Number</dt>
-                <dd class="col-sm-9" id="deletePhoneNumber"></dd>
-
-                <dt class="col-sm-3">Start Date</dt>
-                <dd class="col-sm-9" id="deleteStartDate"></dd>
-
-                <dt class="col-sm-3">Salary</dt>
-                <dd class="col-sm-9" id="deleteSalary"></dd>
-
-                <dt class="col-sm-3">Is Active</dt>
-                <dd class="col-sm-9" id="deleteIsActive"></dd>
+                <dt class="col-sm-3">Title</dt>
+                <dd class="col-sm-9" id="deleteTitle"></dd>
 
                 <dt class="col-sm-3">Created By</dt>
                 <dd class="col-sm-9" id="deleteCreatedBy"></dd>
@@ -60,7 +54,7 @@
                 <button class="btn btn-danger" id="btnConfirmDelete">
                     <i class="bi bi-trash"></i> Delete
                 </button>
-                <a href="/User" class="btn btn-secondary">Cancel</a>
+                <a href="/Note" class="btn btn-secondary">Cancel</a>
             </div>
         </div>
     </div>
@@ -70,7 +64,7 @@
         <div class="spinner-border text-danger" role="status">
             <span class="visually-hidden">Deleting...</span>
         </div>
-        <p class="mt-2 text-muted">Deleting user...</p>
+        <p class="mt-2 text-muted">Deleting note...</p>
     </div>
 
     <!-- Alert Container -->
@@ -80,46 +74,48 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var isAdmin = (window.currentUserRole === 'Admin');
+            var currentUserRole = window.currentUserRole || '';
+            var isAdmin = (currentUserRole === 'Admin');
+
+            // Check permission - only Admin can delete
             if (!isAdmin) {
                 $('#loadingSpinner').hide();
                 $('#alertContainer').html(
-                    '<div class="alert alert-danger">You do not have permission to delete users.</div>'
+                    '<div class="alert alert-danger">You do not have permission to delete notes.</div>'
                 );
                 return;
             }
 
-            // Extract user ID from URL: /User/Delete/{id}
+            // Extract note ID from URL: /Note/Delete/{id}
             var pathParts = window.location.pathname.split('/');
-            var userId = decodeURIComponent(pathParts[pathParts.length - 1]);
+            var noteId = parseInt(pathParts[pathParts.length - 1]);
 
-            if (!userId) {
+            if (!noteId) {
                 $('#loadingSpinner').hide();
-                $('#errorAlert').text('Invalid user ID.').show();
+                $('#errorAlert').text('Invalid note ID.').show();
                 return;
             }
 
-            // Load user data
+            // Load note data
             $.ajax({
-                url: '/User/GetById/' + encodeURIComponent(userId),
+                url: '/Note/GetById/' + noteId,
                 type: 'GET',
-                success: function (user) {
+                success: function (note) {
                     $('#loadingSpinner').hide();
 
-                    if (!user) {
+                    if (!note) {
                         $('#notFoundAlert').show();
                         return;
                     }
 
-                    $('#deleteUserId').text(escapeHtml(user.userId || ''));
-                    $('#deleteUsername').text(escapeHtml(user.username || ''));
-                    $('#deleteRoleId').text(user.roleId != null ? user.roleId : '-');
-                    $('#deletePhoneNumber').text(escapeHtml(user.phoneNumber || '-'));
-                    $('#deleteStartDate').text(user.startDate ? new Date(user.startDate).toLocaleDateString() : '-');
-                    $('#deleteSalary').text(user.salary != null ? parseFloat(user.salary).toFixed(2) : '-');
-                    $('#deleteIsActive').text(user.isActive ? 'Yes' : 'No');
-                    $('#deleteCreatedBy').text(escapeHtml(user.createdBy || '-'));
-                    $('#deleteCreatedDate').text(user.createdDate ? new Date(user.createdDate).toLocaleString() : '-');
+                    var noteType = note.noteType === 1 ? 'Technical' : (note.noteType === 2 ? 'Behavioral' : note.noteType || '-');
+
+                    $('#deleteNoteId').text(note.noteId || '');
+                    $('#deleteUserId').text(note.userId || '-');
+                    $('#deleteNoteType').text(noteType);
+                    $('#deleteTitle').text(note.title || '');
+                    $('#deleteCreatedBy').text(note.createdBy || '-');
+                    $('#deleteCreatedDate').text(note.createdDate ? new Date(note.createdDate).toLocaleString() : '-');
 
                     $('#deleteCard').show();
                 },
@@ -127,8 +123,10 @@
                     $('#loadingSpinner').hide();
                     if (xhr.status === 404) {
                         $('#notFoundAlert').show();
+                    } else if (xhr.status === 403) {
+                        $('#permissionDenied').show();
                     } else {
-                        var msg = xhr.responseText || 'Failed to load user.';
+                        var msg = xhr.responseText || 'Failed to load note.';
                         $('#errorAlert').text(msg).show();
                     }
                 }
@@ -136,11 +134,11 @@
 
             // Confirm delete
             $('#btnConfirmDelete').on('click', function () {
-                var id = $('#deleteUserId').text();
+                var id = parseInt($('#deleteNoteId').text());
 
                 if (!id) {
                     $('#alertContainer').html(
-                        '<div class="alert alert-danger">Invalid user ID. Cannot delete.</div>'
+                        '<div class="alert alert-danger">Invalid note ID. Cannot delete.</div>'
                     );
                     return;
                 }
@@ -150,23 +148,23 @@
                 $('#alertContainer').empty();
 
                 $.ajax({
-                    url: '/User/Delete/' + encodeURIComponent(id),
+                    url: '/Note/Delete/' + id,
                     type: 'DELETE',
                     success: function (response) {
                         $('#deletingSpinner').hide();
-                        var message = (response && response.message) ? response.message : 'User deleted successfully!';
+                        var message = (response && response.message) ? response.message : 'Note deleted successfully!';
                         $('#alertContainer').html(
                             '<div class="alert alert-success">' + message + ' Redirecting...</div>'
                         );
                         setTimeout(function () {
-                            window.location.href = '/User';
+                            window.location.href = '/Note';
                         }, 1000);
                     },
                     error: function (xhr) {
                         $('#deletingSpinner').hide();
                         $('#btnConfirmDelete').prop('disabled', false);
 
-                        var msg = 'Failed to delete user.';
+                        var msg = 'Failed to delete note.';
                         if (xhr.responseJSON) {
                             if (xhr.responseJSON.title) {
                                 msg = xhr.responseJSON.title;
@@ -183,11 +181,6 @@
                     }
                 });
             });
-
-            function escapeHtml(str) {
-                if (!str) return '';
-                return $('<span>').text(str).html();
-            }
         });
     </script>
 }

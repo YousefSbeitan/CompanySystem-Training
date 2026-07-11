@@ -21,10 +21,59 @@ public class RoleController : Controller
     }
 
 
-    // GET: /Role
+    // GET: /Role (MVC View)
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Index(
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+
+    // GET: /Role/Create (MVC View)
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+
+    // GET: /Role/Edit/{id} (MVC View)
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public IActionResult Edit(
+        int id)
+    {
+        return View();
+    }
+
+
+    // GET: /Role/Details/{id} (MVC View)
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public IActionResult Details(
+        int id)
+    {
+        return View();
+    }
+
+
+    // GET: /Role/Delete/{id} (MVC View)
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [ActionName("Delete")]
+    public IActionResult DeleteView(
+        int id)
+    {
+        return View();
+    }
+
+
+    // API: GET /Role/GetAll
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -51,10 +100,10 @@ public class RoleController : Controller
     }
 
 
-    // GET: /Role/Details/1
+    // API: GET /Role/GetById/1
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Details(
+    public async Task<IActionResult> GetById(
         int id)
     {
         try

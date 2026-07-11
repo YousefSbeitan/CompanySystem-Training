@@ -1,16 +1,16 @@
 @{
-    ViewData["Title"] = "Department Details";
+    ViewData["Title"] = "Role Details";
 }
 
 <div class="container-fluid">
-    <h1 class="h3 mb-3">Department Details</h1>
+    <h1 class="h3 mb-3">Role Details</h1>
 
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="text-center my-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-2 text-muted">Loading department details...</p>
+        <p class="mt-2 text-muted">Loading role details...</p>
     </div>
 
     <!-- Error -->
@@ -19,19 +19,16 @@
     <!-- Detail Card -->
     <div id="detailCard" class="card" style="display:none;">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-bold">Department Information</span>
-            <span class="badge bg-secondary" id="detailDepartmentId"></span>
+            <span class="fw-bold">Role Information</span>
+            <span class="badge bg-secondary" id="detailRoleId"></span>
         </div>
         <div class="card-body">
             <dl class="row mb-0">
-                <dt class="col-sm-3">Department ID</dt>
-                <dd class="col-sm-9" id="detailDepartmentIdDisplay"></dd>
+                <dt class="col-sm-3">Role ID</dt>
+                <dd class="col-sm-9" id="detailRoleIdDisplay"></dd>
 
-                <dt class="col-sm-3">Department Name</dt>
-                <dd class="col-sm-9" id="detailDepartmentName"></dd>
-
-                <dt class="col-sm-3">Manager</dt>
-                <dd class="col-sm-9" id="detailManagerId"></dd>
+                <dt class="col-sm-3">Role Name</dt>
+                <dd class="col-sm-9" id="detailRoleName"></dd>
 
                 <dt class="col-sm-3">Created By</dt>
                 <dd class="col-sm-9" id="detailCreatedBy"></dd>
@@ -47,7 +44,7 @@
             </dl>
         </div>
         <div class="card-footer">
-            <a href="/Department" class="btn btn-secondary">Back to List</a>
+            <a href="/Role" class="btn btn-secondary">Back to List</a>
             <button class="btn btn-warning admin-only" id="btnEditFromDetails" style="display:none;">
                 <i class="bi bi-pencil"></i> Edit
             </button>
@@ -56,12 +53,7 @@
 
     <!-- Not Found -->
     <div id="notFoundAlert" class="alert alert-warning" style="display:none;">
-        Department not found.
-    </div>
-
-    <!-- Permission Denied -->
-    <div id="permissionDeniedAlert" class="alert alert-danger" style="display:none;">
-        You do not have permission to view department details.
+        Role not found.
     </div>
 </div>
 
@@ -73,38 +65,37 @@
                 $('.admin-only').show();
             }
 
-            // Extract department ID from URL: /Department/Details/{id}
+            // Extract role ID from URL: /Role/Details/{id}
             var pathParts = window.location.pathname.split('/');
-            var departmentId = parseInt(pathParts[pathParts.length - 1]);
+            var roleId = parseInt(pathParts[pathParts.length - 1]);
 
-            if (!departmentId) {
+            if (!roleId) {
                 $('#loadingSpinner').hide();
-                $('#errorAlert').text('Invalid department ID.').show();
+                $('#errorAlert').text('Invalid role ID.').show();
                 return;
             }
 
             $.ajax({
-                url: '/Department/GetById/' + departmentId,
+                url: '/Role/GetById/' + roleId,
                 type: 'GET',
-                success: function (dept) {
+                success: function (role) {
                     $('#loadingSpinner').hide();
 
-                    if (!dept) {
+                    if (!role) {
                         $('#notFoundAlert').show();
                         return;
                     }
 
-                    $('#detailDepartmentId').text('#' + (dept.departmentId || dept.departmentID || ''));
-                    $('#detailDepartmentIdDisplay').text(dept.departmentId || dept.departmentID || '');
-                    $('#detailDepartmentName').text(dept.departmentName || '');
-                    $('#detailManagerId').text(dept.managerId || '-');
-                    $('#detailCreatedBy').text(dept.createdBy || '-');
-                    $('#detailCreatedDate').text(dept.createdDate ? new Date(dept.createdDate).toLocaleString() : '-');
-                    $('#detailUpdatedBy').text(dept.updatedBy || '-');
-                    $('#detailUpdatedDate').text(dept.updatedDate ? new Date(dept.updatedDate).toLocaleString() : '-');
+                    $('#detailRoleId').text('#' + (role.roleId || role.roleID || ''));
+                    $('#detailRoleIdDisplay').text(role.roleId || role.roleID || '');
+                    $('#detailRoleName').text(role.roleName || '');
+                    $('#detailCreatedBy').text(role.createdBy || '-');
+                    $('#detailCreatedDate').text(role.createdDate ? new Date(role.createdDate).toLocaleString() : '-');
+                    $('#detailUpdatedBy').text(role.updatedBy || '-');
+                    $('#detailUpdatedDate').text(role.updatedDate ? new Date(role.updatedDate).toLocaleString() : '-');
 
                     if (isAdmin) {
-                        $('#btnEditFromDetails').data('id', dept.departmentId || dept.departmentID).show();
+                        $('#btnEditFromDetails').data('id', role.roleId || role.roleID).show();
                     }
 
                     $('#detailCard').show();
@@ -113,10 +104,8 @@
                     $('#loadingSpinner').hide();
                     if (xhr.status === 404) {
                         $('#notFoundAlert').show();
-                    } else if (xhr.status === 403) {
-                        $('#permissionDeniedAlert').show();
                     } else {
-                        var msg = xhr.responseText || 'An error occurred while loading department details.';
+                        var msg = xhr.responseText || 'An error occurred while loading role details.';
                         $('#errorAlert').text(msg).show();
                     }
                 }
@@ -125,7 +114,7 @@
             // Edit button on details page
             $(document).on('click', '#btnEditFromDetails', function () {
                 var id = $(this).data('id');
-                window.location.href = '/Department/Edit/' + id;
+                window.location.href = '/Role/Edit/' + id;
             });
         });
     </script>
