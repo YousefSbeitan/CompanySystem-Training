@@ -193,7 +193,7 @@ public class UserService : IUserService
                     "Username is required.");
 
 
-            if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+            if (string.IsNullOrWhiteSpace(dto.Password))
                 throw new BusinessException(
                     "Password is required.");
 
@@ -252,6 +252,9 @@ public class UserService : IUserService
             var user =
                 UserMapper.ToEntity(dto);
 
+            user.PasswordHash =
+                PasswordHasher.HashPassword(
+                    dto.Password);
 
             user.UserId =
                 UserIdGenerator.Generate(

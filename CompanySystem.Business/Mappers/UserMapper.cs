@@ -31,7 +31,7 @@ public static class UserMapper
         return new User
         {
             Username = dto.Username,
-            PasswordHash = dto.PasswordHash,
+            PasswordHash = string.Empty,
             RoleId = dto.RoleId,
             DepartmentId = dto.DepartmentId,
             PhoneNumber = dto.PhoneNumber,

@@ -25,46 +25,6 @@ public class AuthController : ControllerBase
     }
 
 
-    // POST: api/Auth/Register
-    [HttpPost("Register")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Register(
-        [FromBody] RegisterDto dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(
-                ModelState);
-
-
-        try
-        {
-            var result =
-                await _authService.RegisterAsync(
-                    dto);
-
-
-            return Ok(
-                result);
-        }
-        catch (ResourceNotFoundException ex)
-        {
-            return NotFound(
-                ex.Message);
-        }
-        catch (BusinessException ex)
-        {
-            return BadRequest(
-                ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(
-                500,
-                ex.Message);
-        }
-    }
-
-
     // POST: api/Auth/Login
     [HttpPost("Login")]
     [AllowAnonymous]
