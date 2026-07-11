@@ -5,6 +5,8 @@ using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Helpers;
+using CompanySystem.Shared.Requests;
+using CompanySystem.Shared.Responses;
 
 namespace CompanySystem.Business.Services;
 
@@ -22,7 +24,8 @@ public class UserService : IUserService
     }
 
 
-    public async Task<IEnumerable<UserDto>> GetAllAsync()
+    public async Task<PagedResponse<UserDto>> GetAllAsync(
+        PaginationFilterRequest request)
     {
         try
         {
@@ -30,7 +33,66 @@ public class UserService : IUserService
                 await _userRepository.FindAsync(
                     u => !u.IsDeleted);
 
-            return users.Select(UserMapper.ToDto);
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                users = users.Where(
+                    u =>
+                    u.UserId.ToLower()
+                        .Contains(request.Search.ToLower())
+                    ||
+                    u.Username.ToLower()
+                        .Contains(request.Search.ToLower())
+                    ||
+                    u.PhoneNumber.Contains(request.Search));
+            }
+
+
+            users = request.SortBy?.ToLower() switch
+            {
+                "username" => request.IsDescending
+                    ? users.OrderByDescending(u => u.Username)
+                    : users.OrderBy(u => u.Username),
+
+
+                "salary" => request.IsDescending
+                    ? users.OrderByDescending(u => u.Salary)
+                    : users.OrderBy(u => u.Salary),
+
+
+                "startdate" => request.IsDescending
+                    ? users.OrderByDescending(u => u.StartDate)
+                    : users.OrderBy(u => u.StartDate),
+
+
+                "createddate" => request.IsDescending
+                    ? users.OrderByDescending(u => u.CreatedDate)
+                    : users.OrderBy(u => u.CreatedDate),
+
+
+                _ => users.OrderBy(u => u.UserId)
+            };
+
+
+            var totalRecords =
+                users.Count();
+
+
+            var pagedUsers =
+                users
+                .Skip(
+                    (request.PageNumber - 1)
+                    * request.PageSize)
+                .Take(request.PageSize)
+                .Select(UserMapper.ToDto)
+                .ToList();
+
+
+            return new PagedResponse<UserDto>(
+                pagedUsers,
+                request.PageNumber,
+                request.PageSize,
+                totalRecords);
         }
         catch (Exception ex)
         {
@@ -48,7 +110,6 @@ public class UserService : IUserService
                 throw new BusinessException(
                     "User id is required.");
 
-
             var user =
                 await _userRepository.FirstOrDefaultAsync(
                     u => u.UserId == userId &&
@@ -57,7 +118,9 @@ public class UserService : IUserService
 
             if (user == null)
                 throw new ResourceNotFoundException(
-                    "User", userId);
+                    "User",
+                    userId);
+
 
 
             return UserMapper.ToDto(user);
@@ -124,8 +187,8 @@ public class UserService : IUserService
                         u.Username.ToLower()
                         == dto.Username.ToLower()
                         ||
-                        u.PhoneNumber
-                        == dto.PhoneNumber
+                        u.PhoneNumber == dto.PhoneNumber
+
                     )
                     &&
                     !u.IsDeleted);
@@ -159,9 +222,13 @@ public class UserService : IUserService
 
             if (dto.IsLeader)
             {
-                user.LeaderId = user.UserId;
+                user.LeaderId =
+                    user.UserId;
 
-                department.ManagerId = user.UserId;
+
+                department.ManagerId =
+                    user.UserId;
+
 
                 _departmentRepository.Update(
                     department);
@@ -170,8 +237,11 @@ public class UserService : IUserService
             {
                 if (string.IsNullOrEmpty(
                     department.ManagerId))
+                {
+
                     throw new BusinessException(
                         "This department does not have a leader yet.");
+                }
 
 
                 user.LeaderId =
@@ -183,6 +253,7 @@ public class UserService : IUserService
 
 
             await _userRepository.AddAsync(user);
+
 
             await _userRepository.SaveChangesAsync();
 
@@ -205,7 +276,8 @@ public class UserService : IUserService
     }
 
 
-    public async Task<UserDto> UpdateAsync(EditUserDto dto)
+    public async Task<UserDto> UpdateAsync(
+        EditUserDto dto)
     {
         try
         {
@@ -254,8 +326,7 @@ public class UserService : IUserService
                         u.Username.ToLower()
                         == dto.Username.ToLower()
                         ||
-                        u.PhoneNumber
-                        == dto.PhoneNumber
+                        u.PhoneNumber == dto.PhoneNumber
                     )
                     &&
                     !u.IsDeleted);
@@ -273,7 +344,8 @@ public class UserService : IUserService
 
             if (dto.IsLeader)
             {
-                user.LeaderId = user.UserId;
+                user.LeaderId =
+                    user.UserId;
             }
             else
             {
@@ -294,7 +366,6 @@ public class UserService : IUserService
                     throw new BusinessException(
                         "This department does not have a leader yet.");
 
-
                 user.LeaderId =
                     department.ManagerId;
             }
@@ -305,6 +376,7 @@ public class UserService : IUserService
 
 
             _userRepository.Update(user);
+
 
             await _userRepository.SaveChangesAsync();
 
@@ -327,7 +399,8 @@ public class UserService : IUserService
     }
 
 
-    public async Task<bool> DeleteAsync(string userId)
+    public async Task<bool> DeleteAsync(
+        string userId)
     {
         try
         {
@@ -355,6 +428,7 @@ public class UserService : IUserService
 
 
             _userRepository.Update(user);
+
 
             await _userRepository.SaveChangesAsync();
 

@@ -4,6 +4,8 @@ using CompanySystem.Business.Mappers;
 using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
+using CompanySystem.Shared.Responses;
 
 namespace CompanySystem.Business.Services;
 
@@ -17,7 +19,10 @@ public class DepartmentService : IDepartmentService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
+
+    public async Task<PagedResponse<DepartmentDto>> GetAllAsync(
+        PaginationFilterRequest request)
+
     {
         try
         {
@@ -25,8 +30,52 @@ public class DepartmentService : IDepartmentService
                 await _repository.FindAsync(
                     d => !d.IsDeleted);
 
-            return departments.Select(
-                DepartmentMapper.ToDto);
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                departments = departments.Where(
+                    d => d.DepartmentName.ToLower()
+                        .Contains(request.Search.ToLower()));
+            }
+
+
+            // Sorting
+            departments = request.SortBy?.ToLower() switch
+            {
+                "departmentname" => request.IsDescending
+                    ? departments.OrderByDescending(d => d.DepartmentName)
+                    : departments.OrderBy(d => d.DepartmentName),
+
+                "createddate" => request.IsDescending
+                    ? departments.OrderByDescending(d => d.CreatedDate)
+                    : departments.OrderBy(d => d.CreatedDate),
+
+                _ => departments.OrderBy(d => d.DepartmentId)
+            };
+
+
+            var totalRecords =
+                departments.Count();
+
+
+            // Pagination
+            var pagedDepartments =
+                departments
+                    .Skip(
+                        (request.PageNumber - 1)
+                        * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(DepartmentMapper.ToDto)
+                    .ToList();
+
+
+            return new PagedResponse<DepartmentDto>(
+                pagedDepartments,
+                request.PageNumber,
+                request.PageSize,
+                totalRecords);
+
         }
         catch (Exception ex)
         {
@@ -48,6 +97,7 @@ public class DepartmentService : IDepartmentService
                 await _repository.FirstOrDefaultAsync(
                     d => d.DepartmentId == departmentId &&
                          !d.IsDeleted);
+
 
             if (department == null)
                 throw new ResourceNotFoundException(
@@ -97,6 +147,7 @@ public class DepartmentService : IDepartmentService
                     == dto.DepartmentName.ToLower()
                     &&
                     !d.IsDeleted);
+
 
             if (existingDepartment != null)
                 throw new BusinessException(

@@ -4,6 +4,8 @@ using CompanySystem.Business.Mappers;
 using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
+using CompanySystem.Shared.Responses;
 
 namespace CompanySystem.Business.Services;
 
@@ -22,7 +24,8 @@ public class NoteService : INoteService
     }
 
 
-    public async Task<IEnumerable<NoteDto>> GetAllAsync()
+    public async Task<PagedResponse<NoteDto>> GetAllAsync(
+        PaginationFilterRequest request)
     {
         try
         {
@@ -30,7 +33,65 @@ public class NoteService : INoteService
                 await _noteRepository.FindAsync(
                     n => !n.IsDeleted);
 
-            return notes.Select(NoteMapper.ToDto);
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                notes = notes.Where(
+                    n =>
+                    n.Title.ToLower()
+                        .Contains(request.Search.ToLower())
+                    ||
+                    n.Content.ToLower()
+                        .Contains(request.Search.ToLower())
+                    ||
+                    n.NoteType.ToString()
+                        .ToLower()
+                        .Contains(request.Search.ToLower()));
+            }
+
+
+            // Sorting
+            notes = request.SortBy?.ToLower() switch
+            {
+                "title" => request.IsDescending
+                    ? notes.OrderByDescending(n => n.Title)
+                    : notes.OrderBy(n => n.Title),
+
+
+                "notetype" => request.IsDescending
+                    ? notes.OrderByDescending(n => n.NoteType)
+                    : notes.OrderBy(n => n.NoteType),
+
+
+                "createddate" => request.IsDescending
+                    ? notes.OrderByDescending(n => n.CreatedDate)
+                    : notes.OrderBy(n => n.CreatedDate),
+
+
+                _ => notes.OrderBy(n => n.NoteId)
+            };
+
+
+            var totalRecords =
+                notes.Count();
+
+
+            var pagedNotes =
+                notes
+                .Skip(
+                    (request.PageNumber - 1)
+                    * request.PageSize)
+                .Take(request.PageSize)
+                .Select(NoteMapper.ToDto)
+                .ToList();
+
+
+            return new PagedResponse<NoteDto>(
+                pagedNotes,
+                request.PageNumber,
+                request.PageSize,
+                totalRecords);
         }
         catch (Exception ex)
         {
@@ -79,7 +140,8 @@ public class NoteService : INoteService
     }
 
 
-    public async Task<NoteDto> CreateAsync(CreateNoteDto dto)
+    public async Task<NoteDto> CreateAsync(
+        CreateNoteDto dto)
     {
         try
         {
@@ -129,6 +191,7 @@ public class NoteService : INoteService
 
             await _noteRepository.AddAsync(note);
 
+
             await _noteRepository.SaveChangesAsync();
 
 
@@ -150,7 +213,8 @@ public class NoteService : INoteService
     }
 
 
-    public async Task<NoteDto?> UpdateAsync(EditNoteDto dto)
+    public async Task<NoteDto?> UpdateAsync(
+        EditNoteDto dto)
     {
         try
         {
@@ -201,6 +265,7 @@ public class NoteService : INoteService
 
             _noteRepository.Update(note);
 
+
             await _noteRepository.SaveChangesAsync();
 
 
@@ -222,7 +287,8 @@ public class NoteService : INoteService
     }
 
 
-    public async Task<bool> DeleteAsync(int noteId)
+    public async Task<bool> DeleteAsync(
+        int noteId)
     {
         try
         {
@@ -250,6 +316,7 @@ public class NoteService : INoteService
 
 
             _noteRepository.Update(note);
+
 
             await _noteRepository.SaveChangesAsync();
 

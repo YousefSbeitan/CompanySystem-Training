@@ -1,6 +1,7 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -9,18 +10,24 @@ public class MainPageSectionController : Controller
 {
     private readonly IMainPageSectionService _mainPageSectionService;
 
-    public MainPageSectionController(IMainPageSectionService mainPageSectionService)
+    public MainPageSectionController(
+        IMainPageSectionService mainPageSectionService)
     {
         _mainPageSectionService = mainPageSectionService;
     }
 
+
     // GET: /MainPageSection
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        [FromQuery] PaginationFilterRequest request)
     {
         try
         {
-            var sections = await _mainPageSectionService.GetAllAsync();
+            var sections =
+                await _mainPageSectionService.GetAllAsync(
+                    request);
+
 
             return Ok(sections);
         }
@@ -34,13 +41,18 @@ public class MainPageSectionController : Controller
         }
     }
 
+
     // GET: /MainPageSection/Details/1
     [HttpGet]
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(
+        int id)
     {
         try
         {
-            var section = await _mainPageSectionService.GetByIdAsync(id);
+            var section =
+                await _mainPageSectionService.GetByIdAsync(
+                    id);
+
 
             return Ok(section);
         }
@@ -57,17 +69,23 @@ public class MainPageSectionController : Controller
             return StatusCode(500, ex.Message);
         }
     }
+
 
     // POST: /MainPageSection/Create
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateMainPageSectionDto dto)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateMainPageSectionDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var section = await _mainPageSectionService.CreateAsync(dto);
+            var section =
+                await _mainPageSectionService.CreateAsync(
+                    dto);
+
 
             return Ok(section);
         }
@@ -81,16 +99,22 @@ public class MainPageSectionController : Controller
         }
     }
 
+
     // PUT: /MainPageSection/Edit
     [HttpPut]
-    public async Task<IActionResult> Edit([FromBody] EditMainPageSectionDto dto)
+    public async Task<IActionResult> Edit(
+        [FromBody] EditMainPageSectionDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
-            var section = await _mainPageSectionService.UpdateAsync(dto);
+            var section =
+                await _mainPageSectionService.UpdateAsync(
+                    dto);
+
 
             return Ok(section);
         }
@@ -108,17 +132,22 @@ public class MainPageSectionController : Controller
         }
     }
 
+
     // DELETE: /MainPageSection/Delete/1
     [HttpDelete]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id)
     {
         try
         {
-            await _mainPageSectionService.DeleteAsync(id);
+            await _mainPageSectionService.DeleteAsync(
+                id);
+
 
             return Ok(new
             {
-                Message = "Main page section deleted successfully."
+                Message =
+                    "Main page section deleted successfully."
             });
         }
         catch (ResourceNotFoundException ex)

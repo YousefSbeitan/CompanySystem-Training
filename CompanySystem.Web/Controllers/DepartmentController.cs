@@ -1,6 +1,7 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -9,7 +10,8 @@ public class DepartmentController : Controller
 {
     private readonly IDepartmentService _departmentService;
 
-    public DepartmentController(IDepartmentService departmentService)
+    public DepartmentController(
+        IDepartmentService departmentService)
     {
         _departmentService = departmentService;
     }
@@ -58,12 +60,15 @@ public class DepartmentController : Controller
 
     // API: GET /Department/GetAll
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] PaginationFilterRequest request)
     {
         try
         {
             var departments =
-                await _departmentService.GetAllAsync();
+                await _departmentService.GetAllAsync(
+                    request);
+
 
             return Ok(departments);
         }
@@ -80,12 +85,15 @@ public class DepartmentController : Controller
 
     // API: GET /Department/GetById/1
     [HttpGet]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(
+        int id)
     {
         try
         {
             var department =
-                await _departmentService.GetByIdAsync(id);
+                await _departmentService.GetByIdAsync(
+                    id);
+
 
             return Ok(department);
         }
@@ -112,10 +120,13 @@ public class DepartmentController : Controller
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
             var department =
-                await _departmentService.CreateAsync(dto);
+                await _departmentService.CreateAsync(
+                    dto);
+
 
             return Ok(department);
         }
@@ -138,10 +149,13 @@ public class DepartmentController : Controller
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+
         try
         {
             var department =
-                await _departmentService.UpdateAsync(dto);
+                await _departmentService.UpdateAsync(
+                    dto);
+
 
             return Ok(department);
         }
@@ -162,11 +176,14 @@ public class DepartmentController : Controller
 
     // API: DELETE /Department/Delete/1
     [HttpDelete]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id)
     {
         try
         {
-            await _departmentService.DeleteAsync(id);
+            await _departmentService.DeleteAsync(
+                id);
+
 
             return Ok(new
             {

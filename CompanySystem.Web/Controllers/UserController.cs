@@ -1,6 +1,7 @@
 ﻿using CompanySystem.Business.DTOs;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
+using CompanySystem.Shared.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -9,7 +10,8 @@ public class UserController : Controller
 {
     private readonly IUserService _userService;
 
-    public UserController(IUserService userService)
+    public UserController(
+        IUserService userService)
     {
         _userService = userService;
     }
@@ -58,12 +60,15 @@ public class UserController : Controller
 
     // API: GET /User/GetAll
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] PaginationFilterRequest request)
     {
         try
         {
             var users =
-                await _userService.GetAllAsync();
+                await _userService.GetAllAsync(
+                    request);
+
 
             return Ok(users);
         }
@@ -80,12 +85,15 @@ public class UserController : Controller
 
     // API: GET /User/GetById/EMP001
     [HttpGet]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(
+        string id)
     {
         try
         {
             var user =
-                await _userService.GetByIdAsync(id);
+                await _userService.GetByIdAsync(
+                    id);
+
 
             return Ok(user);
         }
@@ -116,7 +124,9 @@ public class UserController : Controller
         try
         {
             var user =
-                await _userService.CreateAsync(dto);
+                await _userService.CreateAsync(
+                    dto);
+
 
             return Ok(user);
         }
@@ -143,7 +153,9 @@ public class UserController : Controller
         try
         {
             var user =
-                await _userService.UpdateAsync(dto);
+                await _userService.UpdateAsync(
+                    dto);
+
 
             return Ok(user);
         }
@@ -169,7 +181,9 @@ public class UserController : Controller
     {
         try
         {
-            await _userService.DeleteAsync(id);
+            await _userService.DeleteAsync(
+                id);
+
 
             return Ok(new
             {
