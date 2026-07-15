@@ -4,6 +4,7 @@ using CompanySystem.Data.Context;
 using CompanySystem.Data.Repositories.Implementations;
 using CompanySystem.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using CompanySystem.Business.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +22,7 @@ builder.Services.AddScoped(
     typeof(GenericRepository<>));
 
 // Register Business Services
-builder.Services.AddScoped<IRoleService, RoleService>();
-builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<INoteService, NoteService>();
-builder.Services.AddScoped<IMainPageSectionService, MainPageSectionService>();
+builder.Services.AddBusinessServices();
 
 var app = builder.Build();
 
