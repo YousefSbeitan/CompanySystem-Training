@@ -452,14 +452,11 @@ public class UserService : IUserService
 
             var user =
                 await _userRepository.FirstOrDefaultAsync(
-                    u => u.UserId == userId &&
-                         !u.IsDeleted);
+                    u => u.UserId == userId && !u.IsDeleted);
 
 
             if (user == null)
-                throw new ResourceNotFoundException(
-                    "User",
-                    userId);
+                throw new ResourceNotFoundException("User", userId);
 
 
             user.IsDeleted = true;
