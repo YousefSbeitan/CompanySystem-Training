@@ -39,7 +39,7 @@ public class CreateUserDto
         255,
         ErrorMessage = "Password must not exceed 255 characters.")]
     [Display(Name = "Password")]
-    public string PasswordHash { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 
 
     [Required(ErrorMessage = "Role is required.")]
