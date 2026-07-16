@@ -1,0 +1,33 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CompanySystem.Web.Controllers;
+
+public class AuthPageController : Controller
+{
+    [HttpGet]
+    [AllowAnonymous]
+    [Route("Auth/Login")]
+    public IActionResult Login()
+    {
+        return View("~/Views/Auth/Login.cshtml");
+    }
+
+
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [Route("Auth/Register")]
+    public IActionResult Register()
+    {
+        return View("~/Views/Auth/Register.cshtml");
+    }
+
+
+    [HttpGet]
+    [AllowAnonymous]
+    [Route("Auth/AccessDenied")]
+    public IActionResult AccessDenied()
+    {
+        return View("~/Views/Auth/AccessDenied.cshtml");
+    }
+}
