@@ -101,10 +101,8 @@ public class UserService : IUserService
 
         ValidateUserData(dto.Username,dto.PhoneNumber,dto.DepartmentId,dto.Salary);
 
-        if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+        if (string.IsNullOrWhiteSpace(dto.Password))
             throw new BusinessException("Password is required.");
-
-        
 
         dto.Username = dto.Username.Trim();
         dto.PhoneNumber = dto.PhoneNumber.Trim();
@@ -116,6 +114,8 @@ public class UserService : IUserService
             var department = await GetDepartmentAsync(dto.DepartmentId!.Value);
 
             var user = UserMapper.ToEntity(dto);
+
+            user.PasswordHash = PasswordHasher.HashPassword(dto.Password);
 
             user.UserId = UserIdGenerator.Generate(dto.DepartmentId);
 

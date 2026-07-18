@@ -2,6 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -19,6 +20,7 @@ public class MainPageSectionController : Controller
 
     // GET: /MainPageSection
     [HttpGet]
+    [RequirePermission("MainPageSections.View")]
     public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -44,6 +46,7 @@ public class MainPageSectionController : Controller
 
     // GET: /MainPageSection/Details/1
     [HttpGet]
+    [RequirePermission("MainPageSections.View")]
     public async Task<IActionResult> Details(
         int id)
     {
@@ -73,6 +76,7 @@ public class MainPageSectionController : Controller
 
     // POST: /MainPageSection/Create
     [HttpPost]
+    [RequirePermission("MainPageSections.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateMainPageSectionDto dto)
     {
@@ -102,6 +106,7 @@ public class MainPageSectionController : Controller
 
     // PUT: /MainPageSection/Edit
     [HttpPut]
+    [RequirePermission("MainPageSections.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditMainPageSectionDto dto)
     {
@@ -135,6 +140,7 @@ public class MainPageSectionController : Controller
 
     // DELETE: /MainPageSection/Delete/1
     [HttpDelete]
+    [RequirePermission("MainPageSections.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {

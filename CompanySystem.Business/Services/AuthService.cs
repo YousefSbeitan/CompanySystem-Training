@@ -13,6 +13,8 @@ public class AuthService : IAuthService
     private readonly IGenericRepository<User> _userRepository;
     private readonly IGenericRepository<Role> _roleRepository;
     private readonly IGenericRepository<RefreshToken> _refreshTokenRepository;
+    private readonly IGenericRepository<UserPermission> _userPermissionRepository;
+    private readonly IGenericRepository<Permission> _permissionRepository;
     private readonly JwtService _jwtService;
 
 
@@ -20,11 +22,15 @@ public class AuthService : IAuthService
         IGenericRepository<User> userRepository,
         IGenericRepository<Role> roleRepository,
         IGenericRepository<RefreshToken> refreshTokenRepository,
+        IGenericRepository<UserPermission> userPermissionRepository,
+        IGenericRepository<Permission> permissionRepository,
         JwtService jwtService)
     {
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _refreshTokenRepository = refreshTokenRepository;
+        _userPermissionRepository = userPermissionRepository;
+        _permissionRepository = permissionRepository;
         _jwtService = jwtService;
     }
 
@@ -253,10 +259,33 @@ public class AuthService : IAuthService
         User user,
         string roleName)
     {
+        // Load user's permissions
+        var userPermissions =
+            await _userPermissionRepository.FindAsync(
+                up => up.UserId == user.UserId && !up.IsDeleted);
+
+        var permissionIds = userPermissions
+            .Select(up => up.PermissionId)
+            .ToList();
+
+        var permissions = new List<string>();
+
+        if (permissionIds.Count > 0)
+        {
+            var permissionEntities =
+                await _permissionRepository.FindAsync(
+                    p => permissionIds.Contains(p.PermissionId) && !p.IsDeleted);
+
+            permissions = permissionEntities
+                .Select(p => p.PermissionName)
+                .ToList();
+        }
+
         var accessToken =
             _jwtService.GenerateAccessToken(
                 user,
-                roleName);
+                roleName,
+                permissions);
 
 
         var refreshToken =

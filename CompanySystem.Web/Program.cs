@@ -1,3 +1,4 @@
+using CompanySystem.Business.Extensions;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Services;
 using CompanySystem.Business.Services.Security;
@@ -32,15 +33,7 @@ builder.Services.AddScoped(
 
 
 // Register Business Services
-builder.Services.AddScoped<IRoleService, RoleService>();
-
-builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-
-builder.Services.AddScoped<IUserService, UserService>();
-
-builder.Services.AddScoped<INoteService, NoteService>();
-
-builder.Services.AddScoped<IMainPageSectionService, MainPageSectionService>();
+builder.Services.AddBusinessServices();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 

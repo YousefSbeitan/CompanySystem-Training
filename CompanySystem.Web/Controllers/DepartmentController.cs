@@ -2,6 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -60,6 +61,7 @@ public class DepartmentController : Controller
 
     // API: GET /Department/GetAll
     [HttpGet]
+    [RequirePermission("Departments.View")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -85,6 +87,7 @@ public class DepartmentController : Controller
 
     // API: GET /Department/GetById/1
     [HttpGet]
+    [RequirePermission("Departments.View")]
     public async Task<IActionResult> GetById(
         int id)
     {
@@ -114,6 +117,7 @@ public class DepartmentController : Controller
 
     // API: POST /Department/Create
     [HttpPost]
+    [RequirePermission("Departments.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateDepartmentDto dto)
     {
@@ -143,6 +147,7 @@ public class DepartmentController : Controller
 
     // API: PUT /Department/Edit
     [HttpPut]
+    [RequirePermission("Departments.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditDepartmentDto dto)
     {
@@ -176,6 +181,7 @@ public class DepartmentController : Controller
 
     // API: DELETE /Department/Delete/1
     [HttpDelete]
+    [RequirePermission("Departments.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {

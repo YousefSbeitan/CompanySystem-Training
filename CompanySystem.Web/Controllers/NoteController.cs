@@ -2,6 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -19,6 +20,7 @@ public class NoteController : Controller
 
     // GET: /Note
     [HttpGet]
+    [RequirePermission("Notes.View")]
     public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -44,6 +46,7 @@ public class NoteController : Controller
 
     // GET: /Note/Details/1
     [HttpGet]
+    [RequirePermission("Notes.View")]
     public async Task<IActionResult> Details(
         int id)
     {
@@ -73,6 +76,7 @@ public class NoteController : Controller
 
     // POST: /Note/Create
     [HttpPost]
+    [RequirePermission("Notes.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateNoteDto dto)
     {
@@ -106,6 +110,7 @@ public class NoteController : Controller
 
     // PUT: /Note/Edit
     [HttpPut]
+    [RequirePermission("Notes.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditNoteDto dto)
     {
@@ -139,6 +144,7 @@ public class NoteController : Controller
 
     // DELETE: /Note/Delete/1
     [HttpDelete]
+    [RequirePermission("Notes.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {

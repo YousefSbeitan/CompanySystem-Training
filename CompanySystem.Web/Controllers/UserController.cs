@@ -2,6 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -60,6 +61,7 @@ public class UserController : Controller
 
     // API: GET /User/GetAll
     [HttpGet]
+    [RequirePermission("Users.View")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -85,6 +87,7 @@ public class UserController : Controller
 
     // API: GET /User/GetById/EMP001
     [HttpGet]
+    [RequirePermission("Users.View")]
     public async Task<IActionResult> GetById(
         string id)
     {
@@ -114,6 +117,7 @@ public class UserController : Controller
 
     // API: POST /User/Create
     [HttpPost]
+    [RequirePermission("Users.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateUserDto dto)
     {
@@ -143,6 +147,7 @@ public class UserController : Controller
 
     // API: PUT /User/Edit
     [HttpPut]
+    [RequirePermission("Users.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditUserDto dto)
     {
@@ -176,6 +181,7 @@ public class UserController : Controller
 
     // API: DELETE /User/Delete/EMP001
     [HttpDelete]
+    [RequirePermission("Users.Delete")]
     public async Task<IActionResult> Delete(
         string id)
     {

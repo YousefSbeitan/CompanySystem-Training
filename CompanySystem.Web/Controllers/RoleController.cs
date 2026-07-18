@@ -2,6 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -18,6 +19,7 @@ public class RoleController : Controller
 
     // GET: /Role
     [HttpGet]
+    [RequirePermission("Roles.View")]
     public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -42,6 +44,7 @@ public class RoleController : Controller
 
     // GET: /Role/Details/1
     [HttpGet]
+    [RequirePermission("Roles.View")]
     public async Task<IActionResult> Details(
         int id)
     {
@@ -70,6 +73,7 @@ public class RoleController : Controller
 
     // POST: /Role/Create
     [HttpPost]
+    [RequirePermission("Roles.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateRoleDto dto)
     {
@@ -98,6 +102,7 @@ public class RoleController : Controller
 
     // PUT: /Role/Edit
     [HttpPut]
+    [RequirePermission("Roles.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditRoleDto dto)
     {
@@ -130,6 +135,7 @@ public class RoleController : Controller
 
     // DELETE: /Role/Delete/1
     [HttpDelete]
+    [RequirePermission("Roles.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {

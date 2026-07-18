@@ -21,7 +21,8 @@ public class JwtService
 
     public string GenerateAccessToken(
         User user,
-        string roleName)
+        string roleName,
+        List<string>? permissions = null)
     {
         var claims =
             new List<Claim>
@@ -40,6 +41,18 @@ public class JwtService
                     ClaimTypes.Role,
                     roleName)
             };
+
+
+        if (permissions != null)
+        {
+            foreach (var permission in permissions)
+            {
+                claims.Add(
+                    new Claim(
+                        "Permission",
+                        permission));
+            }
+        }
 
 
         var key =
