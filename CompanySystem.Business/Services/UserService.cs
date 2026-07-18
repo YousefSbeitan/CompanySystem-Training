@@ -23,7 +23,10 @@ public class UserService : IUserService
         _departmentRepository = departmentRepository;
     }
 
-    public async Task<PagedResponse<UserDto>> GetAllAsync(PaginationFilterRequest request)
+    public async Task<PagedResponse<UserDto>> GetAllAsync(
+        PaginationFilterRequest request,
+        string currentUserId,
+        string currentUserRole)
     {
         try
         {
@@ -31,6 +34,13 @@ public class UserService : IUserService
 
             // Manager can see himself + his employees only
             if (currentUserRole == "Manager")
+            {
+                users = users.Where(u =>
+                    u.UserId == currentUserId ||
+                    u.LeaderId == currentUserId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
             {
                 var search = request.Search.Trim().ToLower();
 
@@ -40,23 +50,11 @@ public class UserService : IUserService
                     u.PhoneNumber.Contains(search));
             }
 
-            if (!string.IsNullOrWhiteSpace(
-                    request.Search))
+            users = request.SortBy?.ToLower() switch
             {
-                users =
-                    users.Where(
-                        u =>
-                        u.UserId.ToLower()
-                            .Contains(
-                                request.Search.ToLower())
-                        ||
-                        u.Username.ToLower()
-                            .Contains(
-                                request.Search.ToLower())
-                        ||
-                        u.PhoneNumber.Contains(
-                            request.Search));
-            }
+                "username" => request.IsDescending
+                    ? users.OrderByDescending(u => u.Username)
+                    : users.OrderBy(u => u.Username),
 
                 "salary" => request.IsDescending
                     ? users.OrderByDescending(u => u.Salary)
@@ -286,5 +284,35 @@ public class UserService : IUserService
 
         if (salary < 0)
             throw new BusinessException("Salary cannot be negative.");
+    }
+
+    public async Task<bool> CanManageUserAsync(
+        string managerId,
+        string userId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(managerId) ||
+                string.IsNullOrWhiteSpace(userId))
+            {
+                return false;
+            }
+
+            var user =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.UserId == userId &&
+                         !u.IsDeleted);
+
+            if (user == null)
+                return false;
+
+            return user.LeaderId == managerId;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to check user permission.",
+                ex);
+        }
     }
 }

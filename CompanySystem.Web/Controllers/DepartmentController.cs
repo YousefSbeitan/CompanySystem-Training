@@ -3,6 +3,7 @@ using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
 using CompanySystem.Web.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
