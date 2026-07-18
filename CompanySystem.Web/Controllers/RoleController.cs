@@ -2,7 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
-using Microsoft.AspNetCore.Authorization;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -23,57 +23,8 @@ public class RoleController : Controller
 
     // GET: /Role (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Index()
-    {
-        return View();
-    }
-
-
-    // GET: /Role/Create (MVC View)
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-
-    // GET: /Role/Edit/{id} (MVC View)
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Edit(
-        int id)
-    {
-        return View();
-    }
-
-
-    // GET: /Role/Details/{id} (MVC View)
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Details(
-        int id)
-    {
-        return View();
-    }
-
-
-    // GET: /Role/Delete/{id} (MVC View)
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    [ActionName("Delete")]
-    public IActionResult DeleteView(
-        int id)
-    {
-        return View();
-    }
-
-
-    // API: GET /Role/GetAll
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetAll(
+    [RequirePermission("Roles.View")]
+    public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -102,8 +53,8 @@ public class RoleController : Controller
 
     // API: GET /Role/GetById/1
     [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetById(
+    [RequirePermission("Roles.View")]
+    public async Task<IActionResult> Details(
         int id)
     {
         try
@@ -137,7 +88,7 @@ public class RoleController : Controller
 
     // POST: /Role/Create
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Roles.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateRoleDto dto)
     {
@@ -172,7 +123,7 @@ public class RoleController : Controller
 
     // PUT: /Role/Edit
     [HttpPut]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Roles.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditRoleDto dto)
     {
@@ -212,7 +163,7 @@ public class RoleController : Controller
 
     // DELETE: /Role/Delete/1
     [HttpDelete]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Roles.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {

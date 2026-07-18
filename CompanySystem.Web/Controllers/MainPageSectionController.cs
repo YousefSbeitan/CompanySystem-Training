@@ -2,7 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
-using Microsoft.AspNetCore.Authorization;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -23,57 +23,8 @@ public class MainPageSectionController : Controller
 
     // MVC: GET /MainPageSection
     [HttpGet]
-    [AllowAnonymous]
-    public IActionResult Index()
-    {
-        return View();
-    }
-
-
-    // MVC: GET /MainPageSection/Create
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-
-    // MVC: GET /MainPageSection/Edit/{id}
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public IActionResult Edit(
-        int id)
-    {
-        return View();
-    }
-
-
-    // MVC: GET /MainPageSection/Details/{id}
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult Details(
-        int id)
-    {
-        return View();
-    }
-
-
-    // MVC: GET /MainPageSection/Delete/{id}
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    [ActionName("Delete")]
-    public IActionResult DeleteView(
-        int id)
-    {
-        return View();
-    }
-
-
-    // API: GET /MainPageSection/GetAll
-    [HttpGet]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetAll(
+    [RequirePermission("MainPageSections.View")]
+    public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -102,8 +53,8 @@ public class MainPageSectionController : Controller
 
     // API: GET /MainPageSection/GetById/1
     [HttpGet]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetById(
+    [RequirePermission("MainPageSections.View")]
+    public async Task<IActionResult> Details(
         int id)
     {
         try
@@ -137,7 +88,7 @@ public class MainPageSectionController : Controller
 
     // POST: /MainPageSection/Create
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("MainPageSections.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateMainPageSectionDto dto)
     {
@@ -172,7 +123,7 @@ public class MainPageSectionController : Controller
 
     // PUT: /MainPageSection/Edit
     [HttpPut]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("MainPageSections.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditMainPageSectionDto dto)
     {
@@ -212,7 +163,7 @@ public class MainPageSectionController : Controller
 
     // DELETE: /MainPageSection/Delete/1
     [HttpDelete]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("MainPageSections.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {

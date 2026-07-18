@@ -1,3 +1,4 @@
+using CompanySystem.Business.Extensions;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Business.Services;
 using CompanySystem.Business.Services.Security;
@@ -32,15 +33,93 @@ builder.Services.AddScoped(
 
 
 // Register Business Services
-builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddBusinessServices();
 
-builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
-builder.Services.AddScoped<IUserService, UserService>();
 
-builder.Services.AddScoped<INoteService, NoteService>();
+// Register JWT Service
+builder.Services.AddScoped<JwtService>();
 
-builder.Services.AddScoped<IMainPageSectionService, MainPageSectionService>();
+
+// Composite Authentication: Cookie for MVC pages, JWT for API calls
+builder.Services
+    .AddAuthentication(
+        options =>
+        {
+            options.DefaultAuthenticateScheme = "Composite";
+            options.DefaultChallengeScheme = "Composite";
+        })
+    .AddPolicyScheme("Composite", "Composite",
+        options =>
+        {
+            options.ForwardDefaultSelector = context =>
+            {
+                // API routes use JWT Bearer
+                if (context.Request.Path.StartsWithSegments("/api"))
+                    return JwtBearerDefaults.AuthenticationScheme;
+
+                // MVC pages use Cookie
+                return CookieAuthenticationDefaults.AuthenticationScheme;
+            };
+        })
+    .AddCookie(
+        options =>
+        {
+            options.LoginPath = "/Auth/Login";
+            options.AccessDeniedPath = "/Auth/AccessDenied";
+            options.Cookie.Name = "CompanySystem.Auth";
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.ExpireTimeSpan = TimeSpan.FromHours(8);
+            options.SlidingExpiration = true;
+        })
+    .AddJwtBearer(
+        options =>
+        {
+            options.TokenValidationParameters =
+                new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+
+                    ValidateAudience = true,
+
+                    ValidateLifetime = true,
+
+                    ValidateIssuerSigningKey = true,
+
+
+                    ValidIssuer =
+                        builder.Configuration[
+                            "Jwt:Issuer"],
+
+
+                    ValidAudience =
+                        builder.Configuration[
+                            "Jwt:Audience"],
+
+
+                    IssuerSigningKey =
+                        new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(
+                                builder.Configuration[
+                                    "Jwt:Key"]!))
+                };
+
+            // Also accept JWT from cookie for MVC requests that carry it
+            options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var token = context.Request.Cookies["CompanySystem.Jwt"];
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        context.Token = token;
+                    }
+                    return Task.CompletedTask;
+                }
+            };
+        });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 

@@ -2,7 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
-using Microsoft.AspNetCore.Authorization;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -76,7 +76,7 @@ public class UserController : Controller
     // API: GET /User/GetAll
     // Admin + Manager
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager,HR")]
+    [RequirePermission("Users.View")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -127,6 +127,7 @@ public class UserController : Controller
 
 
     [HttpGet]
+    [RequirePermission("Users.View")]
     public async Task<IActionResult> GetById(
         string id)
     {
@@ -164,7 +165,7 @@ public class UserController : Controller
 
     // API: POST /User/Create
     [HttpPost]
-    [Authorize(Roles = "Admin,HR")]
+    [RequirePermission("Users.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateUserDto dto)
     {
@@ -200,7 +201,7 @@ public class UserController : Controller
     // API: PUT /User/Edit
     // Admin only because DTO contains Role, Salary, Department
     [HttpPut]
-    [Authorize(Roles = "Admin,HR")]
+    [RequirePermission("Users.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditUserDto dto)
     {
@@ -237,7 +238,7 @@ public class UserController : Controller
     }
 
     [HttpDelete]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Users.Delete")]
     public async Task<IActionResult> Delete(
         string id)
     {

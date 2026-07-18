@@ -2,7 +2,7 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
-using Microsoft.AspNetCore.Authorization;
+using CompanySystem.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -27,54 +27,8 @@ public class NoteController : Controller
 
     // GET: /Note (MVC View)
     [HttpGet]
-    public IActionResult Index()
-    {
-        return View();
-    }
-
-
-    // GET: /Note/Create (MVC View)
-    [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-
-    // GET: /Note/Edit/{id} (MVC View)
-    [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
-    public IActionResult Edit(
-        int id)
-    {
-        return View();
-    }
-
-
-    // GET: /Note/Details/{id} (MVC View)
-    [HttpGet]
-    public IActionResult Details(
-        int id)
-    {
-        return View();
-    }
-
-
-    // GET: /Note/Delete/{id} (MVC View)
-    [HttpGet]
-    [Authorize(Roles = "Admin")]
-    [ActionName("Delete")]
-    public IActionResult DeleteView(
-        int id)
-    {
-        return View();
-    }
-
-
-    // API: GET /Note/GetAll
-    [HttpGet]
-    public async Task<IActionResult> GetAll(
+    [RequirePermission("Notes.View")]
+    public async Task<IActionResult> Index(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -117,7 +71,8 @@ public class NoteController : Controller
 
     // API: GET /Note/GetById/1
     [HttpGet]
-    public async Task<IActionResult> GetById(
+    [RequirePermission("Notes.View")]
+    public async Task<IActionResult> Details(
         int id)
     {
         try
@@ -174,7 +129,7 @@ public class NoteController : Controller
 
     // POST: /Note/Create
     [HttpPost]
-    [Authorize(Roles = "Admin,Manager,HR")]
+    [RequirePermission("Notes.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateNoteDto dto)
     {
@@ -246,7 +201,7 @@ public class NoteController : Controller
 
     // PUT: /Note/Edit
     [HttpPut]
-    [Authorize(Roles = "Admin,Manager,HR")]
+    [RequirePermission("Notes.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditNoteDto dto)
     {
@@ -310,7 +265,7 @@ public class NoteController : Controller
 
     // DELETE: /Note/Delete/1
     [HttpDelete]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Notes.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {
