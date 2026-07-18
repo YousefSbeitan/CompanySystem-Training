@@ -23,30 +23,21 @@ public class UserService : IUserService
         _departmentRepository = departmentRepository;
     }
 
-
-    public async Task<PagedResponse<UserDto>> GetAllAsync(
-        PaginationFilterRequest request)
+    public async Task<PagedResponse<UserDto>> GetAllAsync(PaginationFilterRequest request)
     {
         try
         {
-            var users =
-                await _userRepository.FindAsync(
-                    u => !u.IsDeleted);
-
+            var users = await _userRepository.FindAsync(u => !u.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
-                users = users.Where(
-                    u =>
-                    u.UserId.ToLower()
-                        .Contains(request.Search.ToLower())
-                    ||
-                    u.Username.ToLower()
-                        .Contains(request.Search.ToLower())
-                    ||
-                    u.PhoneNumber.Contains(request.Search));
-            }
+                var search = request.Search.Trim().ToLower();
 
+                users = users.Where(u =>
+                    u.UserId.ToLower().Contains(search) ||
+                    u.Username.ToLower().Contains(search) ||
+                    u.PhoneNumber.Contains(search));
+            }
 
             users = request.SortBy?.ToLower() switch
             {
@@ -54,399 +45,233 @@ public class UserService : IUserService
                     ? users.OrderByDescending(u => u.Username)
                     : users.OrderBy(u => u.Username),
 
-
                 "salary" => request.IsDescending
                     ? users.OrderByDescending(u => u.Salary)
                     : users.OrderBy(u => u.Salary),
-
 
                 "startdate" => request.IsDescending
                     ? users.OrderByDescending(u => u.StartDate)
                     : users.OrderBy(u => u.StartDate),
 
-
                 "createddate" => request.IsDescending
                     ? users.OrderByDescending(u => u.CreatedDate)
                     : users.OrderBy(u => u.CreatedDate),
 
-
                 _ => users.OrderBy(u => u.UserId)
             };
 
+            var totalRecords = users.Count();
 
-            var totalRecords =
-                users.Count();
-
-
-            var pagedUsers =
-                users
-                .Skip(
-                    (request.PageNumber - 1)
-                    * request.PageSize)
+            var pagedUsers = users
+                .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .Select(UserMapper.ToDto)
                 .ToList();
 
-
-            return new PagedResponse<UserDto>(
-                pagedUsers,
-                request.PageNumber,
-                request.PageSize,
-                totalRecords);
+            return new PagedResponse<UserDto>(pagedUsers, request.PageNumber, request.PageSize, totalRecords);
         }
         catch (Exception ex)
         {
-            throw new BusinessException(
-                "Failed to retrieve users.", ex);
+            throw new BusinessException("Failed to retrieve users.", ex);
         }
     }
 
-
     public async Task<UserDto> GetByIdAsync(string userId)
     {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new BusinessException("User id is required.");
+
         try
         {
-            if (string.IsNullOrWhiteSpace(userId))
-                throw new BusinessException(
-                    "User id is required.");
-
-            var user =
-                await _userRepository.FirstOrDefaultAsync(
-                    u => u.UserId == userId &&
-                         !u.IsDeleted);
-
-
-            if (user == null)
-                throw new ResourceNotFoundException(
-                    "User",
-                    userId);
-
-
+            var user = await GetUserAsync(userId);
 
             return UserMapper.ToDto(user);
         }
-        catch (ResourceNotFoundException)
-        {
-            throw;
-        }
-        catch (BusinessException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not BusinessException && ex is not ResourceNotFoundException)
         {
             throw new BusinessException(
                 "Failed to retrieve the user.", ex);
         }
     }
 
-
     public async Task<UserDto> CreateAsync(CreateUserDto dto)
     {
+        if (dto == null)
+            throw new BusinessException("User data is required.");
+
+        ValidateUserData(dto.Username,dto.PhoneNumber,dto.DepartmentId,dto.Salary);
+
+        if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+            throw new BusinessException("Password is required.");
+
+        
+
+        dto.Username = dto.Username.Trim();
+        dto.PhoneNumber = dto.PhoneNumber.Trim();
+
         try
         {
-            if (dto == null)
-                throw new BusinessException(
-                    "User data is required.");
+            await EnsureUserIsUniqueAsync(dto.Username,dto.PhoneNumber);
 
+            var department = await GetDepartmentAsync(dto.DepartmentId!.Value);
 
-            if (string.IsNullOrWhiteSpace(dto.Username))
-                throw new BusinessException(
-                    "Username is required.");
+            var user = UserMapper.ToEntity(dto);
 
-
-            if (string.IsNullOrWhiteSpace(dto.PasswordHash))
-                throw new BusinessException(
-                    "Password is required.");
-
-
-            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
-                throw new BusinessException(
-                    "Phone number is required.");
-
-
-            if (dto.DepartmentId == null ||
-                dto.DepartmentId <= 0)
-                throw new BusinessException(
-                    "Department is required.");
-
-
-            if (dto.Salary < 0)
-                throw new BusinessException(
-                    "Salary cannot be negative.");
-
-
-            dto.Username = dto.Username.Trim();
-            dto.PhoneNumber = dto.PhoneNumber.Trim();
-
-
-            var existingUser =
-                await _userRepository.FirstOrDefaultAsync(
-                    u =>
-                    (
-                        u.Username.ToLower()
-                        == dto.Username.ToLower()
-                        ||
-                        u.PhoneNumber == dto.PhoneNumber
-
-                    )
-                    &&
-                    !u.IsDeleted);
-
-
-            if (existingUser != null)
-                throw new BusinessException(
-                    "Username or phone number already exists.");
-
-
-            var department =
-                await _departmentRepository.FirstOrDefaultAsync(
-                    d => d.DepartmentId == dto.DepartmentId &&
-                         !d.IsDeleted);
-
-
-            if (department == null)
-                throw new ResourceNotFoundException(
-                    "Department",
-                    dto.DepartmentId);
-
-
-            var user =
-                UserMapper.ToEntity(dto);
-
-
-            user.UserId =
-                UserIdGenerator.Generate(
-                    dto.DepartmentId);
-
+            user.UserId = UserIdGenerator.Generate(dto.DepartmentId);
 
             if (dto.IsLeader)
             {
-                user.LeaderId =
-                    user.UserId;
+                user.LeaderId = user.UserId;
 
+                department.ManagerId = user.UserId;
 
-                department.ManagerId =
-                    user.UserId;
-
-
-                _departmentRepository.Update(
-                    department);
+                _departmentRepository.Update(department);
             }
             else
             {
-                if (string.IsNullOrEmpty(
-                    department.ManagerId))
+                if (string.IsNullOrWhiteSpace(department.ManagerId))
                 {
-
-                    throw new BusinessException(
-                        "This department does not have a leader yet.");
+                    throw new BusinessException("This department does not have a leader yet.");
                 }
 
-
-                user.LeaderId =
-                    department.ManagerId;
+                user.LeaderId = department.ManagerId;
             }
-
 
             user.CreatedBy = "System";
 
-
             await _userRepository.AddAsync(user);
-
-
             await _userRepository.SaveChangesAsync();
-
 
             return UserMapper.ToDto(user);
         }
-        catch (ResourceNotFoundException)
+        catch (Exception ex) when (ex is not BusinessException && ex is not ResourceNotFoundException)
         {
-            throw;
-        }
-        catch (BusinessException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException(
-                "Failed to create the user.", ex);
+            throw new BusinessException("Failed to create the user.", ex);
         }
     }
 
-
-    public async Task<UserDto> UpdateAsync(
-        EditUserDto dto)
+    public async Task<UserDto> UpdateAsync(EditUserDto dto)
     {
+        if (dto == null)
+            throw new BusinessException("User data is required.");
+
+        if (string.IsNullOrWhiteSpace(dto.UserId))
+            throw new BusinessException("User id is required.");
+
+        ValidateUserData(dto.Username, dto.PhoneNumber, dto.DepartmentId, dto.Salary);
+
+        dto.Username = dto.Username.Trim();
+        dto.PhoneNumber = dto.PhoneNumber.Trim();
+
         try
         {
-            if (dto == null)
-                throw new BusinessException(
-                    "User data is required.");
+            var user = await GetUserAsync(dto.UserId);
 
+            await EnsureUserIsUniqueAsync(dto.Username,dto.PhoneNumber,dto.UserId);
 
-            if (string.IsNullOrWhiteSpace(dto.UserId))
-                throw new BusinessException(
-                    "User id is required.");
-
-
-            if (string.IsNullOrWhiteSpace(dto.Username))
-                throw new BusinessException(
-                    "Username is required.");
-
-
-            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
-                throw new BusinessException(
-                    "Phone number is required.");
-
-
-            dto.Username = dto.Username.Trim();
-            dto.PhoneNumber = dto.PhoneNumber.Trim();
-
-
-            var user =
-                await _userRepository.FirstOrDefaultAsync(
-                    u => u.UserId == dto.UserId &&
-                         !u.IsDeleted);
-
-
-            if (user == null)
-                throw new ResourceNotFoundException(
-                    "User",
-                    dto.UserId);
-
-
-            var duplicateUser =
-                await _userRepository.FirstOrDefaultAsync(
-                    u =>
-                    u.UserId != dto.UserId
-                    &&
-                    (
-                        u.Username.ToLower()
-                        == dto.Username.ToLower()
-                        ||
-                        u.PhoneNumber == dto.PhoneNumber
-                    )
-                    &&
-                    !u.IsDeleted);
-
-
-            if (duplicateUser != null)
-                throw new BusinessException(
-                    "Username or phone number already exists.");
-
-
-            UserMapper.UpdateEntity(
-                user,
-                dto);
-
+            UserMapper.UpdateEntity(user, dto);
 
             if (dto.IsLeader)
             {
-                user.LeaderId =
-                    user.UserId;
+                user.LeaderId = user.UserId;
             }
             else
             {
-                var department =
-                    await _departmentRepository.FirstOrDefaultAsync(
-                        d => d.DepartmentId == dto.DepartmentId &&
-                             !d.IsDeleted);
+                var department = await GetDepartmentAsync(dto.DepartmentId!.Value);
 
+                if (string.IsNullOrWhiteSpace(department.ManagerId))
+                    throw new BusinessException("This department does not have a leader yet.");
 
-                if (department == null)
-                    throw new ResourceNotFoundException(
-                        "Department",
-                        dto.DepartmentId);
-
-
-                if (string.IsNullOrEmpty(
-                    department.ManagerId))
-                    throw new BusinessException(
-                        "This department does not have a leader yet.");
-
-                user.LeaderId =
-                    department.ManagerId;
+                user.LeaderId = department.ManagerId;
             }
-
 
             user.UpdatedBy = "System";
             user.UpdatedDate = DateTime.UtcNow;
 
-
             _userRepository.Update(user);
 
-
             await _userRepository.SaveChangesAsync();
-
 
             return UserMapper.ToDto(user);
         }
-        catch (ResourceNotFoundException)
+        catch (Exception ex) when (ex is not BusinessException && ex is not ResourceNotFoundException)
         {
-            throw;
-        }
-        catch (BusinessException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new BusinessException(
-                "Failed to update the user.", ex);
+            throw new BusinessException("Failed to update the user.",ex);
         }
     }
 
-
-    public async Task<bool> DeleteAsync(
-        string userId)
+    public async Task<bool> DeleteAsync(string userId)
     {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new BusinessException("User id is required.");
+
         try
         {
-            if (string.IsNullOrWhiteSpace(userId))
-                throw new BusinessException(
-                    "User id is required.");
-
-
-            var user =
-                await _userRepository.FirstOrDefaultAsync(
-                    u => u.UserId == userId &&
-                         !u.IsDeleted);
-
-
-            if (user == null)
-                throw new ResourceNotFoundException(
-                    "User",
-                    userId);
-
+            var user = await GetUserAsync(userId);
 
             user.IsDeleted = true;
-
             user.UpdatedBy = "System";
             user.UpdatedDate = DateTime.UtcNow;
 
-
             _userRepository.Update(user);
-
 
             await _userRepository.SaveChangesAsync();
 
-
             return true;
         }
-        catch (ResourceNotFoundException)
+        catch (Exception ex) when (ex is not BusinessException && ex is not ResourceNotFoundException)
         {
-            throw;
+            throw new BusinessException("Failed to delete the user.",ex);
         }
-        catch (BusinessException)
+    }
+
+    private async Task EnsureUserIsUniqueAsync(string username,string phoneNumber,string? excludedUserId = null)
+    {
+        var existingUser =await _userRepository.FirstOrDefaultAsync(u =>!u.IsDeleted &&
+                    (excludedUserId == null || u.UserId != excludedUserId) &&
+                    (u.Username.ToLower() == username.ToLower() || u.PhoneNumber == phoneNumber));
+
+        if (existingUser != null)
         {
-            throw;
+            throw new BusinessException("Username or phone number already exists.");
         }
-        catch (Exception ex)
+    }
+
+    private async Task<Department> GetDepartmentAsync(
+    int departmentId)
+    {
+        var department = await _departmentRepository.FirstOrDefaultAsync(d => d.DepartmentId == departmentId &&!d.IsDeleted);
+
+        if (department == null)
         {
-            throw new BusinessException(
-                "Failed to delete the user.", ex);
+            throw new ResourceNotFoundException("Department",departmentId);
         }
+
+        return department;
+    }
+
+    private async Task<User> GetUserAsync(string userId)
+    {
+        var user = await _userRepository.FirstOrDefaultAsync(u => u.UserId == userId &&!u.IsDeleted);
+
+        if (user == null)
+            throw new ResourceNotFoundException("User",userId);
+
+        return user;
+    }
+
+    private static void ValidateUserData(string username,string phoneNumber,int? departmentId,decimal salary)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            throw new BusinessException("Username is required.");
+
+        if (string.IsNullOrWhiteSpace(phoneNumber))
+            throw new BusinessException("Phone number is required.");
+
+        if (departmentId == null || departmentId <= 0)
+            throw new BusinessException("Department is required.");
+
+        if (salary < 0)
+            throw new BusinessException("Salary cannot be negative.");
     }
 }
