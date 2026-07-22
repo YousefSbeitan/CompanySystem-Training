@@ -247,7 +247,6 @@ window.currentUserRole
 Do NOT modify:
 
 - Login
-- Register
 - Logout logic
 - Token storage
 

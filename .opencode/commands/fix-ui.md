@@ -11,7 +11,6 @@ Read:
 
 - CompanySystem.Web/Views/Shared/_Layout.cshtml
 - CompanySystem.Web/Views/Auth/Login.cshtml
-- CompanySystem.Web/Views/Auth/Register.cshtml
 - CompanySystem.Web/Views/Auth/AccessDenied.cshtml
 - CompanySystem.Web/Views/Home/Dashboard.cshtml
 - CompanySystem.Web/wwwroot/js/auth.js
@@ -39,23 +38,15 @@ Wrap sidebar and navbar in _Layout.cshtml with:
 
 @if (!ViewContext.HttpContext.Request.Path.StartsWithSegments("/Auth"))
 
-Login/Register pages must be standalone centered cards.
+Login page must be a standalone centered card.
 
-3. Fix Register Access
-
-Remove public Register link from login page.
-
-Register is admin-only (/Auth/Register).
-
-Non-admin users see Access Denied.
-
-4. Add Password Toggle
+3. Add Password Toggle
 
 Add show/hide button to all password fields.
 
 Use Bootstrap input-group and btn-outline-secondary.
 
-5. Fix Login Redirect
+4. Fix Login Redirect
 
 Login → /Home/Dashboard
 
@@ -63,7 +54,7 @@ Logout → /Auth/Login
 
 401 → /Auth/Login
 
-6. Fix Sidebar Navigation
+5. Fix Sidebar Navigation
 
 Links point to MVC controllers only.
 
@@ -81,19 +72,19 @@ Examples:
 
 Never link to /GetAll, /GetById, /Create, /Edit, /Delete.
 
-7. Fix Permission Based Menu Visibility
+6. Fix Permission Based Menu Visibility
 
 Use window.currentUserPermissions to show/hide menu items.
 
 Fallback to window.currentUserRole if permissions unavailable.
 
-8. Fix Authentication State
+7. Fix Authentication State
 
 Ensure currentUser, currentUserPermissions, currentUserRole are set on login.
 
 Clear on logout.
 
-9. Fix Dashboard UI
+8. Fix Dashboard UI
 
 Polish cards, widgets, statistics, header, layout.
 
@@ -101,7 +92,7 @@ Remove placeholders.
 
 Fix loading indicators.
 
-10. Fix Loading States
+9. Fix Loading States
 
 Add spinners during AJAX.
 
@@ -109,41 +100,41 @@ Hide on success/failure.
 
 Never leave "Loading..." permanently visible.
 
-11. Fix Bootstrap Collapse
+10. Fix Bootstrap Collapse
 
 Arrow rotation on expand/collapse.
 
 Sync state with icon.
 
-12. Fix CRUD Pages
+11. Fix CRUD Pages
 
 Polish tables, forms, pagination, sorting, filtering.
 
 Permission-based button visibility.
 
-13. Replace alert()
+12. Replace alert()
 
 Use Bootstrap alerts for messages.
 
 Use Bootstrap modals for confirmations.
 
-14. Verify Navigation
+13. Verify Navigation
 
 Every link opens an MVC Razor page, never a JSON endpoint.
 
-15. Fix Responsive Design
+14. Fix Responsive Design
 
 Desktop, tablet, mobile all work correctly.
 
-16. Ensure Visual Consistency
+15. Ensure Visual Consistency
 
 Same color scheme, card style, typography across all pages.
 
-17. Fix JavaScript Issues
+16. Fix JavaScript Issues
 
 Remove duplicate events, duplicate AJAX calls, broken selectors.
 
-18. Clean CSS
+17. Clean CSS
 
 Remove unused, duplicate, conflicting styles.
 
@@ -172,8 +163,6 @@ Final verification:
 ✓ Login redirects to /Home/Dashboard
 
 ✓ Password toggle works
-
-✓ Register is admin-only
 
 ✓ JWT cookie set for MVC navigation
 

@@ -102,7 +102,6 @@ build-auth-ui
 This agent MUST NOT create or modify:
 
 - Login pages
-- Register pages
 - Logout functionality
 - Authentication flow
 - Token handling

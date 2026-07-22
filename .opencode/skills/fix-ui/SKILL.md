@@ -55,7 +55,6 @@ Frontend Fixes:
 
 - MVC auth flow (JWT + Cookie composite scheme)
 - Login page standalone layout (no sidebar/navbar)
-- Register page access control (admin-only)
 - Login redirect flow
 - Password visibility toggle
 - Authentication state
@@ -128,7 +127,6 @@ You MAY create/update:
 Views/Auth/
 
 - Login.cshtml
-- Register.cshtml
 - AccessDenied.cshtml
 
 Views/Home/
@@ -232,9 +230,9 @@ document.cookie = "CompanySystem.Jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00
 
 Problem:
 
-Login/Register pages show sidebar, navbar, admin menu.
+Login page shows sidebar, navbar, admin menu.
 
-They should be standalone clean pages.
+It should be a standalone clean page.
 
 Fix:
 
@@ -247,7 +245,7 @@ In _Layout.cshtml, wrap sidebar + navbar in:
 }
 ```
 
-Login/Register pages should have:
+Login page should have:
 
 - Centered card layout
 - Company branding
@@ -255,27 +253,6 @@ Login/Register pages should have:
 - No navbar
 - No admin menu
 - No footer menu
-
----
-
-# Issue 3 - Register Access Control
-
-Register is admin-only.
-
-Backend uses:
-
-```csharp
-[Authorize(Roles = "Admin")]
-```
-
-on AuthPageController.Register GET.
-
-Fix:
-
-- Remove public Register link from login page
-- Keep Register accessible only via /Auth/Register for Admin users
-- Non-admin users see Access Denied page
-- Menu link for Register only visible to Admin in sidebar
 
 ---
 
@@ -289,7 +266,7 @@ Implementation:
 - Use Bootstrap input-group and btn-outline-secondary
 - Toggle input type between "password" and "text"
 - Update button icon/text accordingly
-- Apply to ALL password fields (Login, Register)
+- Apply to ALL password fields (Login)
 
 ```javascript
 function togglePassword(inputId, btnId) {
@@ -698,8 +675,6 @@ Before finishing verify:
 ✓ Login redirects to /Home/Dashboard
 
 ✓ Password toggle works on all password fields
-
-✓ Register is admin-only (no public link)
 
 ✓ JWT is stored in cookie for MVC navigation
 

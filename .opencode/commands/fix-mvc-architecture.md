@@ -368,8 +368,6 @@ AuthController
 
 Login
 
-Register
-
 Logout
 
 JWT

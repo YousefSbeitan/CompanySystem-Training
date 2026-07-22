@@ -1,6 +1,6 @@
 ---
 name: build-auth-ui
-description: Builds Authentication Razor UI for CompanySystem using existing AuthController. Handles Login, Register, Logout, JWT storage, user state, permission claims, and role exposure for downstream skills without modifying backend security.
+description: Builds Authentication Razor UI for CompanySystem using existing AuthController. Handles Login, Logout, JWT storage, user state, permission claims, and role exposure for downstream skills without modifying backend security.
 ---
 
 # Build Auth UI Skill - ASP.NET Core MVC Authentication Frontend Agent
@@ -45,7 +45,6 @@ Frontend:
 This agent handles:
 
 - Login UI
-- Register UI
 - Logout functionality
 - Authentication state
 - Token storage
@@ -98,8 +97,6 @@ Files:
 
 Login.cshtml
 
-Register.cshtml
-
 AccessDenied.cshtml
 
 
@@ -110,7 +107,6 @@ CompanySystem.Web/Views/Shared/_Layout.cshtml
 ONLY for:
 
 - Login link
-- Register link
 - Logout button
 - Current username display
 - Role based navigation
@@ -189,15 +185,6 @@ POST
 ```
 
 
-Register:
-
-POST
-
-```text
-/api/Auth/Register
-```
-
-
 Refresh Token:
 
 POST
@@ -271,38 +258,6 @@ Redirect:
 ```text
 /
 ```
-
----
-
-# Register Page Rules
-
-Create:
-
-Views/Auth/Register.cshtml
-
-
-Generate fields by reading:
-
-RegisterDto
-
-
-Submit:
-
-```javascript
-POST /api/Auth/Register
-```
-
-using AJAX JSON.
-
-
-Important:
-
-Register requires:
-
-Admin token.
-
-
-Attach Authorization header.
 
 ---
 
@@ -484,12 +439,6 @@ Show:
 - Logout
 
 
-Admin user (role fallback):
-
-Show:
-
-- Register
-
 ---
 
 # Styling
@@ -521,7 +470,6 @@ ALWAYS:
 2. Read:
 
 - LoginDto
-- RegisterDto
 
 3. Detect returned token structure
 
@@ -544,8 +492,6 @@ Before finishing verify:
 ✓ AuthController unchanged
 
 ✓ Login works
-
-✓ Register works with Admin
 
 ✓ Logout works
 

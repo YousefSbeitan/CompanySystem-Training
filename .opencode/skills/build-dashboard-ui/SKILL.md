@@ -79,7 +79,6 @@ The project contains three UI agents:
 Responsible for:
 
 - Login
-- Register
 - Logout functionality
 - Authentication flow
 - Token storage

@@ -725,8 +725,6 @@ Do not modify
 
 Login
 
-Register
-
 Logout
 
 AccessDenied
