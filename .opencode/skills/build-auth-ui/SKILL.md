@@ -1,6 +1,6 @@
 ---
 name: build-auth-ui
-description: Builds Authentication Razor UI for CompanySystem using existing AuthController. Handles Login, Register, Logout, JWT storage, user state and role exposure for build-ui without modifying backend security.
+description: Builds Authentication Razor UI for CompanySystem using existing AuthController. Handles Login, Register, Logout, JWT storage, user state, permission claims, and role exposure for downstream skills without modifying backend security.
 ---
 
 # Build Auth UI Skill - ASP.NET Core MVC Authentication Frontend Agent
@@ -69,10 +69,22 @@ This agent provides:
 ```javascript
 window.currentUser
 
-window.currentUserRole
+window.currentUserPermissions
+
+window.currentUserRole (legacy, prefer permissions)
 ```
 
-for build-ui.
+for build-ui and other downstream skills.
+
+window.currentUserPermissions is an array of permission strings decoded from JWT claim "Permission".
+
+Example:
+
+```javascript
+["Dashboard.View", "Users.View", "Users.Create", "Departments.View"]
+```
+
+Downstream skills use permissions to control UI visibility.
 
 ---
 
@@ -336,6 +348,8 @@ Must handle:
 - Decode JWT
 - Extract username
 - Extract role
+- Extract permission claims
+- Expose current user data
 
 ---
 
@@ -377,24 +391,51 @@ window.currentUser =
 {
  id:"",
  username:"",
- role:""
+ role:"",
+ permissions: []
 };
 ```
 
 Also expose:
 
 ```javascript
-window.currentUserRole
+window.currentUserPermissions
 ```
 
 Example:
 
 ```javascript
-window.currentUserRole =
-window.currentUser.role;
+// Decode JWT payload
+function parseJwt(token) {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    var jsonPayload = decodeURIComponent(
+        atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join('')
+    );
+    return JSON.parse(jsonPayload);
+}
+
+// Extract permission claims
+var decoded = parseJwt(accessToken);
+window.currentUserPermissions = decoded.Permission || [];
+
+// Legacy role support
+window.currentUserRole = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded.role || "";
+
+window.currentUser = {
+    id: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded.nameid || "",
+    username: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || decoded.unique_name || "",
+    role: window.currentUserRole,
+    permissions: window.currentUserPermissions
+};
 ```
 
-build-ui depends on this.
+Downstream skills depend on:
+
+- window.currentUserPermissions for permission-based UI
+- window.currentUserRole for legacy role fallback
 
 ---
 
@@ -439,11 +480,11 @@ Authenticated user:
 Show:
 
 - Username
-- Role
+- Permissions / Role
 - Logout
 
 
-Admin:
+Admin user (role fallback):
 
 Show:
 
@@ -514,9 +555,13 @@ Before finishing verify:
 
 ✓ User role detected
 
-✓ window.currentUserRole exists
+✓ Permission claims extracted
 
-✓ build-ui can read role
+✓ window.currentUserPermissions exists (array of permission strings)
+
+✓ window.currentUserRole exists (legacy fallback)
+
+✓ Downstream skills can read permissions
 
 ✓ No backend security modified
 

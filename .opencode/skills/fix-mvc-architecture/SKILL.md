@@ -379,11 +379,19 @@ Keep every
 
 exactly as it is.
 
+Keep every
+
+[RequirePermission("...")]
+
+exactly as it is.
+
 Never add permissions.
 
 Never remove permissions.
 
 Never change roles.
+
+Never change permission requirements.
 
 Only repair routing.
 

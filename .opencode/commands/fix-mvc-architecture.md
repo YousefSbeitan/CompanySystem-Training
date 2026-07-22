@@ -166,6 +166,12 @@ Never remove
 [Authorize(Roles="...")]
 ```
 
+Never remove
+
+```
+[RequirePermission("...")]
+```
+
 Never change permissions.
 
 Never change roles.

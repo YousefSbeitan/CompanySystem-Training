@@ -15,13 +15,14 @@ Your ONLY task is to generate Razor View files (.cshtml) in `CompanySystem.Web/V
 
 You follow the build-ui skill instructions. You must:
 
-1. Read the entity's Controller to understand actions, endpoints, and DTO types used.
+1. Read the entity's Controller to understand actions, endpoints, DTO types, and [RequirePermission] attributes used.
 2. Read the entity's DTO file to understand properties, data types, and validation rules.
 3. Generate the following views if they don't exist:
-   - Index.cshtml — table listing with action links
-   - Create.cshtml — form for creating
-   - Edit.cshtml — form for editing
-   - Details.cshtml — read-only display
-   - Delete.cshtml — confirmation with display
-4. Use Bootstrap 5 classes, jQuery AJAX, and the exact patterns from existing views.
-5. NEVER modify Business layer, Data layer, controllers, or any file outside `Views/{EntityName}/`.
+   - Index.cshtml — table listing with action links (permission-based visibility)
+   - Create.cshtml — form for creating (gated by Create permission)
+   - Edit.cshtml — form for editing (gated by Edit permission)
+   - Details.cshtml — read-only display (gated by View permission)
+   - Delete.cshtml — confirmation with display (gated by Delete permission)
+4. Map [RequirePermission] attributes from controller actions to permission checks using window.currentUserPermissions.
+5. Use Bootstrap 5 classes, jQuery AJAX, and the exact patterns from existing views.
+6. NEVER modify Business layer, Data layer, or any file outside `Views/{EntityName}/` and controllers (only to add missing MVC view actions).

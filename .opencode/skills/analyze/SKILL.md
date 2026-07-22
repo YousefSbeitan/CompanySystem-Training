@@ -358,19 +358,27 @@ Check:
 
 - AllowAnonymous
 - Authorize
+- [Authorize(Roles)]
+- [RequirePermission]
 - Roles
 - Policies
-- Claims
+- Claims (especially "Permission" claim type)
 - Ownership validation
+- UserPermission records (per-user permission assignment)
+- Permission entities
 
 Detect problems such as:
 
 - Public endpoints that should be protected.
 - Missing role checks.
+- Missing permission checks.
 - Missing ownership checks.
 - Incorrect role names.
+- Incorrect permission names.
 - Broken policy configuration.
 - Insecure authorization flow.
+- Mixed role+permission authorization (incomplete migration).
+- Hard-coded role strings in business logic that should be permission checks.
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Generate professional Dashboard, Layout, Navigation and Branding UI for CompanySystem. Creates application shell using existing Auth UI and CRUD pages.
+description: Generate professional Dashboard, Layout, Navigation and Branding UI for CompanySystem. Creates application shell with permission-based menus using existing Auth UI and CRUD pages.
 agent: ui-builder
 ---
 
@@ -133,30 +133,35 @@ Create link:
 Never invent modules.
 
 
-4. Build Role Based Navigation
+4. Build Permission Based Navigation
 
 Use data provided by build-auth-ui:
 
 ```javascript
 window.currentUser
 
+window.currentUserPermissions
+```
+
+Fallback:
+
+```javascript
 window.currentUserRole
 ```
 
 
-Example:
+Rules:
 
-Admin:
+- Users menu requires "Users.View" permission
+- Departments menu requires "Departments.View" permission
+- Roles menu requires "Roles.View" permission
+- Notes menu requires "Notes.View" permission
+- MainPageSections menu requires "MainPageSections.View" permission
+- Permissions menu requires "Permissions.View" permission
 
-Show:
+Restricted menus hidden by default.
 
-- User management
-- Create/Edit/Delete related links
-
-
-Normal users:
-
-Hide restricted menus.
+Never show links for modules the user cannot access.
 
 
 Never change backend authorization.
@@ -166,23 +171,23 @@ Never change backend authorization.
 
 Use existing endpoints only.
 
+Only load statistics for modules the user has permission to view.
+
 Examples:
 
-Users:
+Users (requires Users.View):
 
 GET:
 
 /User/GetAll
 
-
-Departments:
+Departments (requires Departments.View):
 
 GET:
 
 /Department/GetAll
 
-
-Roles:
+Roles (requires Roles.View):
 
 GET:
 
@@ -190,6 +195,8 @@ GET:
 
 
 Calculate counts from returned data.
+
+Never load data for modules the user cannot access.
 
 
 Support:
@@ -289,6 +296,8 @@ NEVER remove:
 [Authorize]
 
 [Authorize(Roles="...")]
+
+[RequirePermission("...")]
 ```
 
 
@@ -310,7 +319,9 @@ Check:
 
 ✓ Navigation works
 
-✓ Role menus work
+✓ Permission menus work
+
+✓ Fallback role menus work
 
 ✓ CRUD links work
 

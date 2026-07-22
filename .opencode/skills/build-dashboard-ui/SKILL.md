@@ -1,6 +1,6 @@
 ---
 name: build-dashboard-ui
-description: Builds professional ASP.NET Core MVC Dashboard, Layout, Navigation and Branding UI for CompanySystem. Works with build-auth-ui and build-ui without modifying backend logic.
+description: Builds professional ASP.NET Core MVC Dashboard, Layout, Navigation and Branding UI for CompanySystem. Displays modules based on user permissions. Works with build-auth-ui and build-ui without modifying backend logic.
 ---
 
 # Build Dashboard UI Skill - ASP.NET Core MVC Application Shell Agent
@@ -18,7 +18,7 @@ This agent builds ONLY:
 - Navigation System
 - Sidebar / Navbar
 - Company Branding
-- Role Based Menus
+- Permission Based Menus
 - UI Theme
 
 Backend is already completed.
@@ -99,7 +99,8 @@ Only read and use:
 
 ```javascript
 window.currentUser
-window.currentUserRole
+window.currentUserPermissions
+window.currentUserRole (legacy fallback)
 ```
 
 ---
@@ -161,7 +162,7 @@ Purpose:
 - Add navbar
 - Add navigation links
 - Add user menu
-- Add role based menus
+- Add permission based menus
 - Add branding
 
 
@@ -269,6 +270,8 @@ NEVER edit:
 [Authorize]
 
 [Authorize(Roles="Admin")]
+
+[RequirePermission("...")]
 ```
 
 Never:
@@ -336,14 +339,16 @@ Show:
 
 - Company name
 - Current username
-- Current role badge
+- Current role badge (fallback if permissions not available)
 
 Get data from:
 
 ```javascript
 window.currentUser
 
-window.currentUserRole
+window.currentUserPermissions
+
+window.currentUserRole (legacy fallback)
 ```
 
 ---
@@ -386,26 +391,54 @@ Never invent pages.
 
 ---
 
-# Role Based Menu Rules
+# Permission Based Menu Rules
 
 Use:
 
 ```javascript
-let role = window.currentUserRole;
+let permissions = window.currentUserPermissions || [];
 
-if(role === "Admin")
-{
-    $(".admin-only").show();
+function hasAccess(perm) {
+    return permissions.includes(perm);
 }
-else
-{
-    $(".admin-only").hide();
+
+// Show menu only if user has the required permission
+if (hasAccess("Departments.View")) {
+    $(".menu-departments").show();
+}
+
+if (hasAccess("Users.View")) {
+    $(".menu-users").show();
+}
+
+if (hasAccess("Roles.View")) {
+    $(".menu-roles").show();
+}
+
+if (hasAccess("Notes.View")) {
+    $(".menu-notes").show();
+}
+
+if (hasAccess("MainPageSections.View")) {
+    $(".menu-content").show();
+}
+
+if (hasAccess("Permissions.View")) {
+    $(".menu-permissions").show();
 }
 ```
 
+Fallback if permissions unavailable:
+
+Admin → show all menus
+
+Manager → show Users, Departments, Notes
+
+Employee → show Notes, MainPageSections
+
 Restricted menus hidden by default.
 
-Never expose admin links first.
+Never expose unauthorized links first.
 
 ---
 
@@ -413,31 +446,33 @@ Never expose admin links first.
 
 Generate cards from existing modules.
 
+Only show cards the user has permission to access.
+
 Examples:
 
-Users:
+Users (requires Users.View):
 
 - Manage Users
 
-
-Departments:
+Departments (requires Departments.View):
 
 - Manage Departments
 
-
-Roles:
+Roles (requires Roles.View):
 
 - Manage Roles
 
-
-Notes:
+Notes (requires Notes.View):
 
 - Manage Notes
 
-
-MainPageSections:
+MainPageSections (requires MainPageSections.View):
 
 - Manage Content
+
+Permissions (requires Permissions.View):
+
+- Manage Permissions
 
 
 Example:
@@ -454,25 +489,24 @@ Example:
 
 Dashboard may show:
 
+Only if user has the View permission for that module.
+
 Examples:
 
-Users:
+Users (requires Users.View):
 
 - Total Users
 - Active Users
 
-
-Departments:
+Departments (requires Departments.View):
 
 - Total Departments
 
-
-Roles:
+Roles (requires Roles.View):
 
 - Total Roles
 
-
-Notes:
+Notes (requires Notes.View):
 
 - Total Notes
 
@@ -504,6 +538,49 @@ Use:
 If statistics cannot be calculated:
 
 Hide statistic value.
+
+---
+
+# Permission Based Dashboard Architecture
+
+The dashboard must render modules dynamically based on user permissions.
+
+Never hardcode three dashboard variants (Admin/Manager/Employee).
+
+Instead:
+
+1. Read window.currentUserPermissions
+2. Determine which modules the user can access
+3. Render only permitted modules
+4. Never render empty sections
+
+Architecture:
+
+```javascript
+function renderDashboard() {
+    let permissions = window.currentUserPermissions || [];
+    let role = window.currentUserRole || "";
+
+    renderUserProfile();
+
+    if (hasAnyPermission(permissions, ["Users.View", "Departments.View", "Roles.View"])) {
+        renderStatistics(permissions);
+    }
+
+    renderModules(permissions);
+    renderQuickActions(permissions, role);
+}
+
+function hasAnyPermission(perms, required) {
+    return required.some(p => perms.includes(p));
+}
+```
+
+Performance:
+
+- Load data only for modules the user can access
+- Never call /User/GetAll if user lacks Users.View
+- Never call /Department/GetAll if user lacks Departments.View
 
 ---
 
@@ -606,9 +683,11 @@ Before finishing verify:
 
 ✓ CRUD navigation works
 
-✓ Admin menus work
+✓ Permission based menus work
 
-✓ User menus work
+✓ Modules hidden when user lacks permission
+
+✓ Fallback role menus work
 
 ✓ Layout responsive
 
