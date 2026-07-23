@@ -1,5 +1,5 @@
 ﻿@{
-    var isAuthPage = ViewData["IsAuthPage"] as bool? ?? false;
+    var isAuthPage = ViewData["IsAuthPage"] as bool? ?? ViewContext.HttpContext.Request.Path.StartsWithSegments("/Auth");
 }
 <!DOCTYPE html>
 <html lang="en">

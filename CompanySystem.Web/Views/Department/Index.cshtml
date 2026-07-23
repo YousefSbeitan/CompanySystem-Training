@@ -197,10 +197,16 @@
             var currentSearch = '';
             var currentSortBy = 'DepartmentId';
             var currentIsDescending = false;
-            var isAdmin = (window.currentUserRole === 'Admin');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
 
-            // ── Initial Role Visibility ─────────────────────────────
-            if (isAdmin) {
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin';
+            }
+
+            // ── Initial Permission Visibility ───────────────────────
+            if (hasPermission('Departments.Create')) {
                 $('.admin-only').show();
             }
 
@@ -271,8 +277,10 @@
                     html += '<td>' + createdDate + '</td>';
                     html += '<td><div class="action-btns">';
                     html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(dept.departmentId) + '" title="Details"><i class="bi bi-eye"></i></button>';
-                    if (isAdmin) {
+                    if (hasPermission('Departments.Edit')) {
                         html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(dept.departmentId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
+                    }
+                    if (hasPermission('Departments.Delete')) {
                         html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(dept.departmentId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
                     }
                     html += '</div></td>';

@@ -88,11 +88,16 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var currentUserRole = window.currentUserRole || '';
-            var isAdmin = (currentUserRole === 'Admin');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
+
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin';
+            }
 
             // Check permission
-            if (!isAdmin) {
+            if (!hasPermission('MainPageSections.Create')) {
                 $('#createCard').hide();
                 $('#permissionDenied').show();
                 return;

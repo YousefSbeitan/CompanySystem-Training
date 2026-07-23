@@ -92,25 +92,7 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // ── Password Visibility Toggle ───────────────────────────
-            $('#passwordToggle').on('click', function () {
-                var input = $('#password');
-                var icon = $('#passwordToggleIcon');
-                var isPassword = input.attr('type') === 'password';
-                input.attr('type', isPassword ? 'text' : 'password');
-                icon.toggleClass('bi-eye bi-eye-slash');
-                $(this).attr('title', isPassword ? 'Hide password' : 'Show password');
-            });
-
-            $('#confirmPasswordToggle').on('click', function () {
-                var input = $('#confirmPassword');
-                var icon = $('#confirmPasswordToggleIcon');
-                var isPassword = input.attr('type') === 'password';
-                input.attr('type', isPassword ? 'text' : 'password');
-                icon.toggleClass('bi-eye bi-eye-slash');
-                $(this).attr('title', isPassword ? 'Hide password' : 'Show password');
-            });
-
+            // ── Password toggle is handled globally by site.js via .password-toggle-btn class
             // ── Check Authorization ──────────────────────────────────
             // The controller is already [Authorize(Roles = "Admin")]
             // This client-side check adds extra protection

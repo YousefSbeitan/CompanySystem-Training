@@ -1,0 +1,131 @@
+@{
+    ViewData["Title"] = "Delete Permission";
+}
+
+<div class="container-fluid">
+    <h1 class="h3 mb-3">Delete Permission</h1>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading permission data...</p>
+    </div>
+
+    <!-- Error -->
+    <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
+    <div id="notFoundAlert" class="alert alert-warning" style="display:none;">Permission not found.</div>
+
+    <!-- Delete Confirmation Card -->
+    <div class="card border-danger" id="deleteCard" style="display:none;">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirm Deletion</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Warning:</strong> This action cannot be undone. Are you sure you want to delete this permission?
+            </div>
+
+            <dl class="row">
+                <dt class="col-sm-3">Permission ID</dt>
+                <dd class="col-sm-9" id="deletePermissionId"></dd>
+
+                <dt class="col-sm-3">Permission Name</dt>
+                <dd class="col-sm-9" id="deletePermissionName"></dd>
+
+                <dt class="col-sm-3">Description</dt>
+                <dd class="col-sm-9" id="deleteDescription"></dd>
+
+                <dt class="col-sm-3">Created By</dt>
+                <dd class="col-sm-9" id="deleteCreatedBy"></dd>
+
+                <dt class="col-sm-3">Created Date</dt>
+                <dd class="col-sm-9" id="deleteCreatedDate"></dd>
+            </dl>
+
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                Permission deletion is managed at the system level and cannot be performed through the UI.
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="/Permission" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deleting Spinner -->
+    <div id="deletingSpinner" class="text-center my-3" style="display:none;">
+        <div class="spinner-border text-danger" role="status">
+            <span class="visually-hidden">Processing...</span>
+        </div>
+        <p class="mt-2 text-muted">Processing...</p>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="mt-3"></div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
+
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.includes(perm);
+                return (userRole === 'Admin');
+            }
+
+            if (!hasPermission("Permissions.Delete")) {
+                $('#loadingSpinner').hide();
+                $('#alertContainer').html(
+                    '<div class="alert alert-danger">You do not have permission to delete permissions.</div>'
+                );
+                return;
+            }
+
+            // Extract permission ID from URL: /Permission/Delete/{id}
+            var pathParts = window.location.pathname.split('/');
+            var permissionId = parseInt(pathParts[pathParts.length - 1]);
+
+            if (!permissionId) {
+                $('#loadingSpinner').hide();
+                $('#errorAlert').text('Invalid permission ID.').show();
+                return;
+            }
+
+            // Load permission data
+            $.ajax({
+                url: '/Permission/GetById/' + permissionId,
+                type: 'GET',
+                success: function (perm) {
+                    $('#loadingSpinner').hide();
+
+                    if (!perm) {
+                        $('#notFoundAlert').show();
+                        return;
+                    }
+
+                    $('#deletePermissionId').text(perm.permissionId || '');
+                    $('#deletePermissionName').text(perm.permissionName || '');
+                    $('#deleteDescription').text(perm.description || '-');
+                    $('#deleteCreatedBy').text(perm.createdBy || '-');
+                    $('#deleteCreatedDate').text(perm.createdDate ? new Date(perm.createdDate).toLocaleString() : '-');
+
+                    $('#deleteCard').show();
+                },
+                error: function (xhr) {
+                    $('#loadingSpinner').hide();
+                    if (xhr.status === 404) {
+                        $('#notFoundAlert').show();
+                    } else {
+                        var msg = xhr.responseText || 'Failed to load permission.';
+                        $('#errorAlert').text(msg).show();
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -1396,6 +1396,14 @@ body.auth-page {
     display: none !important;
 }
 
+.permissions-create {
+    display: none !important;
+}
+
+.permissions-edit {
+    display: none !important;
+}
+
 body.has-admin .admin-only {
     display: inline-flex !important;
 }
@@ -1411,6 +1419,14 @@ body .manager-admin-only {
 body.is-manager .manager-admin-only,
 body.has-admin .manager-admin-only {
     display: inline-flex !important;
+}
+
+body .permissions-create {
+    display: none !important;
+}
+
+body .permissions-edit {
+    display: none !important;
 }
 
 /* Card Enhancements */

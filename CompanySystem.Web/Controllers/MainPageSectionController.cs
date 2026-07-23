@@ -25,7 +25,16 @@ public class MainPageSectionController : Controller
     // MVC: GET /MainPageSection
     [HttpGet]
     [RequirePermission("MainPageSections.View")]
-    public async Task<IActionResult> Index(
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+
+    // API: GET /MainPageSection/GetAll
+    [HttpGet]
+    [RequirePermission("MainPageSections.View")]
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -52,10 +61,20 @@ public class MainPageSectionController : Controller
     }
 
 
-    // API: GET /MainPageSection/GetById/1
+    // MVC: GET /MainPageSection/Details/{id}
     [HttpGet]
     [RequirePermission("MainPageSections.View")]
-    public async Task<IActionResult> Details(
+    public IActionResult Details(
+        int id)
+    {
+        return View();
+    }
+
+
+    // API: GET /MainPageSection/GetById/{id}
+    [HttpGet]
+    [RequirePermission("MainPageSections.View")]
+    public async Task<IActionResult> GetById(
         int id)
     {
         try
@@ -84,6 +103,15 @@ public class MainPageSectionController : Controller
                 500,
                 ex.Message);
         }
+    }
+
+
+    // GET: /MainPageSection/Create
+    [HttpGet]
+    [RequirePermission("MainPageSections.Create")]
+    public IActionResult Create()
+    {
+        return View();
     }
 
 
@@ -119,6 +147,16 @@ public class MainPageSectionController : Controller
                 500,
                 ex.Message);
         }
+    }
+
+
+    // GET: /MainPageSection/Edit/{id}
+    [HttpGet]
+    [RequirePermission("MainPageSections.Edit")]
+    public IActionResult Edit(
+        int id)
+    {
+        return View();
     }
 
 
@@ -162,10 +200,21 @@ public class MainPageSectionController : Controller
     }
 
 
+    // GET: /MainPageSection/Delete/{id}
+    [HttpGet]
+    [RequirePermission("MainPageSections.Delete")]
+    public IActionResult Delete(
+        int id)
+    {
+        return View();
+    }
+
+
     // DELETE: /MainPageSection/Delete/1
     [HttpDelete]
+    [ActionName("Delete")]
     [RequirePermission("MainPageSections.Delete")]
-    public async Task<IActionResult> Delete(
+    public async Task<IActionResult> DeleteConfirmed(
         int id)
     {
         try

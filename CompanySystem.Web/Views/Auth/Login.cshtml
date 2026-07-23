@@ -75,25 +75,7 @@
 
 @section Scripts {
     <script>
-        $(document).off('click', '#passwordToggle');
-
-$(document).on('click', '#passwordToggle', function (e) {
-    e.preventDefault();
-
-    var passwordInput = $('#password');
-    var icon = $('#passwordToggleIcon');
-
-    var isPassword = passwordInput.attr('type') === 'password';
-
-    passwordInput.attr('type', isPassword ? 'text' : 'password');
-
-    icon.toggleClass('bi-eye bi-eye-slash');
-
-    $(this)
-        .attr('title', isPassword ? 'Hide password' : 'Show password')
-        .attr('aria-label', isPassword ? 'Hide password' : 'Show password');
-});
-
+            // ── Password toggle is handled globally by site.js via .password-toggle-btn class
             // ── Form Submit ──────────────────────────────────────────
             $('#loginForm').on('submit', function (e) {
                 e.preventDefault();

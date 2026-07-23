@@ -100,12 +100,16 @@
             var currentSearch = '';
             var currentSortBy = 'CreatedDate';
             var currentIsDescending = true;
-            var currentUserRole = window.currentUserRole || '';
-            var isAdmin = (currentUserRole === 'Admin');
-            var isManager = (currentUserRole === 'Manager');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
 
-            // ── Initial Role Visibility ─────────────────────────────
-            if (isAdmin || isManager) {
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin' || userRole === 'Manager';
+            }
+
+            // ── Initial Permission Visibility ───────────────────────
+            if (hasPermission('Notes.Create')) {
                 $('.manager-admin-only').show();
             }
 
@@ -179,10 +183,10 @@
                     html += '<td>' + createdDate + '</td>';
                     html += '<td><div class="action-btns">';
                     html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(note.noteId) + '" title="Details"><i class="bi bi-eye"></i></button>';
-                    if (isAdmin || isManager) {
+                    if (hasPermission('Notes.Edit')) {
                         html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(note.noteId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
                     }
-                    if (isAdmin) {
+                    if (hasPermission('Notes.Delete')) {
                         html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(note.noteId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
                     }
                     html += '</div></td>';

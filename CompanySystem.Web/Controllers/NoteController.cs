@@ -26,10 +26,10 @@ public class NoteController : Controller
     }
 
 
-    // GET: /Note (MVC View)
+    // API: GET /Note/GetAll
     [HttpGet]
     [RequirePermission("Notes.View")]
-    public async Task<IActionResult> Index(
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -73,7 +73,7 @@ public class NoteController : Controller
     // API: GET /Note/GetById/1
     [HttpGet]
     [RequirePermission("Notes.View")]
-    public async Task<IActionResult> Details(
+    public async Task<IActionResult> GetById(
         int id)
     {
         try
@@ -301,6 +301,51 @@ public class NoteController : Controller
     }
 
 
+
+    // ──────────────────────────────────────────────
+    // MVC View Actions
+    // ──────────────────────────────────────────────
+
+    // GET /Note
+    [HttpGet]
+    [RequirePermission("Notes.View")]
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    // GET /Note/Create
+    [HttpGet]
+    [RequirePermission("Notes.Create")]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    // GET /Note/Edit/{id}
+    [HttpGet]
+    [RequirePermission("Notes.Edit")]
+    public IActionResult Edit(int id)
+    {
+        return View();
+    }
+
+    // GET /Note/Details/{id}
+    [HttpGet]
+    [RequirePermission("Notes.View")]
+    public IActionResult Details(int id)
+    {
+        return View();
+    }
+
+    // GET /Note/Delete/{id}
+    [HttpGet]
+    [ActionName("Delete")]
+    [RequirePermission("Notes.Delete")]
+    public IActionResult DeleteView(int id)
+    {
+        return View("Delete");
+    }
 
     private string? GetCurrentUserId()
     {

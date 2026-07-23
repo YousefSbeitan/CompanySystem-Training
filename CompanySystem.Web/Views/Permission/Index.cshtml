@@ -1,12 +1,12 @@
 @{
-    ViewData["Title"] = "Main Page Section Management";
+    ViewData["Title"] = "Permission Management";
 }
 
 <div class="crud-container">
     <div class="crud-header">
-        <h1><i class="bi bi-layout-text-window-reverse me-2"></i>Main Page Section Management</h1>
-        <button class="btn btn-primary admin-only" id="btnCreate" style="display:none;">
-            <i class="bi bi-plus-lg"></i> Create Section
+        <h1><i class="bi bi-shield-lock-fill me-2"></i>Permission Management</h1>
+        <button class="btn btn-primary permissions-create" id="btnCreate" style="display:none;">
+            <i class="bi bi-plus-lg"></i> Assign Permissions
         </button>
     </div>
 
@@ -14,7 +14,7 @@
     <div class="search-filter-row">
         <div class="search-group">
             <div class="input-group">
-                <input type="text" class="form-control" id="inputSearch" placeholder="Search by title or content..." />
+                <input type="text" class="form-control" id="inputSearch" placeholder="Search by permission name..." />
                 <button class="btn btn-outline-secondary" type="button" id="btnSearch">
                     <i class="bi bi-search"></i> Search
                 </button>
@@ -41,26 +41,23 @@
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p>Loading sections...</p>
+        <p>Loading permissions...</p>
     </div>
 
     <!-- Table -->
     <div class="crud-table">
         <div class="table-responsive-custom">
-            <table class="table table-hover table-striped" id="sectionsTable" style="display:none;">
+            <table class="table table-hover table-striped" id="permissionsTable" style="display:none;">
                 <thead>
                     <tr>
-                        <th data-sort="SectionId" class="sortable" style="cursor:pointer; width:80px;">
+                        <th data-sort="PermissionId" class="sortable" style="cursor:pointer; width:80px;">
                             ID <span class="sort-icon"></span>
                         </th>
-                        <th data-sort="SectionType" class="sortable" style="cursor:pointer;">
-                            Section Type <span class="sort-icon"></span>
+                        <th data-sort="PermissionName" class="sortable" style="cursor:pointer;">
+                            Permission Name <span class="sort-icon"></span>
                         </th>
-                        <th data-sort="Title" class="sortable" style="cursor:pointer;">
-                            Title <span class="sort-icon"></span>
-                        </th>
-                        <th data-sort="Content" class="sortable" style="cursor:pointer;">
-                            Content <span class="sort-icon"></span>
+                        <th data-sort="Description" class="sortable" style="cursor:pointer;">
+                            Description <span class="sort-icon"></span>
                         </th>
                         <th data-sort="CreatedBy" class="sortable" style="cursor:pointer;">
                             Created By <span class="sort-icon"></span>
@@ -85,12 +82,9 @@
 
     <!-- No Data -->
     <div class="empty-state" id="noData" style="display:none;">
-        <i class="bi bi-layout-text-window-reverse empty-icon"></i>
-        <h4>No Sections Found</h4>
-        <p>There are no content sections available yet.</p>
-        <button class="btn btn-primary admin-only" id="btnCreateEmpty" style="display:none;">
-            <i class="bi bi-plus-lg"></i> Create Section
-        </button>
+        <i class="bi bi-shield empty-icon"></i>
+        <h4>No Permissions Found</h4>
+        <p>There are no permissions configured yet.</p>
     </div>
 </div>
 
@@ -101,19 +95,19 @@
             var currentPage = 1;
             var currentPageSize = 10;
             var currentSearch = '';
-            var currentSortBy = 'SectionId';
+            var currentSortBy = 'PermissionId';
             var currentIsDescending = false;
             var permissions = window.currentUserPermissions || [];
             var userRole = window.currentUserRole || '';
+            var isAdmin = (userRole === 'Admin');
 
             function hasPermission(perm) {
-                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
-                return userRole === 'Admin';
+                if (permissions.length > 0) return permissions.includes(perm);
+                return isAdmin; // fallback: Admin has all permissions
             }
 
-            // ── Initial Permission Visibility ───────────────────────
-            if (hasPermission('MainPageSections.Create')) {
-                $('.admin-only').show();
+            if (hasPermission("Permissions.Create")) {
+                $('.permissions-create').show();
             }
 
             function showToast(msg, type) {
@@ -124,27 +118,15 @@
                 }
             }
 
-            // ── Section Type Mapping ─────────────────────────────────
-            function getSectionTypeText(type) {
-                switch (type) {
-                    case 1: return 'About Us';
-                    case 2: return 'Services';
-                    case 3: return 'Contact Us';
-                    case 4: return 'Home';
-                    default: return type || '-';
-                }
-            }
-
-            // ── Load Data ───────────────────────────────────────────
-            function loadSections() {
+            function loadPermissions() {
                 $('#loadingSpinner').show();
-                $('#sectionsTable').hide();
+                $('#permissionsTable').hide();
                 $('#paginationNav').hide();
                 $('#noData').hide();
                 $('#errorAlert').hide();
 
                 $.ajax({
-                    url: '/MainPageSection/GetAll',
+                    url: '/Permission/GetAll',
                     type: 'GET',
                     data: {
                         pageNumber: currentPage,
@@ -163,7 +145,7 @@
                         if (Array.isArray(data) && data.length > 0) {
                             renderTable(data);
                             renderPagination(totalPages, pageNumber);
-                            $('#sectionsTable').show();
+                            $('#permissionsTable').show();
                             $('#paginationNav').show();
                         } else {
                             $('#noData').show();
@@ -171,41 +153,36 @@
                     },
                     error: function (xhr) {
                         $('#loadingSpinner').hide();
-                        var msg = xhr.responseText || 'An error occurred while loading sections.';
+                        var msg = xhr.responseText || 'An error occurred while loading permissions.';
                         if (xhr.status === 403) {
-                            msg = 'You do not have permission to view sections.';
+                            msg = 'You do not have permission to view permissions.';
                         }
                         $('#errorAlert').text(msg).show();
                     }
                 });
             }
 
-            // ── Render Table ────────────────────────────────────────
-            function renderTable(sections) {
+            function renderTable(items) {
                 var html = '';
-                $.each(sections, function (idx, section) {
-                    var createdDate = section.createdDate
-                        ? new Date(section.createdDate).toLocaleDateString()
+                $.each(items, function (idx, item) {
+                    var createdDate = item.createdDate
+                        ? new Date(item.createdDate).toLocaleDateString()
                         : '-';
-                    var sectionType = getSectionTypeText(section.sectionType);
-                    var contentPreview = section.content
-                        ? (section.content.length > 60 ? section.content.substring(0, 60) + '...' : section.content)
-                        : '-';
-
                     html += '<tr>';
-                    html += '<td>' + escapeHtml(section.sectionId) + '</td>';
-                    html += '<td><span class="badge bg-info">' + escapeHtml(sectionType) + '</span></td>';
-                    html += '<td><strong>' + escapeHtml(section.title || '') + '</strong></td>';
-                    html += '<td class="text-muted">' + escapeHtml(contentPreview) + '</td>';
-                    html += '<td>' + escapeHtml(section.createdBy || '-') + '</td>';
+                    html += '<td>' + escapeHtml(item.permissionId) + '</td>';
+                    html += '<td><strong>' + escapeHtml(item.permissionName || '') + '</strong></td>';
+                    html += '<td>' + escapeHtml(item.description || '-') + '</td>';
+                    html += '<td>' + escapeHtml(item.createdBy || '-') + '</td>';
                     html += '<td>' + createdDate + '</td>';
                     html += '<td><div class="action-btns">';
-                    html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(section.sectionId) + '" title="Details"><i class="bi bi-eye"></i></button>';
-                    if (hasPermission('MainPageSections.Edit')) {
-                        html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(section.sectionId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
+                    if (hasPermission("Permissions.View")) {
+                        html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(item.permissionId) + '" title="Details"><i class="bi bi-eye"></i></button>';
                     }
-                    if (hasPermission('MainPageSections.Delete')) {
-                        html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(section.sectionId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
+                    if (hasPermission("Permissions.Edit")) {
+                        html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(item.permissionId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
+                    }
+                    if (hasPermission("Permissions.Delete")) {
+                        html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(item.permissionId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
                     }
                     html += '</div></td>';
                     html += '</tr>';
@@ -213,7 +190,6 @@
                 $('#tableBody').html(html);
             }
 
-            // ── Render Pagination ───────────────────────────────────
             function renderPagination(totalPages, pageNumber) {
                 var ul = $('#paginationUl');
                 ul.empty();
@@ -233,7 +209,6 @@
                 ul.append('<li class="page-item' + (pageNumber >= totalPages ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (pageNumber + 1) + '"><i class="bi bi-chevron-right"></i></a></li>');
             }
 
-            // ── Helpers ─────────────────────────────────────────────
             function escapeHtml(str) {
                 if (!str) return '';
                 return $('<span>').text(str).html();
@@ -260,7 +235,7 @@
                 }
                 currentPage = 1;
                 updateSortIcon();
-                loadSections();
+                loadPermissions();
             });
 
             // ── Pagination Click ────────────────────────────────────
@@ -269,7 +244,7 @@
                 var page = parseInt($(this).data('page'));
                 if (page && page > 0) {
                     currentPage = page;
-                    loadSections();
+                    loadPermissions();
                 }
             });
 
@@ -277,7 +252,7 @@
             $('#btnSearch').on('click', function () {
                 currentSearch = $('#inputSearch').val().trim();
                 currentPage = 1;
-                loadSections();
+                loadPermissions();
             });
 
             $('#inputSearch').on('keypress', function (e) {
@@ -290,43 +265,42 @@
                 $('#inputSearch').val('');
                 currentSearch = '';
                 currentPage = 1;
-                loadSections();
+                loadPermissions();
             });
 
             // ── Page Size ───────────────────────────────────────────
             $('#selectPageSize').on('change', function () {
                 currentPageSize = parseInt($(this).val());
                 currentPage = 1;
-                loadSections();
+                loadPermissions();
             });
 
-            // ── Create ──────────────────────────────────────────────
-            $('#btnCreate, #btnCreateEmpty').on('click', function () {
-                window.location.href = '/MainPageSection/Create';
+            // ── Create (Assign) ─────────────────────────────────────
+            $('#btnCreate').on('click', function () {
+                window.location.href = '/Permission/Create';
             });
 
             // ── Details ─────────────────────────────────────────────
             $(document).on('click', '.btn-details', function () {
                 var id = $(this).data('id');
-                window.location.href = '/MainPageSection/Details/' + encodeURIComponent(id);
+                window.location.href = '/Permission/Details/' + encodeURIComponent(id);
             });
 
             // ── Edit ────────────────────────────────────────────────
             $(document).on('click', '.btn-edit', function () {
                 var id = $(this).data('id');
-                window.location.href = '/MainPageSection/Edit/' + encodeURIComponent(id);
+                window.location.href = '/Permission/Edit/' + encodeURIComponent(id);
             });
 
             // ── Delete ──────────────────────────────────────────────
             $(document).on('click', '.btn-delete', function () {
                 var id = $(this).data('id');
-                window.location.href = '/MainPageSection/Delete/' + encodeURIComponent(id);
+                window.location.href = '/Permission/Delete/' + encodeURIComponent(id);
             });
 
             // ── Initial Load ────────────────────────────────────────
             updateSortIcon();
-            loadSections();
+            loadPermissions();
         });
     </script>
 }
-

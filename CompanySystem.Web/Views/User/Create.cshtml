@@ -142,13 +142,15 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var currentRole = window.currentUserRole;
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
 
-            var canCreate =
-                currentRole === 'Admin' ||
-                currentRole === 'HR';
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin' || userRole === 'HR';
+            }
 
-            if (!canCreate) {
+            if (!hasPermission('Users.Create')) {
                 $('#alertContainer').html(
                     '<div class="alert alert-danger">You do not have permission to create users.</div>'
                 );

@@ -74,11 +74,15 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var currentUserRole = window.currentUserRole || '';
-            var isAdmin = (currentUserRole === 'Admin');
-            var isManager = (currentUserRole === 'Manager');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
 
-            if (isAdmin || isManager) {
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin' || userRole === 'Manager';
+            }
+
+            if (hasPermission('Notes.Edit')) {
                 $('.manager-admin-only').show();
             }
 

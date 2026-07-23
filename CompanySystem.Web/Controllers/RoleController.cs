@@ -25,7 +25,16 @@ public class RoleController : Controller
     // GET: /Role (MVC View)
     [HttpGet]
     [RequirePermission("Roles.View")]
-    public async Task<IActionResult> Index(
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+
+    // API: GET /Role/GetAll
+    [HttpGet("GetAll")]
+    [RequirePermission("Roles.View")]
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
@@ -52,10 +61,19 @@ public class RoleController : Controller
     }
 
 
-    // API: GET /Role/GetById/1
-    [HttpGet]
+    // MVC: GET /Role/Details/{id}
+    [HttpGet("Details/{id}")]
     [RequirePermission("Roles.View")]
-    public async Task<IActionResult> Details(
+    public IActionResult Details(int id)
+    {
+        return View();
+    }
+
+
+    // API: GET /Role/GetById/{id}
+    [HttpGet("GetById/{id}")]
+    [RequirePermission("Roles.View")]
+    public async Task<IActionResult> GetById(
         int id)
     {
         try
@@ -84,6 +102,15 @@ public class RoleController : Controller
                 500,
                 ex.Message);
         }
+    }
+
+
+    // MVC: GET /Role/Create
+    [HttpGet("Create")]
+    [RequirePermission("Roles.Create")]
+    public IActionResult Create()
+    {
+        return View();
     }
 
 
@@ -119,6 +146,15 @@ public class RoleController : Controller
                 500,
                 ex.Message);
         }
+    }
+
+
+    // MVC: GET /Role/Edit/{id}
+    [HttpGet("Edit/{id}")]
+    [RequirePermission("Roles.Edit")]
+    public IActionResult Edit(int id)
+    {
+        return View();
     }
 
 
@@ -162,8 +198,17 @@ public class RoleController : Controller
     }
 
 
-    // DELETE: /Role/Delete/1
-    [HttpDelete]
+    // MVC: GET /Role/Delete/{id}
+    [HttpGet("Delete/{id}")]
+    [RequirePermission("Roles.Delete")]
+    public IActionResult DeleteView(int id)
+    {
+        return View("Delete");
+    }
+
+
+    // DELETE: /Role/Delete/{id}
+    [HttpDelete("Delete/{id}")]
     [RequirePermission("Roles.Delete")]
     public async Task<IActionResult> Delete(
         int id)

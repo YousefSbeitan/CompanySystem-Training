@@ -9,7 +9,59 @@
 </div>
 
 <!-- User Profile Card -->
-<div id="userProfileContainer"></div>
+<div id="userProfileContainer">
+    <div class="user-profile-card">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="user-avatar-large">—</div>
+            </div>
+            <div class="col">
+                <h3>Loading...</h3>
+                <div class="user-meta">
+                    <span class="badge bg-secondary">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<!-- Dashboard Content Container - populated by JS based on role -->
-<div id="dashboardContent"></div>
+<!-- Dashboard Content Container - populated by JS based on permissions -->
+<div id="dashboardContent">
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon icon-users"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-value placeholder-loading">—</div>
+                <div class="stat-label">Loading...</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon icon-departments"><i class="bi bi-building-fill"></i></div>
+                <div class="stat-value placeholder-loading">—</div>
+                <div class="stat-label">Loading...</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon icon-roles"><i class="bi bi-shield-fill-check"></i></div>
+                <div class="stat-value placeholder-loading">—</div>
+                <div class="stat-label">Loading...</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon icon-notes"><i class="bi bi-sticky-fill"></i></div>
+                <div class="stat-value placeholder-loading">—</div>
+                <div class="stat-label">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading dashboard...</span>
+        </div>
+        <p class="text-muted mt-2">Loading your personalized dashboard...</p>
+    </div>
+</div>

@@ -10,6 +10,9 @@
     function saveTokens(accessToken, refreshToken) {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
+        // Set cookie for MVC navigation (composite auth)
+        document.cookie = 'CompanySystem.Jwt=' + encodeURIComponent(accessToken) + '; path=/; secure; samesite=lax';
+        document.cookie = 'CompanySystem.Auth=' + encodeURIComponent(accessToken) + '; path=/; secure; samesite=lax';
     }
 
     function getAccessToken() {
@@ -23,6 +26,9 @@
     function removeTokens() {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        // Clear MVC navigation cookies
+        document.cookie = 'CompanySystem.Jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; secure; samesite=lax';
+        document.cookie = 'CompanySystem.Auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; secure; samesite=lax';
     }
 
     // ── Cookie Helper ──────────────────────────────────────────────
@@ -51,6 +57,16 @@
         return decoded.exp < now;
     }
 
+    // ── Permission Extraction ─────────────────────────────────────
+
+    function extractPermissions(decoded) {
+        if (!decoded) return [];
+        var perm = decoded['Permission'];
+        if (Array.isArray(perm)) return perm;
+        if (typeof perm === 'string') return [perm];
+        return [];
+    }
+
     // ── User Info ──────────────────────────────────────────────────
 
     function getCurrentUser() {
@@ -67,6 +83,11 @@
         const decoded = decodeJwt(token);
         if (!decoded) return null;
 
+        const permissions = extractPermissions(decoded);
+        const role = decoded[
+            'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+            decoded.role || '';
+
         return {
             id: decoded[
                 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
@@ -74,9 +95,8 @@
             username: decoded[
                 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
                 decoded.unique_name || '',
-            role: decoded[
-                'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
-                decoded.role || ''
+            role: role,
+            permissions: permissions
         };
     }
 
@@ -84,8 +104,9 @@
 
     function refreshUserGlobals() {
         const user = getCurrentUser();
-        window.currentUser = user || { id: '', username: '', role: '' };
+        window.currentUser = user || { id: '', username: '', role: '', permissions: [] };
         window.currentUserRole = window.currentUser.role;
+        window.currentUserPermissions = window.currentUser.permissions || [];
     }
 
     // ── Initial Load ───────────────────────────────────────────────

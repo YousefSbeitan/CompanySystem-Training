@@ -148,10 +148,16 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var isAdmin = (window.currentUserRole === 'Admin');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
 
-            // ── Role Visibility ─────────────────────────────────────
-            if (isAdmin) {
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin';
+            }
+
+            // ── Permission Visibility ──────────────────────────────
+            if (hasPermission('Users.Edit')) {
                 $('.admin-only').show();
             } else {
                 $('#alertContainer').html(
@@ -290,7 +296,7 @@
             $('#editForm').on('submit', function (e) {
                 e.preventDefault();
 
-                if (!isAdmin) {
+                if (!hasPermission('Users.Edit')) {
                     $('#alertContainer').html(
                         '<div class="alert alert-danger">Only administrators can save changes.</div>'
                     );

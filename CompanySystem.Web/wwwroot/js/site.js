@@ -153,6 +153,9 @@
         });
     }
 
+    // ── Expose Globally ────────────────────────────────────────────
+    window.showToast = showToast;
+
     // ── Document Ready ─────────────────────────────────────────────
     $(document).ready(function () {
         initCollapseToggles();

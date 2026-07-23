@@ -183,9 +183,16 @@
             var currentSearch = '';
             var currentSortBy = 'RoleId';
             var currentIsDescending = false;
-            var isAdmin = (window.currentUserRole === 'Admin');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
+            var isAdmin = (userRole === 'Admin');
 
-            if (isAdmin) {
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.includes(perm);
+                return isAdmin; // fallback: Admin has all permissions
+            }
+
+            if (hasPermission("Roles.Create")) {
                 $('.admin-only').show();
             }
 
@@ -250,9 +257,13 @@
                     html += '<td>' + escapeHtml(role.createdBy || '-') + '</td>';
                     html += '<td>' + createdDate + '</td>';
                     html += '<td><div class="action-btns">';
-                    html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(role.roleId) + '" title="Details"><i class="bi bi-eye"></i></button>';
-                    if (isAdmin) {
+                    if (hasPermission("Roles.View")) {
+                        html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(role.roleId) + '" title="Details"><i class="bi bi-eye"></i></button>';
+                    }
+                    if (hasPermission("Roles.Edit")) {
                         html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(role.roleId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
+                    }
+                    if (hasPermission("Roles.Delete")) {
                         html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(role.roleId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
                     }
                     html += '</div></td>';

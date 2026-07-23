@@ -63,8 +63,15 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var isAdmin = (window.currentUserRole === 'Admin');
-            if (!isAdmin) {
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
+
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.includes(perm);
+                return (userRole === 'Admin');
+            }
+
+            if (!hasPermission("Roles.Edit")) {
                 $('#loadingSpinner').hide();
                 $('#alertContainer').html(
                     '<div class="alert alert-danger">You do not have permission to edit roles.</div>'

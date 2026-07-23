@@ -1,16 +1,12 @@
-// ── CompanySystem – Role-Based Dashboard ────────────────────────────
-// Supports Admin, Manager, HR, Employee (User) roles.
-// Module visibility is inferred from controllers via Authorize attributes.
+// ── CompanySystem – Permission-Based Dashboard ─────────────────────
+// Uses window.currentUserPermissions (primary) with
+// window.currentUserRole (fallback for legacy compatibility).
+// ─────────────────────────────────────────────────────────────────────
 
 (function () {
     'use strict';
 
-    // ── Module Definitions (inferred from controller Authorize attributes) ──
-    // Users:     Index=[Authorize], GetAll=[Authorize(Roles="Admin,Manager,HR")]
-    // Departments: Index=[Authorize(Roles="Admin,Manager")]
-    // Roles:     All actions=[Authorize(Roles="Admin")]
-    // Notes:     Index=[Authorize] (all authenticated), but Employee explicitly excluded per business rule
-    // MainPageSections: Index=[AllowAnonymous]
+    // ── Module Definitions (inferred from controller [RequirePermission]) ──
     var modules = [
         {
             id: 'users',
@@ -18,6 +14,8 @@
             desc: 'Manage system users and employees',
             url: '/User',
             icon: 'users',
+            permission: 'Users.View',
+            // Fallback roles when permissions not available
             roles: ['Admin', 'Manager', 'HR']
         },
         {
@@ -26,6 +24,7 @@
             desc: 'Organize company departments',
             url: '/Department',
             icon: 'departments',
+            permission: 'Departments.View',
             roles: ['Admin', 'Manager']
         },
         {
@@ -34,6 +33,7 @@
             desc: 'Configure access permissions',
             url: '/Role',
             icon: 'roles',
+            permission: 'Roles.View',
             roles: ['Admin']
         },
         {
@@ -42,6 +42,7 @@
             desc: 'View and manage notes',
             url: '/Note',
             icon: 'notes',
+            permission: 'Notes.View',
             roles: ['Admin', 'Manager', 'HR']
         },
         {
@@ -50,7 +51,17 @@
             desc: 'Edit homepage content blocks',
             url: '/MainPageSection',
             icon: 'content',
+            permission: 'MainPageSections.View',
             roles: ['Admin', 'Manager', 'HR', 'User']
+        },
+        {
+            id: 'permissions',
+            title: 'Permissions',
+            desc: 'Manage user permissions',
+            url: '/Permission',
+            icon: 'permissions',
+            permission: 'Permissions.View',
+            roles: ['Admin']
         }
     ];
 
@@ -61,88 +72,80 @@
         'departments': 'bi-building-fill',
         'roles': 'bi-shield-fill-check',
         'notes': 'bi-sticky-fill',
-        'content': 'bi-layout-text-window-reverse'
+        'content': 'bi-layout-text-window-reverse',
+        'permissions': 'bi-shield-lock-fill'
     };
 
     function getModuleIcon(iconName) {
         return iconMap[iconName] || 'bi-circle-fill';
     }
 
-    // ═══════════════════════════════════════════════════════════════════
-    //  INITIALIZATION
-    // ═══════════════════════════════════════════════════════════════════
+    // ── Permission / Role Helpers ──────────────────────────────────
 
-    function initDashboard() {
-        var user = window.currentUser || { id: '', username: '', role: '' };
-        var role = user.role || '';
-        var isLoggedIn = !!user.username;
-
-        // Build sidebar navigation
-        buildSidebarNav(role);
-
-        // Build user menu in top navbar
-        if ($('#topNavRight').length) {
-            buildUserMenu(user, isLoggedIn);
-        }
-
-        // Render role-specific dashboard content
-        if ($('#dashboardContent').length) {
-            renderRoleDashboard(role, user);
-        }
-
-        // Toggle body classes for role-based CSS
-        document.body.classList.remove('role-admin', 'role-manager', 'role-hr', 'role-user');
-        var roleClass = 'role-' + (role || 'user').toLowerCase();
-        document.body.classList.add(roleClass);
-
-        // Update footer year
-        var yearEl = document.getElementById('footerYear');
-        if (yearEl) {
-            yearEl.textContent = new Date().getFullYear();
-        }
+    /**
+     * Get current permissions array (with fallback).
+     */
+    function getPermissions() {
+        return window.currentUserPermissions || [];
     }
 
-    // ═══════════════════════════════════════════════════════════════════
-    //  ROLE DISPATCH
-    // ═══════════════════════════════════════════════════════════════════
+    /**
+     * Get current role (legacy fallback).
+     */
+    function getRole() {
+        var user = window.currentUser || { role: '' };
+        return user.role || '';
+    }
 
-    function renderRoleDashboard(role, user) {
-        var roleLower = (role || '').toLowerCase();
+    /**
+     * Check whether the user has a specific permission.
+     */
+    function hasPermission(perm) {
+        if (!perm) return false;
+        var perms = getPermissions();
+        return perms.indexOf(perm) !== -1;
+    }
 
-        switch (roleLower) {
-            case 'admin':
-                renderAdminDashboard(user);
-                break;
-            case 'manager':
-                renderManagerDashboard(user);
-                break;
-            case 'hr':
-                renderHRDashboard(user);
-                break;
-            default:
-                renderEmployeeDashboard(user);
-                break;
+    /**
+     * Check whether the user has any of the given permissions.
+     */
+    function hasAnyPermission(permList) {
+        if (!permList || permList.length === 0) return false;
+        var perms = getPermissions();
+        return permList.some(function (p) { return perms.indexOf(p) !== -1; });
+    }
+
+    /**
+     * Check whether the user has access to a module.
+     * Primary: permission check via window.currentUserPermissions.
+     * Fallback: role check (legacy).
+     */
+    function canAccessModule(mod) {
+        if (!mod) return false;
+
+        // Permission-based check (primary)
+        var perms = getPermissions();
+        if (perms.length > 0) {
+            return hasPermission(mod.permission);
         }
+
+        // Role-based fallback
+        var role = getRole().toLowerCase();
+        if (!role) return false;
+        if (!mod.roles) return false;
+        return mod.roles.some(function (r) { return r.toLowerCase() === role; });
     }
 
-    // ═══════════════════════════════════════════════════════════════════
-    //  HELPERS
-    // ═══════════════════════════════════════════════════════════════════
-
-    function setWelcome(title, subtitle) {
-        var subEl = document.getElementById('welcomeSubtitle');
-        if (subEl) {
-            subEl.textContent = subtitle || '';
-        }
+    /**
+     * Get accessible modules based on permissions (or role fallback).
+     */
+    function getAccessibleModules() {
+        return modules.filter(function (m) { return canAccessModule(m); });
     }
 
-    function hasAccess(allowedRoles, userRole) {
-        if (!userRole) return false;
-        return allowedRoles.some(function (r) {
-            return r.toLowerCase() === userRole.toLowerCase();
-        });
-    }
-
+    /**
+     * Get role badge CSS class.
+     */
     function getRoleBadgeClass(role) {
         var r = (role || '').toLowerCase();
         if (r === 'admin') return 'bg-danger';
@@ -158,16 +161,123 @@
         return div.innerHTML;
     }
 
-    function setActiveNavLink() {
-        var currentPath = window.location.pathname;
-        var links = document.querySelectorAll('.sidebar-nav .nav-link');
-        links.forEach(function (link) {
-            link.classList.remove('active');
-            var href = link.getAttribute('href');
-            if (href === currentPath || (currentPath.indexOf(href + '/') === 0 && href !== '/')) {
-                link.classList.add('active');
-            }
+    // ═══════════════════════════════════════════════════════════════════
+    //  INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════════
+
+    function initDashboard() {
+        var user = window.currentUser || { id: '', username: '', role: '' };
+        var isLoggedIn = !!user.username;
+
+        // Build sidebar navigation
+        buildSidebarNav();
+
+        // Build user menu in top navbar
+        if ($('#topNavRight').length) {
+            buildUserMenu(user, isLoggedIn);
+        }
+
+        // Render dashboard content
+        if ($('#dashboardContent').length) {
+            renderDashboardContent(user);
+        }
+
+        // Set body role class for CSS targeting
+        var role = user.role || '';
+        document.body.classList.remove('role-admin', 'role-manager', 'role-hr', 'role-user');
+        if (role) {
+            document.body.classList.add('role-' + role.toLowerCase());
+        }
+
+        // Update footer year
+        var yearEl = document.getElementById('footerYear');
+        if (yearEl) {
+            yearEl.textContent = new Date().getFullYear();
+        }
+
+        // Set active nav link
+        setActiveNavLink();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  WELCOME
+    // ═══════════════════════════════════════════════════════════════════
+
+    function setWelcome(title, subtitle) {
+        var subEl = document.getElementById('welcomeSubtitle');
+        if (subEl) {
+            subEl.textContent = subtitle || '';
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  DASHBOARD CONTENT (permission-based)
+    // ═══════════════════════════════════════════════════════════════════
+
+    function renderDashboardContent(user) {
+        var permissions = getPermissions();
+        var role = getRole();
+        var accessibleModules = getAccessibleModules();
+        var hasPerms = permissions.length > 0;
+
+        // ── Welcome ────────────────────────────────────────────────
+        var welcomeTitle = 'Dashboard';
+        var welcomeSubtitle = 'Welcome, ' + (user.username || 'User') + '!';
+
+        if (hasPerms || role) {
+            var displayRole = role || 'User';
+            welcomeSubtitle += ' | ' + displayRole;
+        }
+
+        setWelcome(welcomeTitle, welcomeSubtitle);
+
+        // ── User Profile ───────────────────────────────────────────
+        renderUserProfile(user);
+
+        var html = '';
+        var container = document.getElementById('dashboardContent');
+        if (!container) return;
+
+        // ── Statistics Cards ───────────────────────────────────────
+        var statModules = accessibleModules.filter(function (m) {
+            return m.id !== 'permissions'; // permissions doesn't have a count endpoint
         });
+
+        if (statModules.length > 0) {
+            html += '<div class="row g-4 mb-4" id="statCardsContainer">';
+            statModules.forEach(function (mod) {
+                html += buildStatCard(mod);
+            });
+            html += '</div>';
+        }
+
+        // ── Quick Actions ──────────────────────────────────────────
+        var hasCreateAny = hasAnyPermission([
+            'Users.Create', 'Departments.Create', 'Roles.Create',
+            'Notes.Create', 'MainPageSections.Create', 'Permissions.Create'
+        ]);
+
+        if (hasCreateAny || accessibleModules.length > 0) {
+            html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
+            html += '<div class="row g-3 mb-4" id="quickActionsContainer">';
+            html += buildQuickActions(accessibleModules, permissions);
+            html += '</div>';
+        }
+
+        // ── Management Modules ─────────────────────────────────────
+        if (accessibleModules.length > 0) {
+            html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
+            html += '<div class="row g-4" id="dashboardModulesContainer">';
+            accessibleModules.forEach(function (mod) {
+                html += buildModuleCard(mod);
+            });
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+
+        // ── Load Statistics ────────────────────────────────────────
+        loadDashboardStatistics(accessibleModules);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -187,7 +297,6 @@
         html += '<h3>' + escapeHtml(user.username || '—') + '</h3>';
         html += '<div class="user-meta">';
         html += '<span class="badge ' + roleBadgeClass + '">' + escapeHtml(user.role || 'User') + '</span>';
-        html += '<span class="badge bg-white text-dark">ID: ' + escapeHtml(user.id || '—') + '</span>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
@@ -199,252 +308,87 @@
         }
     }
 
-    function loadDetailedProfile(user) {
-        $.ajax({
-            url: '/User/GetById?id=' + encodeURIComponent(user.id),
-            type: 'GET',
-            success: function (response) {
-                renderDetailedProfile(response);
-            },
-            error: function () {
-                renderUserProfile(user);
-            }
-        });
-    }
-
-    function renderDetailedProfile(userData) {
-        if (!userData) return;
-
-        var username = userData.username || userData.userName || '—';
-        var roleDisplay = window.currentUserRole || 'User';
-        var userId = userData.userId || userData.id || '—';
-        var avatarLetter = username.charAt(0).toUpperCase();
-        var roleBadgeClass = getRoleBadgeClass(roleDisplay);
-
-        var yearsExp = '—';
-        if (userData.startDate) {
-            var startDate = new Date(userData.startDate);
-            if (!isNaN(startDate.getTime())) {
-                var diffYears = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
-                yearsExp = diffYears + ' year' + (diffYears !== 1 ? 's' : '');
-            }
-        }
-
-        var statusBadge = userData.isActive
-            ? '<span class="badge bg-success">Active</span>'
-            : '<span class="badge bg-secondary">Inactive</span>';
-
-        var html = '<div class="user-profile-card detailed-profile">';
-        html += '<div class="row align-items-center">';
-        html += '<div class="col-auto">';
-        html += '<div class="user-avatar-large">' + escapeHtml(avatarLetter) + '</div>';
-        html += '</div>';
-        html += '<div class="col">';
-        html += '<h3>' + escapeHtml(username) + '</h3>';
-        html += '<div class="user-meta">';
-        html += '<span class="badge ' + roleBadgeClass + '">' + escapeHtml(roleDisplay) + '</span>';
-        html += '<span class="badge bg-white text-dark">ID: ' + escapeHtml(userId) + '</span>';
-        html += statusBadge;
-        html += '</div>';
-        html += '</div>';
-        html += '</div>';
-
-        // Additional details
-        html += '<div class="row mt-3 g-3">';
-        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Phone</span><span class="detail-value">' + escapeHtml(userData.phoneNumber || '—') + '</span></div></div>';
-        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Experience</span><span class="detail-value">' + escapeHtml(yearsExp) + '</span></div></div>';
-        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Department</span><span class="detail-value">' + escapeHtml(userData.departmentName || userData.departmentId || '—') + '</span></div></div>';
-        html += '<div class="col-md-3 col-6"><div class="profile-detail"><span class="detail-label">Leader</span><span class="detail-value">' + escapeHtml(userData.leaderName || userData.leaderId || 'None') + '</span></div></div>';
-        html += '</div>';
-
-        html += '</div>';
-
-        var container = document.getElementById('userProfileContainer');
-        if (container) {
-            container.innerHTML = html;
-        }
-    }
-
     // ═══════════════════════════════════════════════════════════════════
-    //  ADMIN DASHBOARD
+    //  BUILDERS
     // ═══════════════════════════════════════════════════════════════════
 
-    function renderAdminDashboard(user) {
-        setWelcome('Administration Dashboard', 'Full system control and management');
-        renderUserProfile(user);
-
-        var container = document.getElementById('dashboardContent');
-        if (!container) return;
-
-        var html = '';
-
-        // Statistics Cards
-        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
-        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
-        html += buildStatCard('departments', 'Total Departments', 'bi-building-fill', 'departments', '/Department');
-        html += buildStatCard('roles', 'Total Roles', 'bi-shield-fill-check', 'roles', '/Role');
-        html += buildStatCard('content', 'Content Sections', 'bi-layout-text-window-reverse', 'content', '/MainPageSection');
-        html += '</div>';
-
-        // Quick Actions
-        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
-        html += '<div class="row g-3 mb-4">';
-        html += buildQuickAction('New User', 'bi-person-plus-fill', 'primary', '/User/Create', 'Create a new user account');
-        html += buildQuickAction('New Department', 'bi-building-add-fill', 'success', '/Department/Create', 'Add a new department');
-        html += buildQuickAction('New Role', 'bi-shield-plus-fill', 'warning', '/Role/Create', 'Create a new role');
-        html += buildQuickAction('New Section', 'bi-file-plus-fill', 'info', '/MainPageSection/Create', 'Add homepage content');
-        html += '</div>';
-
-        // Management Modules
-        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
-        html += '<div class="row g-4" id="dashboardModulesContainer">';
-        var adminModules = modules.filter(function (m) { return hasAccess(m.roles, 'Admin'); });
-        adminModules.forEach(function (mod) {
-            html += buildModuleCard(mod);
-        });
-        html += '</div>';
-
-        container.innerHTML = html;
-
-        // Load statistics
-        loadAdminStatistics();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  MANAGER DASHBOARD
-    // ═══════════════════════════════════════════════════════════════════
-
-    function renderManagerDashboard(user) {
-        setWelcome('Team Management Dashboard', 'Manage your team and departments');
-        renderUserProfile(user);
-
-        var container = document.getElementById('dashboardContent');
-        if (!container) return;
-
-        var html = '';
-
-        // Statistics Cards
-        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
-        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
-        html += buildStatCard('departments', 'Total Departments', 'bi-building-fill', 'departments', '/Department');
-        html += '</div>';
-
-        // Quick Actions
-        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
-        html += '<div class="row g-3 mb-4">';
-        html += buildQuickAction('Add Note', 'bi-plus-circle-fill', 'purple', '/Note/Create', 'Create a new note');
-        html += buildQuickAction('View Team', 'bi-people-fill', 'primary', '/User', 'See all team members');
-        html += buildQuickAction('Departments', 'bi-building-fill', 'success', '/Department', 'View departments');
-        html += '</div>';
-
-        // Management Modules
-        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
-        html += '<div class="row g-4" id="dashboardModulesContainer">';
-        var managerModules = modules.filter(function (m) { return hasAccess(m.roles, 'Manager'); });
-        managerModules.forEach(function (mod) {
-            html += buildModuleCard(mod);
-        });
-        html += '</div>';
-
-        container.innerHTML = html;
-
-        // Load statistics
-        loadManagerStatistics();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  HR DASHBOARD
-    // ═══════════════════════════════════════════════════════════════════
-
-    function renderHRDashboard(user) {
-        setWelcome('Human Resources Dashboard', 'Manage personnel and company content');
-        renderUserProfile(user);
-
-        var container = document.getElementById('dashboardContent');
-        if (!container) return;
-
-        var html = '';
-
-        // Statistics Cards
-        html += '<div class="row g-4 mb-4" id="statCardsContainer">';
-        html += buildStatCard('users', 'Total Users', 'bi-people-fill', 'users', '/User');
-        html += buildStatCard('content', 'Content Sections', 'bi-layout-text-window-reverse', 'content', '/MainPageSection');
-        html += '</div>';
-
-        // Quick Actions
-        html += '<h2 class="section-title"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</h2>';
-        html += '<div class="row g-3 mb-4">';
-        html += buildQuickAction('New User', 'bi-person-plus-fill', 'primary', '/User/Create', 'Create a new user account');
-        html += buildQuickAction('Add Note', 'bi-plus-circle-fill', 'purple', '/Note/Create', 'Create a new note');
-        html += '</div>';
-
-        // Management Modules
-        html += '<h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Management Modules</h2>';
-        html += '<div class="row g-4" id="dashboardModulesContainer">';
-        var hrModules = modules.filter(function (m) { return hasAccess(m.roles, 'HR'); });
-        hrModules.forEach(function (mod) {
-            html += buildModuleCard(mod);
-        });
-        html += '</div>';
-
-        container.innerHTML = html;
-
-        // Load statistics
-        loadHRStatistics();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  EMPLOYEE DASHBOARD
-    // ═══════════════════════════════════════════════════════════════════
-
-    function renderEmployeeDashboard(user) {
-        setWelcome('Employee Portal', 'Welcome back! Here\'s your personal workspace');
-
-        // Show basic profile immediately, enhance with details from API
-        renderUserProfile(user);
-        if (user.id) {
-            loadDetailedProfile(user);
-        }
-
-        var container = document.getElementById('dashboardContent');
-        if (!container) return;
-
-        var html = '';
-
-        // Quick Personal Actions
-        html += '<h2 class="section-title"><i class="bi bi-person-lines-fill me-2"></i>Quick Actions</h2>';
-        html += '<div class="row g-3 mb-4">';
-        html += buildQuickAction('Company Info', 'bi-building-fill', 'info', '/MainPageSection', 'Browse company information');
-        html += '</div>';
-
-        // Company Information
-        html += '<h2 class="section-title"><i class="bi bi-megaphone-fill me-2"></i>Company Information</h2>';
-        html += '<div class="row g-4" id="companyInfoContainer">';
-        html += '<div class="col-12"><div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading company info...</div></div>';
-        html += '</div>';
-
-        container.innerHTML = html;
-
-        // Load data
-        loadCompanyInfo();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  BUILDERS – Stat Card, Quick Action, Module Card
-    // ═══════════════════════════════════════════════════════════════════
-
-    function buildStatCard(key, label, icon, iconColor, link) {
-        var colorClass = 'icon-' + iconColor;
+    function buildStatCard(mod) {
+        var icon = getModuleIcon(mod.icon);
         return '<div class="col-md-6 col-lg-3">' +
-            '<div class="stat-card" id="statCard_' + key + '">' +
-            '<div class="stat-icon ' + colorClass + '"><i class="bi ' + icon + '"></i></div>' +
-            '<div class="stat-value" id="statValue_' + key + '">—</div>' +
-            '<div class="stat-label">' + escapeHtml(label) + '</div>' +
-            '<a href="' + escapeHtml(link) + '" class="stat-link">Manage <i class="bi bi-arrow-right"></i></a>' +
+            '<div class="stat-card" id="statCard_' + mod.id + '">' +
+            '<div class="stat-icon icon-' + mod.icon + '"><i class="bi ' + icon + '"></i></div>' +
+            '<div class="stat-value" id="statValue_' + mod.id + '">—</div>' +
+            '<div class="stat-label">' + escapeHtml('Total ' + mod.title) + '</div>' +
+            '<a href="' + escapeHtml(mod.url) + '" class="stat-link">Manage <i class="bi bi-arrow-right"></i></a>' +
             '</div></div>';
     }
 
-    function buildQuickAction(title, icon, color, link, desc) {
+    function buildQuickActions(accessibleModules, permissions) {
+        var actions = [];
+        var hasPerms = permissions.length > 0;
+
+        accessibleModules.forEach(function (mod) {
+            var createPerm = mod.id.charAt(0).toUpperCase() + mod.id.slice(1);
+            // Convert 'content' to 'MainPageSections'
+            var createPermName;
+            if (mod.id === 'content') {
+                createPermName = 'MainPageSections.Create';
+            } else {
+                createPermName = createPerm.replace(/([a-z])([A-Z])/g, '$1$2');
+                // Capitalize first letter
+                createPermName = mod.id.charAt(0).toUpperCase() + mod.id.slice(1) + '.Create';
+            }
+
+            var canCreate = hasPerms
+                ? hasPermission(createPermName)
+                : true; // fallback: show quick actions
+
+            if (canCreate) {
+                var actionUrls = {
+                    'users': '/User/Create',
+                    'departments': '/Department/Create',
+                    'roles': '/Role/Create',
+                    'notes': '/Note/Create',
+                    'content': '/MainPageSection/Create',
+                    'permissions': '/Permission/Create'
+                };
+                var actionColors = {
+                    'users': 'primary',
+                    'departments': 'success',
+                    'roles': 'warning',
+                    'notes': 'purple',
+                    'content': 'info',
+                    'permissions': 'danger'
+                };
+                var actionIcons = {
+                    'users': 'bi-person-plus-fill',
+                    'departments': 'bi-building-add-fill',
+                    'roles': 'bi-shield-plus-fill',
+                    'notes': 'bi-plus-circle-fill',
+                    'content': 'bi-file-plus-fill',
+                    'permissions': 'bi-shield-plus-fill'
+                };
+
+                actions.push({
+                    title: 'New ' + mod.title.replace('Main Page Sections', 'Section'),
+                    icon: actionIcons[mod.id] || 'bi-plus-circle-fill',
+                    color: actionColors[mod.id] || 'primary',
+                    url: actionUrls[mod.id] || (mod.url + '/Create'),
+                    desc: 'Create a new ' + mod.title.toLowerCase().replace('main page sections', 'section')
+                });
+            }
+        });
+
+        // Limit to 4 quick actions
+        var displayActions = actions.slice(0, 4);
+        var html = '';
+        displayActions.forEach(function (a) {
+            html += buildQuickActionCard(a.title, a.icon, a.color, a.url, a.desc);
+        });
+        return html;
+    }
+
+    function buildQuickActionCard(title, icon, color, link, desc) {
         var colorMap = {
             'primary': 'btn-primary',
             'success': 'btn-success',
@@ -476,33 +420,22 @@
     //  STATISTICS
     // ═══════════════════════════════════════════════════════════════════
 
-    function loadAdminStatistics() {
-        var endpoints = [
-            { key: 'users', url: '/User/GetAll?pageNumber=1&pageSize=1' },
-            { key: 'departments', url: '/Department/GetAll?pageNumber=1&pageSize=1' },
-            { key: 'roles', url: '/Role/GetAll?pageNumber=1&pageSize=1' },
-            { key: 'content', url: '/MainPageSection/GetAll?pageNumber=1&pageSize=1' }
-        ];
-        loadStatValues(endpoints);
-    }
+    function loadDashboardStatistics(accessibleModules) {
+        var endpointMap = {
+            'users': '/User/GetAll?pageNumber=1&pageSize=1',
+            'departments': '/Department/GetAll?pageNumber=1&pageSize=1',
+            'roles': '/Role/GetAll?pageNumber=1&pageSize=1',
+            'notes': '/Note/GetAll?pageNumber=1&pageSize=1',
+            'content': '/MainPageSection/GetAll?pageNumber=1&pageSize=1'
+        };
 
-    function loadManagerStatistics() {
-        var endpoints = [
-            { key: 'users', url: '/User/GetAll?pageNumber=1&pageSize=1' },
-            { key: 'departments', url: '/Department/GetAll?pageNumber=1&pageSize=1' }
-        ];
-        loadStatValues(endpoints);
-    }
+        var endpoints = [];
+        accessibleModules.forEach(function (mod) {
+            if (endpointMap[mod.id]) {
+                endpoints.push({ key: mod.id, url: endpointMap[mod.id] });
+            }
+        });
 
-    function loadHRStatistics() {
-        var endpoints = [
-            { key: 'users', url: '/User/GetAll?pageNumber=1&pageSize=1' },
-            { key: 'content', url: '/MainPageSection/GetAll?pageNumber=1&pageSize=1' }
-        ];
-        loadStatValues(endpoints);
-    }
-
-    function loadStatValues(endpoints) {
         endpoints.forEach(function (ep) {
             $.ajax({
                 url: ep.url,
@@ -562,69 +495,15 @@
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    //  COMPANY INFORMATION (Employee)
-    // ═══════════════════════════════════════════════════════════════════
-
-    function loadCompanyInfo() {
-        $.ajax({
-            url: '/MainPageSection/GetAll?pageNumber=1&pageSize=50',
-            type: 'GET',
-            success: function (response) {
-                var sections = [];
-                if (response && response.data && Array.isArray(response.data)) {
-                    sections = response.data;
-                } else if (Array.isArray(response)) {
-                    sections = response;
-                }
-                renderCompanyInfo(sections);
-            },
-            error: function () {
-                var container = document.getElementById('companyInfoContainer');
-                if (container) {
-                    container.innerHTML = '<div class="col-12"><div class="empty-state"><i class="bi bi-building empty-icon"></i><h4>Company Information</h4><p>No announcements available at this time.</p></div></div>';
-                }
-            }
-        });
-    }
-
-    function renderCompanyInfo(sections) {
-        var container = document.getElementById('companyInfoContainer');
-        if (!container) return;
-
-        if (!sections || sections.length === 0) {
-            container.innerHTML = '<div class="col-12"><div class="empty-state"><i class="bi bi-building empty-icon"></i><h4>Company Information</h4><p>No company content available at this time.</p><a href="/MainPageSection" class="btn btn-outline-primary btn-sm">Browse Sections</a></div></div>';
-            return;
-        }
-
-        var html = '';
-        sections.forEach(function (section) {
-            var title = section.title || section.name || 'Section';
-            var description = section.description || section.content || '';
-            var truncatedDesc = description.length > 200 ? description.substring(0, 200) + '...' : description;
-
-            html += '<div class="col-md-6 col-lg-4">';
-            html += '<div class="company-info-card">';
-            html += '<div class="company-info-icon"><i class="bi bi-file-text-fill"></i></div>';
-            html += '<h5 class="company-info-title">' + escapeHtml(title) + '</h5>';
-            if (truncatedDesc) {
-                html += '<p class="company-info-desc">' + escapeHtml(truncatedDesc) + '</p>';
-            }
-            html += '<a href="/MainPageSection/Details/' + section.sectionId + '" class="company-info-link">Read More <i class="bi bi-arrow-right"></i></a>';
-            html += '</div></div>';
-        });
-
-        container.innerHTML = html;
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
     //  SIDEBAR NAVIGATION
     // ═══════════════════════════════════════════════════════════════════
 
-    function buildSidebarNav(role) {
+    function buildSidebarNav() {
         var navContainer = document.getElementById('sidebarNav');
         if (!navContainer) return;
 
         var currentPath = window.location.pathname;
+        var accessibleModules = getAccessibleModules();
 
         var html = '';
 
@@ -638,10 +517,6 @@
         html += '</li>';
 
         // Render accessible modules
-        var accessibleModules = modules.filter(function (mod) {
-            return hasAccess(mod.roles, role);
-        });
-
         accessibleModules.forEach(function (mod) {
             var isActive = (currentPath === mod.url || currentPath.indexOf(mod.url + '/') === 0);
             html += '<li class="nav-item">';
@@ -815,6 +690,31 @@
             }
         });
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  ACTIVE NAV LINK
+    // ═══════════════════════════════════════════════════════════════════
+
+    function setActiveNavLink() {
+        var currentPath = window.location.pathname;
+        var links = document.querySelectorAll('.sidebar-nav .nav-link');
+        links.forEach(function (link) {
+            link.classList.remove('active');
+            var href = link.getAttribute('href');
+            if (href === currentPath || (currentPath.indexOf(href + '/') === 0 && href !== '/')) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  EXPOSE FOR LAYOUT SCRIPT
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Expose these functions globally so _Layout.cshtml can call them
+    window.buildSidebarNav = buildSidebarNav;
+    window.buildUserMenu = buildUserMenu;
+    window.initDashboard = initDashboard;
 
     // ═══════════════════════════════════════════════════════════════════
     //  DOCUMENT READY

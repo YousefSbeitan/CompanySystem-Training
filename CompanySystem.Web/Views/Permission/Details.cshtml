@@ -1,16 +1,16 @@
 @{
-    ViewData["Title"] = "Role Details";
+    ViewData["Title"] = "Permission Details";
 }
 
 <div class="container-fluid">
-    <h1 class="h3 mb-3">Role Details</h1>
+    <h1 class="h3 mb-3">Permission Details</h1>
 
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="text-center my-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-2 text-muted">Loading role details...</p>
+        <p class="mt-2 text-muted">Loading permission details...</p>
     </div>
 
     <!-- Error -->
@@ -19,16 +19,19 @@
     <!-- Detail Card -->
     <div id="detailCard" class="card" style="display:none;">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-bold">Role Information</span>
-            <span class="badge bg-secondary" id="detailRoleId"></span>
+            <span class="fw-bold">Permission Information</span>
+            <span class="badge bg-secondary" id="detailPermissionId"></span>
         </div>
         <div class="card-body">
             <dl class="row mb-0">
-                <dt class="col-sm-3">Role ID</dt>
-                <dd class="col-sm-9" id="detailRoleIdDisplay"></dd>
+                <dt class="col-sm-3">Permission ID</dt>
+                <dd class="col-sm-9" id="detailPermissionIdDisplay"></dd>
 
-                <dt class="col-sm-3">Role Name</dt>
-                <dd class="col-sm-9" id="detailRoleName"></dd>
+                <dt class="col-sm-3">Permission Name</dt>
+                <dd class="col-sm-9" id="detailPermissionName"></dd>
+
+                <dt class="col-sm-3">Description</dt>
+                <dd class="col-sm-9" id="detailDescription"></dd>
 
                 <dt class="col-sm-3">Created By</dt>
                 <dd class="col-sm-9" id="detailCreatedBy"></dd>
@@ -44,8 +47,8 @@
             </dl>
         </div>
         <div class="card-footer">
-            <a href="/Role" class="btn btn-secondary">Back to List</a>
-            <button class="btn btn-warning admin-only" id="btnEditFromDetails" style="display:none;">
+            <a href="/Permission" class="btn btn-secondary">Back to List</a>
+            <button class="btn btn-warning permissions-edit" id="btnEditFromDetails" style="display:none;">
                 <i class="bi bi-pencil"></i> Edit
             </button>
         </div>
@@ -53,7 +56,7 @@
 
     <!-- Not Found -->
     <div id="notFoundAlert" class="alert alert-warning" style="display:none;">
-        Role not found.
+        Permission not found.
     </div>
 </div>
 
@@ -68,41 +71,42 @@
                 return (userRole === 'Admin');
             }
 
-            if (hasPermission("Roles.Edit")) {
-                $('.admin-only').show();
+            if (hasPermission("Permissions.Edit")) {
+                $('.permissions-edit').show();
             }
 
-            // Extract role ID from URL: /Role/Details/{id}
+            // Extract permission ID from URL: /Permission/Details/{id}
             var pathParts = window.location.pathname.split('/');
-            var roleId = parseInt(pathParts[pathParts.length - 1]);
+            var permissionId = parseInt(pathParts[pathParts.length - 1]);
 
-            if (!roleId) {
+            if (!permissionId) {
                 $('#loadingSpinner').hide();
-                $('#errorAlert').text('Invalid role ID.').show();
+                $('#errorAlert').text('Invalid permission ID.').show();
                 return;
             }
 
             $.ajax({
-                url: '/Role/GetById/' + roleId,
+                url: '/Permission/GetById/' + permissionId,
                 type: 'GET',
-                success: function (role) {
+                success: function (perm) {
                     $('#loadingSpinner').hide();
 
-                    if (!role) {
+                    if (!perm) {
                         $('#notFoundAlert').show();
                         return;
                     }
 
-                    $('#detailRoleId').text('#' + (role.roleId || role.roleID || ''));
-                    $('#detailRoleIdDisplay').text(role.roleId || role.roleID || '');
-                    $('#detailRoleName').text(role.roleName || '');
-                    $('#detailCreatedBy').text(role.createdBy || '-');
-                    $('#detailCreatedDate').text(role.createdDate ? new Date(role.createdDate).toLocaleString() : '-');
-                    $('#detailUpdatedBy').text(role.updatedBy || '-');
-                    $('#detailUpdatedDate').text(role.updatedDate ? new Date(role.updatedDate).toLocaleString() : '-');
+                    $('#detailPermissionId').text('#' + (perm.permissionId || ''));
+                    $('#detailPermissionIdDisplay').text(perm.permissionId || '');
+                    $('#detailPermissionName').text(perm.permissionName || '');
+                    $('#detailDescription').text(perm.description || '-');
+                    $('#detailCreatedBy').text(perm.createdBy || '-');
+                    $('#detailCreatedDate').text(perm.createdDate ? new Date(perm.createdDate).toLocaleString() : '-');
+                    $('#detailUpdatedBy').text(perm.updatedBy || '-');
+                    $('#detailUpdatedDate').text(perm.updatedDate ? new Date(perm.updatedDate).toLocaleString() : '-');
 
-                    if (hasPermission("Roles.Edit")) {
-                        $('#btnEditFromDetails').data('id', role.roleId || role.roleID).show();
+                    if (hasPermission("Permissions.Edit")) {
+                        $('#btnEditFromDetails').data('id', perm.permissionId).show();
                     }
 
                     $('#detailCard').show();
@@ -112,7 +116,7 @@
                     if (xhr.status === 404) {
                         $('#notFoundAlert').show();
                     } else {
-                        var msg = xhr.responseText || 'An error occurred while loading role details.';
+                        var msg = xhr.responseText || 'An error occurred while loading permission details.';
                         $('#errorAlert').text(msg).show();
                     }
                 }
@@ -121,7 +125,7 @@
             // Edit button on details page
             $(document).on('click', '#btnEditFromDetails', function () {
                 var id = $(this).data('id');
-                window.location.href = '/Role/Edit/' + id;
+                window.location.href = '/Permission/Edit/' + id;
             });
         });
     </script>

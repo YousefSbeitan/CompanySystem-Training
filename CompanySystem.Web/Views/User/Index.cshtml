@@ -109,11 +109,16 @@
             var currentSearch = '';
             var currentSortBy = 'UserId';
             var currentIsDescending = false;
-            var isAdmin = (window.currentUserRole === 'Admin');
-            var isManager = (window.currentUserRole === 'Manager');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
 
-            // ── Initial Role Visibility ─────────────────────────────
-            if (isAdmin) {
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin' || userRole === 'HR';
+            }
+
+            // ── Initial Permission Visibility ───────────────────────
+            if (hasPermission('Users.Create')) {
                 $('.admin-only').show();
             }
 
@@ -198,8 +203,10 @@
                     html += '<td>' + createdDate + '</td>';
                     html += '<td><div class="action-btns">';
                     html += '<button class="btn btn-sm btn-info btn-details" data-id="' + escapeHtml(user.userId) + '" title="Details"><i class="bi bi-eye"></i></button>';
-                    if (isAdmin) {
+                    if (hasPermission('Users.Edit')) {
                         html += '<button class="btn btn-sm btn-warning btn-edit" data-id="' + escapeHtml(user.userId) + '" title="Edit"><i class="bi bi-pencil"></i></button>';
+                    }
+                    if (hasPermission('Users.Delete')) {
                         html += '<button class="btn btn-sm btn-danger btn-delete" data-id="' + escapeHtml(user.userId) + '" title="Delete"><i class="bi bi-trash"></i></button>';
                     }
                     html += '</div></td>';

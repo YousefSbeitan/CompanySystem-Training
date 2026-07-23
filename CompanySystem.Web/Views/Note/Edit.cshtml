@@ -105,12 +105,16 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var currentUserRole = window.currentUserRole || '';
-            var isAdmin = (currentUserRole === 'Admin');
-            var isManager = (currentUserRole === 'Manager');
+            var permissions = window.currentUserPermissions || [];
+            var userRole = window.currentUserRole || '';
+
+            function hasPermission(perm) {
+                if (permissions.length > 0) return permissions.indexOf(perm) !== -1;
+                return userRole === 'Admin' || userRole === 'Manager';
+            }
 
             // Check permission
-            if (!isAdmin && !isManager) {
+            if (!hasPermission('Notes.Edit')) {
                 $('#loadingSpinner').hide();
                 $('#alertContainer').html(
                     '<div class="alert alert-danger">You do not have permission to edit notes.</div>'
