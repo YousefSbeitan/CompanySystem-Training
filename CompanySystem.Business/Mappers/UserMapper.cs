@@ -18,6 +18,7 @@ public static class UserMapper
             StartDate = user.StartDate,
             Salary = user.Salary,
             IsActive = user.IsActive,
+            IsLeader = user.LeaderId == user.UserId,
             CreatedBy = user.CreatedBy,
             CreatedDate = user.CreatedDate,
             UpdatedBy = user.UpdatedBy,

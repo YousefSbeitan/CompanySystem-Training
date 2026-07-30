@@ -1,182 +1,248 @@
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "Edit Role";
 }
 
-<div class="container-fluid">
-    <h1 class="h3 mb-3">Edit Role</h1>
-
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="text-center my-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2 text-muted">Loading role data...</p>
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/Role" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Roles
+        </a>
     </div>
 
-    <!-- Error -->
-    <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
-    <div id="notFoundAlert" class="alert alert-warning" style="display:none;">Role not found.</div>
-
-    <!-- Edit Form -->
-    <div class="card" id="editCard" style="display:none;">
-        <div class="card-body">
-            <form id="editForm" novalidate>
-                <input type="hidden" id="editRoleId" />
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="editRoleName" class="form-label">
-                                Role Name <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="editRoleName" name="RoleName"
-                                   maxlength="100" required placeholder="Enter role name" />
-                            <div class="invalid-feedback">
-                                Role name is required and must not exceed 100 characters.
-                            </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Role</h4>
+                </div>
+                <div class="card-body">
+                    <div id="loadingContainer" class="text-center py-5">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
+                        <p class="mt-2 text-muted">Loading role data...</p>
+                    </div>
+
+                    <form id="roleForm" class="d-none" novalidate>
+                        <input type="hidden" id="roleId" name="roleId" value="0" />
+
+                        <div class="mb-3">
+                            <label for="roleName" class="form-label">Role Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="roleName" name="roleName"
+                                   required maxlength="100"
+                                   placeholder="Enter role name" />
+                            <div class="invalid-feedback" id="roleNameError">Role name is required and must not exceed 100 characters.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="/Role" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning" id="submitBtn">
+                                <i class="bi bi-check-circle me-1"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="errorContainer" class="d-none text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                        <h5>Failed to load role</h5>
+                        <p id="errorMessage" class="text-muted"></p>
+                        <a href="/Role" class="btn btn-outline-secondary mt-2">Back to Roles</a>
                     </div>
                 </div>
-
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary" id="btnSave">
-                        <i class="bi bi-check-lg"></i> Save Changes
-                    </button>
-                    <a href="/Role" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
-
-            <!-- Saving Spinner (hidden) -->
-            <div id="savingSpinner" class="text-center my-3" style="display:none;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Saving...</span>
-                </div>
-                <p class="mt-2 text-muted">Saving changes...</p>
             </div>
         </div>
     </div>
-
-    <!-- Alert Container -->
-    <div id="alertContainer" class="mt-3"></div>
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
+        (function () {
+            'use strict';
+
             var permissions = window.currentUserPermissions || [];
-            var userRole = window.currentUserRole || '';
 
-            function hasPermission(perm) {
-                if (permissions.length > 0) return permissions.includes(perm);
-                return (userRole === 'Admin');
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
             }
 
-            if (!hasPermission("Roles.Edit")) {
-                $('#loadingSpinner').hide();
-                $('#alertContainer').html(
-                    '<div class="alert alert-danger">You do not have permission to edit roles.</div>'
-                );
+            if (!hasPerm('Roles.Edit')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to edit roles.</p>' +
+                    '<a href="/Role" class="btn btn-outline-secondary mt-3">Back to Roles</a>' +
+                    '</div>';
                 return;
             }
 
-            // Extract role ID from URL: /Role/Edit/{id}
+            // Get role ID from URL
             var pathParts = window.location.pathname.split('/');
-            var roleId = parseInt(pathParts[pathParts.length - 1]);
+            var roleId = parseInt(pathParts[pathParts.length - 1]) || 0;
 
-            if (!roleId) {
-                $('#loadingSpinner').hide();
-                $('#errorAlert').text('Invalid role ID.').show();
-                return;
-            }
+            var form = document.getElementById('roleForm');
+            var submitBtn = document.getElementById('submitBtn');
+            var roleNameInput = document.getElementById('roleName');
+            var roleNameError = document.getElementById('roleNameError');
+            var loadingContainer = document.getElementById('loadingContainer');
+            var errorContainer = document.getElementById('errorContainer');
+            var errorMessage = document.getElementById('errorMessage');
 
-            // Load role data
-            $.ajax({
-                url: '/Role/GetById/' + roleId,
-                type: 'GET',
-                success: function (role) {
-                    $('#loadingSpinner').hide();
-
-                    if (!role) {
-                        $('#notFoundAlert').show();
-                        return;
-                    }
-
-                    $('#editRoleId').val(role.roleId || role.roleID || '');
-                    $('#editRoleName').val(role.roleName || '');
-                    $('#editCard').show();
-                },
-                error: function (xhr) {
-                    $('#loadingSpinner').hide();
-                    if (xhr.status === 404) {
-                        $('#notFoundAlert').show();
+            // ── Real-time validation ─────────────────────────────────
+            roleNameInput.addEventListener('input', function () {
+                var val = this.value.trim();
+                if (val.length > 0 && val.length <= 100) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    if (val.length > 0) {
+                        this.classList.add('is-invalid');
                     } else {
-                        var msg = xhr.responseText || 'Failed to load role.';
-                        $('#errorAlert').text(msg).show();
+                        this.classList.remove('is-invalid');
                     }
                 }
             });
 
-            // Submit form
-            $('#editForm').on('submit', function (e) {
-                e.preventDefault();
-
-                var form = this;
-                if (!form.checkValidity()) {
-                    form.classList.add('was-validated');
+            // ── Load Role Data ───────────────────────────────────────
+            function loadRole() {
+                if (!roleId || roleId === 0) {
+                    showError('Invalid role ID.');
                     return;
                 }
 
-                var dto = {
-                    roleId: parseInt($('#editRoleId').val()),
-                    roleName: $('#editRoleName').val().trim()
-                };
+                $.ajax({
+                    url: '/Role/GetById/' + roleId,
+                    type: 'GET',
+                    beforeSend: function () {
+                        loadingContainer.classList.remove('d-none');
+                        form.classList.add('d-none');
+                        errorContainer.classList.add('d-none');
+                    },
+                    success: function (response) {
+                        loadingContainer.classList.add('d-none');
+                        form.classList.remove('d-none');
 
-                $('#btnSave').prop('disabled', true);
-                $('#savingSpinner').show();
-                $('#alertContainer').empty();
+                        var role = response;
+                        // If response has $id or is wrapped
+                        if (response && response.data) {
+                            role = response.data;
+                        }
+
+                        document.getElementById('roleId').value = role.roleId || roleId;
+                        roleNameInput.value = role.roleName || '';
+                        roleNameInput.classList.add('is-valid');
+                    },
+                    error: function (xhr) {
+                        loadingContainer.classList.add('d-none');
+                        errorContainer.classList.remove('d-none');
+                        var msg = 'Failed to load role data.';
+                        try {
+                            msg = JSON.parse(xhr.responseText) || msg;
+                        } catch (e) {
+                            msg = xhr.responseText || msg;
+                        }
+                        errorMessage.textContent = msg;
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            function showError(msg) {
+                loadingContainer.classList.add('d-none');
+                errorContainer.classList.remove('d-none');
+                errorMessage.textContent = msg;
+            }
+
+            // ── Form Submit ──────────────────────────────────────────
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var roleName = roleNameInput.value.trim();
+                var isValid = true;
+
+                if (!roleName || roleName.length === 0 || roleName.length > 100) {
+                    roleNameInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    roleNameInput.classList.remove('is-invalid');
+                    roleNameInput.classList.add('is-valid');
+                }
+
+                if (!isValid) return;
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...';
+
+                var dto = {
+                    roleId: roleId,
+                    roleName: roleName
+                };
 
                 $.ajax({
                     url: '/Role/Edit',
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(dto),
+                    beforeSend: function () {
+                        // button disabled
+                    },
                     success: function (response) {
-                        $('#savingSpinner').hide();
-                        $('#alertContainer').html(
-                            '<div class="alert alert-success">Role updated successfully! Redirecting...</div>'
-                        );
-                        setTimeout(function () {
-                            window.location.href = '/Role';
-                        }, 1000);
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('Role updated successfully.', 'success');
+                        } else {
+                            alert('Role updated successfully.');
+                        }
+                        window.location.href = '/Role';
                     },
                     error: function (xhr) {
-                        $('#savingSpinner').hide();
-                        $('#btnSave').prop('disabled', false);
-
                         var msg = 'Failed to update role.';
-                        if (xhr.responseJSON) {
-                            if (xhr.responseJSON.title) {
-                                msg = xhr.responseJSON.title;
-                            } else if (xhr.responseJSON.errors) {
-                                var errors = xhr.responseJSON.errors;
-                                var errorList = [];
-                                $.each(errors, function (key, arr) {
-                                    $.each(arr, function (i, err) {
-                                        errorList.push(err);
-                                    });
-                                });
-                                msg = errorList.join('<br/>');
+                        try {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (typeof resp === 'string') {
+                                msg = resp;
+                            } else if (resp && resp.title) {
+                                msg = resp.title;
+                            } else if (resp && resp.message) {
+                                msg = resp.message;
+                            } else if (resp && resp.roleName && resp.roleName.length > 0) {
+                                msg = resp.roleName[0];
                             }
-                        } else if (xhr.responseText) {
-                            msg = xhr.responseText;
+                        } catch (e) {
+                            if (xhr.responseText) {
+                                msg = xhr.responseText;
+                            }
                         }
 
-                        $('#alertContainer').html(
-                            '<div class="alert alert-danger">' + msg + '</div>'
-                        );
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Changes';
+                    },
+                    complete: function () {
+                        // handled
                     }
                 });
             });
-        });
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                loadRole();
+            });
+
+        })();
     </script>
 }

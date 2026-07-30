@@ -21,6 +21,8 @@ public class UserDto : TrackingDto
     public decimal Salary { get; set; }
 
     public bool IsActive { get; set; }
+
+    public bool IsLeader { get; set; }
 }
 
 

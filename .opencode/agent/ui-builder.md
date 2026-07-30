@@ -25,4 +25,4 @@ You follow the build-ui skill instructions. You must:
    - Delete.cshtml — confirmation with display (gated by Delete permission)
 4. Map [RequirePermission] attributes from controller actions to permission checks using window.currentUserPermissions.
 5. Use Bootstrap 5 classes, jQuery AJAX, and the exact patterns from existing views.
-6. NEVER modify Business layer, Data layer, or any file outside `Views/{EntityName}/` and controllers (only to add missing MVC view actions).
+ 6. NEVER modify Controllers, Business layer, Data layer, or any file outside `Views/{EntityName}/`. Controllers are READ-ONLY — if MVC view actions are missing, report them in the output.

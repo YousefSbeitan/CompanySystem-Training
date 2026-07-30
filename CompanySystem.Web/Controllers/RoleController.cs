@@ -115,7 +115,7 @@ public class RoleController : Controller
 
 
     // POST: /Role/Create
-    [HttpPost]
+    [HttpPost("Create")]
     [RequirePermission("Roles.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateRoleDto dto)
@@ -159,7 +159,7 @@ public class RoleController : Controller
 
 
     // PUT: /Role/Edit
-    [HttpPut]
+    [HttpPut("Edit")]
     [RequirePermission("Roles.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditRoleDto dto)

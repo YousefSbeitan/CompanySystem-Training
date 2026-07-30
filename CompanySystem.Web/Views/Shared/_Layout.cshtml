@@ -1,138 +1,59 @@
-﻿@{
-    var isAuthPage = ViewData["IsAuthPage"] as bool? ?? ViewContext.HttpContext.Request.Path.StartsWithSegments("/Auth");
-}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ASAL Technologies</title>
+    <title>@ViewData["Title"] - CompanySystem</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CompanySystem.Web.styles.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
-    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-utilities.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/theme.css" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
 </head>
-<body class="@(isAuthPage ? "auth-page" : "")">
-    @if (!isAuthPage)
-    {
-        <!-- Sidebar Overlay (mobile) -->
-        <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
-
-        <!-- Sidebar -->
-        <aside class="main-sidebar" id="sidebar" aria-label="Main navigation">
-            <div class="sidebar-brand">
-                <a href="/Home/Dashboard" aria-label="Dashboard home">
-                    <span class="sidebar-brand-icon">
-                        <svg viewBox="0 0 24 24" width="28" height="28" fill="#00a8e8" aria-hidden="true">
-                            <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/>
-                        </svg>
-                    </span>
-                    <span class="sidebar-brand-text">ASAL Technologies</span>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" href="/">
+                    <i class="bi bi-building me-2"></i>CompanySystem
                 </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#navbarNav" aria-controls="navbarNav"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto" id="mainNav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/"><i class="bi bi-house-door me-1"></i>Home</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav" id="topNavRight">
+                        <!-- Populated by dashboard.js / auth state -->
+                    </ul>
+                </div>
             </div>
-            <hr class="sidebar-divider">
-            <ul class="sidebar-nav" id="sidebarNav" role="menubar">
-                <!-- Dynamically populated by dashboard.js -->
-            </ul>
-        </aside>
+        </nav>
+    </header>
 
-        <!-- Content Wrapper -->
-        <div class="content-wrapper" id="contentWrapper">
-            <!-- Top Navbar -->
-            <nav class="top-navbar" aria-label="Top navigation">
-                <div class="top-navbar-left">
-                    <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar" title="Toggle sidebar">
-                        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-                        </svg>
-                    </button>
-                    <a href="/Home/Dashboard" class="top-navbar-brand">
-                        <i class="bi bi-hexagon-fill me-1" style="color: var(--asal-accent);"></i>CompanySystem
-                    </a>
-                </div>
-                <div class="top-navbar-right" id="topNavRight">
-                    <!-- Populated by dashboard.js based on auth state -->
-                </div>
-            </nav>
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
 
-            <!-- Main Content -->
-            <main class="main-content" id="mainContent" role="main">
-                @RenderBody()
-            </main>
-
-            <!-- Footer -->
-            <footer class="main-footer">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-md-6">
-                            &copy; <span id="footerYear">2026</span> ASAL Technologies. All rights reserved.
-                        </div>
-                        <div class="col-md-6 text-md-end">
-                            <a href="/Home/Privacy">Privacy Policy</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+    <footer class="border-top footer text-muted bg-light py-3">
+        <div class="container-fluid text-center">
+            &copy; <span id="footerYear">2026</span> CompanySystem. All rights reserved.
         </div>
-    }
-    else
-    {
-        <!-- Auth pages: standalone layout without sidebar/navbar -->
-        <div class="auth-page-wrapper">
-            @RenderBody()
-        </div>
-    }
+    </footer>
+
+    <div id="toastContainer" class="toast-container-custom"></div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/auth.js" asp-append-version="true"></script>
-    <script src="~/js/dashboard.js" asp-append-version="true"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @if (!isAuthPage)
-    {
-    <script>
-        // ── Layout Navigation Initialization ──────────────────────────
-        $(document).ready(function () {
-            function updateNav() {
-                var user = window.currentUser || { id: '', username: '', role: '' };
-                var isLoggedIn = !!user.username;
-                var role = user.role || '';
-                var roleLower = role.toLowerCase();
-
-                // Set body role classes (remove old ones first)
-                document.body.classList.remove('role-admin', 'role-manager', 'role-hr', 'role-user', 'has-admin', 'is-manager');
-                document.body.classList.add('role-' + roleLower);
-                if (roleLower === 'admin') { document.body.classList.add('has-admin'); }
-                if (roleLower === 'manager') { document.body.classList.add('is-manager'); }
-
-                // For non-dashboard pages, ensure sidebar nav is updated
-                if (typeof buildSidebarNav === 'function') {
-                    buildSidebarNav(role);
-                }
-
-                // Re-build user menu in navbar
-                if (typeof buildUserMenu === 'function') {
-                    buildUserMenu(user, isLoggedIn);
-                }
-            }
-
-            // Initial update
-            updateNav();
-
-            // Re-run when auth state changes
-            $(window).on('authStateChanged', function () {
-                updateNav();
-                if (typeof initDashboard === 'function') {
-                    initDashboard();
-                }
-            });
-        });
-    </script>
-    }
+    <script src="~/js/auth.js"></script>
+    <script src="~/js/dashboard.js"></script>
+    <script src="~/js/site.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-

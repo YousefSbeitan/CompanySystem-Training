@@ -25,6 +25,7 @@ public class UserController : Controller
 
     // GET: /User (MVC View)
     [HttpGet]
+    [RequirePermission("Users.View")]
     public IActionResult Index()
     {
         return View();
@@ -33,7 +34,7 @@ public class UserController : Controller
 
     // GET: /User/Create (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin,HR")]
+    [RequirePermission("Users.Create")]
     public IActionResult Create()
     {
         return View();
@@ -42,6 +43,7 @@ public class UserController : Controller
 
 
     [HttpGet]
+    [RequirePermission("Users.Edit")]
     public async Task<IActionResult> Edit(
         string id)
     {
@@ -54,6 +56,7 @@ public class UserController : Controller
 
     // GET: /User/Details/{id} (MVC View)
     [HttpGet]
+    [RequirePermission("Users.View")]
     public async Task<IActionResult> Details(
         string id)
     {
@@ -66,7 +69,7 @@ public class UserController : Controller
 
     // GET: /User/Delete/{id} (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Users.Delete")]
     [ActionName("Delete")]
     public IActionResult DeleteView(
         string id)

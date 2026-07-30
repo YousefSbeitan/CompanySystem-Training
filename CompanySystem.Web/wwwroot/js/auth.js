@@ -10,9 +10,9 @@
     function saveTokens(accessToken, refreshToken) {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        // Set cookie for MVC navigation (composite auth)
+        // Set JWT cookie for API fallback (read by JWT bearer OnMessageReceived)
         document.cookie = 'CompanySystem.Jwt=' + encodeURIComponent(accessToken) + '; path=/; secure; samesite=lax';
-        document.cookie = 'CompanySystem.Auth=' + encodeURIComponent(accessToken) + '; path=/; secure; samesite=lax';
+        // Note: CompanySystem.Auth cookie is managed by the server via SignInAsync
     }
 
     function getAccessToken() {

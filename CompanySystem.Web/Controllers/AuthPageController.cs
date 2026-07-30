@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using CompanySystem.Web.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
@@ -15,7 +16,7 @@ public class AuthPageController : Controller
 
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Users.Create")]
     [Route("Auth/Register")]
     public IActionResult Register()
     {

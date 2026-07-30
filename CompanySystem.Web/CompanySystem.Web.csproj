@@ -19,4 +19,8 @@
 		<ProjectReference Include="..\CompanySystem.Shared\CompanySystem.Shared.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Views\" />
+	</ItemGroup>
+
 </Project>

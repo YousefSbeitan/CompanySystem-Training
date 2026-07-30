@@ -1,128 +1,166 @@
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "Create Role";
 }
 
-<div class="container-fluid">
-    <h1 class="h3 mb-3">Create Role</h1>
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/Role" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Roles
+        </a>
+    </div>
 
-    <div class="card">
-        <div class="card-body">
-            <form id="createForm" novalidate>
-                <div class="row">
-                    <div class="col-md-6">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-shield-plus-fill me-2"></i>Create New Role</h4>
+                </div>
+                <div class="card-body">
+                    <form id="roleForm" novalidate>
                         <div class="mb-3">
-                            <label for="createRoleName" class="form-label">
-                                Role Name <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="createRoleName" name="RoleName"
-                                   maxlength="100" required placeholder="Enter role name" />
-                            <div class="invalid-feedback">
-                                Role name is required and must not exceed 100 characters.
-                            </div>
+                            <label for="roleName" class="form-label">Role Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="roleName" name="roleName"
+                                   required maxlength="100"
+                                   placeholder="Enter role name" />
+                            <div class="invalid-feedback" id="roleNameError">Role name is required and must not exceed 100 characters.</div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary" id="btnSave">
-                        <i class="bi bi-check-lg"></i> Save
-                    </button>
-                    <a href="/Role" class="btn btn-secondary">Cancel</a>
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="/Role" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-check-circle me-1"></i>Create Role
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
-
-            <!-- Loading Spinner (hidden) -->
-            <div id="loadingSpinner" class="text-center my-3" style="display:none;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Saving...</span>
-                </div>
-                <p class="mt-2 text-muted">Saving role...</p>
             </div>
         </div>
     </div>
-
-    <!-- Alert Container -->
-    <div id="alertContainer" class="mt-3"></div>
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
-            var permissions = window.currentUserPermissions || [];
-            var userRole = window.currentUserRole || '';
+        (function () {
+            'use strict';
 
-            function hasPermission(perm) {
-                if (permissions.length > 0) return permissions.includes(perm);
-                return (userRole === 'Admin');
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
             }
 
-            if (!hasPermission("Roles.Create")) {
-                $('#alertContainer').html(
-                    '<div class="alert alert-danger">You do not have permission to create roles.</div>'
-                );
-                $('#btnSave').prop('disabled', true);
+            if (!hasPerm('Roles.Create')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to create roles.</p>' +
+                    '<a href="/Role" class="btn btn-outline-secondary mt-3">Back to Roles</a>' +
+                    '</div>';
                 return;
             }
 
-            $('#createForm').on('submit', function (e) {
+            var form = document.getElementById('roleForm');
+            var submitBtn = document.getElementById('submitBtn');
+            var roleNameInput = document.getElementById('roleName');
+            var roleNameError = document.getElementById('roleNameError');
+
+            // ── Real-time validation ─────────────────────────────────
+            roleNameInput.addEventListener('input', function () {
+                var val = this.value.trim();
+                if (val.length > 0 && val.length <= 100) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    if (val.length > 0) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                }
+            });
+
+            // ── Form Submit ──────────────────────────────────────────
+            form.addEventListener('submit', function (e) {
                 e.preventDefault();
 
-                var form = this;
-                if (!form.checkValidity()) {
-                    form.classList.add('was-validated');
-                    return;
+                // Validate
+                var roleName = roleNameInput.value.trim();
+                var isValid = true;
+
+                if (!roleName || roleName.length === 0 || roleName.length > 100) {
+                    roleNameInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    roleNameInput.classList.remove('is-invalid');
+                    roleNameInput.classList.add('is-valid');
                 }
 
-                var dto = {
-                    roleName: $('#createRoleName').val().trim()
-                };
+                if (!isValid) return;
 
-                $('#btnSave').prop('disabled', true);
-                $('#loadingSpinner').show();
-                $('#alertContainer').empty();
+                // Disable button
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Creating...';
+
+                var dto = {
+                    roleName: roleName
+                };
 
                 $.ajax({
                     url: '/Role/Create',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(dto),
+                    beforeSend: function () {
+                        // button already disabled
+                    },
                     success: function (response) {
-                        $('#loadingSpinner').hide();
-                        $('#alertContainer').html(
-                            '<div class="alert alert-success">Role created successfully! Redirecting...</div>'
-                        );
-                        setTimeout(function () {
-                            window.location.href = '/Role';
-                        }, 1000);
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('Role created successfully.', 'success');
+                        } else {
+                            alert('Role created successfully.');
+                        }
+                        window.location.href = '/Role';
                     },
                     error: function (xhr) {
-                        $('#loadingSpinner').hide();
-                        $('#btnSave').prop('disabled', false);
-
                         var msg = 'Failed to create role.';
-                        if (xhr.responseJSON) {
-                            if (xhr.responseJSON.title) {
-                                msg = xhr.responseJSON.title;
-                            } else if (xhr.responseJSON.errors) {
-                                var errors = xhr.responseJSON.errors;
-                                var errorList = [];
-                                $.each(errors, function (key, arr) {
-                                    $.each(arr, function (i, err) {
-                                        errorList.push(err);
-                                    });
-                                });
-                                msg = errorList.join('<br/>');
+                        try {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (typeof resp === 'string') {
+                                msg = resp;
+                            } else if (resp && resp.title) {
+                                msg = resp.title;
+                            } else if (resp && resp.message) {
+                                msg = resp.message;
+                            } else if (resp && resp.roleName && resp.roleName.length > 0) {
+                                msg = resp.roleName[0];
                             }
-                        } else if (xhr.responseText) {
-                            msg = xhr.responseText;
+                        } catch (e) {
+                            if (xhr.responseText) {
+                                msg = xhr.responseText;
+                            }
                         }
 
-                        $('#alertContainer').html(
-                            '<div class="alert alert-danger">' + msg + '</div>'
-                        );
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+
+                        // Re-enable
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Role';
+                    },
+                    complete: function () {
+                        // handled in error/success
                     }
                 });
             });
-        });
+
+        })();
     </script>
 }

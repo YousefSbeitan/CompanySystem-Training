@@ -25,7 +25,7 @@ public class DepartmentController : Controller
 
     // GET: /Department (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
+    [RequirePermission("Departments.View")]
     public IActionResult Index()
     {
         return View();
@@ -34,7 +34,7 @@ public class DepartmentController : Controller
 
     // GET: /Department/Create (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Departments.Create")]
     public IActionResult Create()
     {
         return View();
@@ -43,7 +43,7 @@ public class DepartmentController : Controller
 
     // GET: /Department/Edit/{id} (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Departments.Edit")]
     public IActionResult Edit(
         int id)
     {
@@ -53,6 +53,7 @@ public class DepartmentController : Controller
 
     // GET: /Department/Details/{id} (MVC View)
     [HttpGet]
+    [RequirePermission("Departments.View")]
     public IActionResult Details(
         int id)
     {
@@ -62,7 +63,7 @@ public class DepartmentController : Controller
 
     // GET: /Department/Delete/{id} (MVC View)
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
+    [RequirePermission("Departments.Delete")]
     [ActionName("Delete")]
     public IActionResult DeleteView(
         int id)

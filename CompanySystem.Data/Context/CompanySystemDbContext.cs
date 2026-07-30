@@ -85,6 +85,14 @@ public class CompanySystemDbContext : DbContext
                 CreatedBy = "System",
                 CreatedDate = new DateTime(2026, 1, 1),
                 IsDeleted = false
+            },
+            new Role
+            {
+                RoleId = 4,
+                RoleName = "HR",
+                CreatedBy = "System",
+                CreatedDate = new DateTime(2026, 1, 1),
+                IsDeleted = false
             });
 
 

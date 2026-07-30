@@ -60,6 +60,7 @@ public class PermissionController : Controller
 
     // MVC: GET /Permission/Delete/{id} (MVC View)
     [HttpGet]
+    [ActionName("Delete")]
     [RequirePermission("Permissions.Delete")]
     public IActionResult DeleteView(int id)
     {
