@@ -15,6 +15,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INoteService, NoteService>();
         services.AddScoped<IMainPageSectionService, MainPageSectionService>();
 
+        services.AddScoped<IPermissionService, PermissionService>();
+
         return services;
     }
 }
