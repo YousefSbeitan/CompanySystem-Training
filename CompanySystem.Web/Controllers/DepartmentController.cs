@@ -68,7 +68,7 @@ public class DepartmentController : Controller
     public IActionResult DeleteView(
         int id)
     {
-        return View();
+        return View("Delete");
     }
 
 

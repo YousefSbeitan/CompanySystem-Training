@@ -99,3 +99,12 @@ public class RefreshTokenRequestDto
         Name = "Refresh Token")]
     public string RefreshToken { get; set; } = string.Empty;
 }
+
+
+
+public class LogoutRequestDto
+{
+    [Display(
+        Name = "Refresh Token")]
+    public string? RefreshToken { get; set; }
+}

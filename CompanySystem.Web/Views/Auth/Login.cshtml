@@ -305,12 +305,13 @@
                     // Fallback: store directly
                     localStorage.setItem('accessToken', response.accessToken);
                     localStorage.setItem('refreshToken', response.refreshToken);
+                    var secure = (location.protocol === 'https:') ? '; secure' : '';
                     document.cookie = 'CompanySystem.Jwt=' + encodeURIComponent(response.accessToken) +
-                        '; path=/; secure; samesite=lax';
+                        '; path=/' + secure + '; samesite=lax';
                 }
 
-                // Redirect to home/dashboard
-                window.location.href = '/';
+                // Redirect to dashboard (authenticated landing)
+                window.location.href = '/Home/Dashboard';
             }
 
             function handleLoginError(xhr) {
@@ -374,6 +375,25 @@
             }
 
             // ── Init ─────────────────────────────────────────────────
+            function clearLocalAuth() {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                var secure = (location.protocol === 'https:') ? '; secure' : '';
+                document.cookie = 'CompanySystem.Jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC' +
+                    secure + '; samesite=lax';
+            }
+
+            function isTokenExpired(token) {
+                try {
+                    var payload = token.split('.')[1];
+                    var decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+                    if (!decoded || !decoded.exp) return true;
+                    return decoded.exp < Math.floor(Date.now() / 1000);
+                } catch (e) {
+                    return true;
+                }
+            }
+
             function init() {
                 initPasswordToggle();
                 var form = document.getElementById('loginForm');
@@ -381,15 +401,17 @@
                     form.addEventListener('submit', handleSubmit);
                 }
 
-                // Clear any stale tokens on login page
-                if (window.auth && window.auth.removeTokens) {
-                    window.auth.removeTokens();
-                } else {
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
-                    document.cookie = 'CompanySystem.Jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
-                    document.cookie = 'CompanySystem.Auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+                // If already signed in with a valid JWT, go straight to dashboard.
+                // Do NOT call /api/Auth/Logout on page load — it races with a new
+                // SignInAsync and can clear the fresh auth cookie after login.
+                var existingToken = localStorage.getItem('accessToken');
+                if (existingToken && !isTokenExpired(existingToken)) {
+                    window.location.href = '/Home/Dashboard';
+                    return;
                 }
+
+                // Drop stale client tokens only; server cookie is replaced on login
+                clearLocalAuth();
 
                 // Focus username field
                 setTimeout(function () {

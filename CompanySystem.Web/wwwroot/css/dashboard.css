@@ -367,6 +367,11 @@ body {
     color: #047857;
 }
 
+.user-role-badge.role-employee {
+    background: #d1fae5;
+    color: #047857;
+}
+
 .user-role-badge.role-hr {
     background: #f3e8ff;
     color: #7c3aed;

@@ -19,7 +19,9 @@ public class RequirePermissionAttribute : Attribute, IAuthorizationFilter
 
         if (!user.Identity?.IsAuthenticated ?? true)
         {
-            context.Result = new UnauthorizedResult();
+            // Challenge so MVC browser requests redirect to login (cookie scheme)
+            // and API clients still receive 401 via the authentication handler.
+            context.Result = new ChallengeResult();
             return;
         }
 

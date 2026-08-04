@@ -1,0 +1,293 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Note Details";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/Note" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Notes
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-eye-fill me-2"></i>Note Details</h4>
+                </div>
+                <div class="card-body">
+                    <div id="loadingContainer" class="text-center py-5">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading note details...</p>
+                    </div>
+
+                    <div id="detailsContainer" class="d-none">
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Note ID</div>
+                            <div class="col-md-8" id="detailNoteId">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">User</div>
+                            <div class="col-md-8" id="detailUser">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Note Type</div>
+                            <div class="col-md-8" id="detailNoteType">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Title</div>
+                            <div class="col-md-8" id="detailTitle">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Content</div>
+                            <div class="col-md-8" id="detailContent">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created By</div>
+                            <div class="col-md-8" id="detailCreatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created Date</div>
+                            <div class="col-md-8" id="detailCreatedDate">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated By</div>
+                            <div class="col-md-8" id="detailUpdatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated Date</div>
+                            <div class="col-md-8" id="detailUpdatedDate">—</div>
+                        </div>
+                    </div>
+
+                    <div id="errorContainer" class="d-none text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                        <h5>Failed to load note details</h5>
+                        <p id="errorMessage" class="text-muted"></p>
+                        <a href="/Note" class="btn btn-outline-secondary mt-2">Back to Notes</a>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="/Note" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back
+                    </a>
+                    <div>
+                        <a href="/Note/Edit/@ViewContext.RouteData.Values["id"]" class="btn btn-warning d-none" id="editFromDetailsBtn">
+                            <i class="bi bi-pencil-fill me-1"></i>Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            if (!hasPerm('Notes.View')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to view note details.</p>' +
+                    '<a href="/Note" class="btn btn-outline-secondary mt-3">Back to Notes</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Show Edit button if permitted
+            if (hasPerm('Notes.Edit')) {
+                var editBtn = document.getElementById('editFromDetailsBtn');
+                if (editBtn) {
+                    editBtn.classList.remove('d-none');
+                }
+            }
+
+            function getUrlId() {
+                var pathParts = window.location.pathname.split('/');
+                var raw = decodeURIComponent(pathParts[pathParts.length - 1] || '');
+                var id = parseInt(raw, 10);
+                return isNaN(id) ? '' : id;
+            }
+
+            var noteId = getUrlId();
+
+            var loadingContainer = document.getElementById('loadingContainer');
+            var detailsContainer = document.getElementById('detailsContainer');
+            var errorContainer = document.getElementById('errorContainer');
+            var errorMessage = document.getElementById('errorMessage');
+
+            // ── FK Lookup Map (User) ─────────────────────────────────
+            var userMap = {};
+
+            function loadLookups(callback) {
+                var pending = 1;
+
+                function checkDone() {
+                    pending--;
+                    if (pending <= 0 && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+
+                // Users: GET /User/GetAll
+                $.ajax({
+                    url: '/User/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () { },
+                    success: function (response) {
+                        var users = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            users = response.data;
+                        } else if (Array.isArray(response)) {
+                            users = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            users = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            users = response.results;
+                        }
+                        users.forEach(function (user) {
+                            if (user && user.userId) {
+                                userMap[user.userId] = user.username || user.userId;
+                            }
+                        });
+                    },
+                    error: function () {
+                        // Lookup is best-effort; raw IDs shown as fallback
+                    },
+                    complete: function () {
+                        checkDone();
+                    }
+                });
+            }
+
+            // ── Load Note Details ────────────────────────────────────
+            function loadDetails() {
+                if (!noteId) {
+                    showError('Invalid note ID.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Note/GetById/' + noteId,
+                    type: 'GET',
+                    beforeSend: function () {
+                        loadingContainer.classList.remove('d-none');
+                        detailsContainer.classList.add('d-none');
+                        errorContainer.classList.add('d-none');
+                    },
+                    success: function (response) {
+                        loadingContainer.classList.add('d-none');
+
+                        var note = response;
+                        if (response && response.data) {
+                            note = response.data;
+                        }
+
+                        if (!note || !note.noteId) {
+                            showError('Note not found.');
+                            return;
+                        }
+
+                        document.getElementById('detailNoteId').textContent = note.noteId || '—';
+
+                        var userName = (note.userId && userMap[note.userId])
+                            ? userMap[note.userId]
+                            : (note.userId ? note.userId : '—');
+                        document.getElementById('detailUser').textContent = userName;
+
+                        document.getElementById('detailNoteType').innerHTML = noteTypeBadge(note.noteType);
+                        document.getElementById('detailTitle').textContent = note.title || '—';
+
+                        var contentEl = document.getElementById('detailContent');
+                        contentEl.textContent = note.content || '—';
+                        contentEl.className = 'col-md-8 text-break';
+
+                        document.getElementById('detailCreatedBy').textContent = note.createdBy || '—';
+                        document.getElementById('detailCreatedDate').textContent = note.createdDate ? formatDate(note.createdDate) : '—';
+                        document.getElementById('detailUpdatedBy').textContent = note.updatedBy || '—';
+                        document.getElementById('detailUpdatedDate').textContent = note.updatedDate ? formatDate(note.updatedDate) : '—';
+
+                        detailsContainer.classList.remove('d-none');
+                    },
+                    error: function (xhr) {
+                        loadingContainer.classList.add('d-none');
+                        errorContainer.classList.remove('d-none');
+                        var msg = 'Failed to load note details.';
+                        if (xhr.status === 403) {
+                            msg = 'You do not have permission to access this note.';
+                        } else {
+                            try {
+                                msg = JSON.parse(xhr.responseText) || msg;
+                            } catch (e) {
+                                msg = xhr.responseText || msg;
+                            }
+                        }
+                        errorMessage.textContent = msg;
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            function showError(msg) {
+                loadingContainer.classList.add('d-none');
+                errorContainer.classList.remove('d-none');
+                errorMessage.textContent = msg;
+            }
+
+            function noteTypeBadge(typeVal) {
+                if (typeVal === 1 || typeVal === 'Technical') {
+                    return '<span class="badge bg-primary">Technical</span>';
+                }
+                if (typeVal === 2 || typeVal === 'Behavioral') {
+                    return '<span class="badge bg-success">Behavioral</span>';
+                }
+                return '<span class="text-muted">—</span>';
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '—';
+                try {
+                    var d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                loadLookups(loadDetails);
+            });
+
+        })();
+    </script>
+}

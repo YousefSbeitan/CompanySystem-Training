@@ -74,7 +74,7 @@ public class UserController : Controller
     public IActionResult DeleteView(
         string id)
     {
-        return View();
+        return View("Delete");
     }
 
     // API: GET /User/GetAll

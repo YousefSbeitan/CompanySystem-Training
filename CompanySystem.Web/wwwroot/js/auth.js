@@ -11,7 +11,9 @@
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
         // Set JWT cookie for API fallback (read by JWT bearer OnMessageReceived)
-        document.cookie = 'CompanySystem.Jwt=' + encodeURIComponent(accessToken) + '; path=/; secure; samesite=lax';
+        var secure = (location.protocol === 'https:') ? '; secure' : '';
+        document.cookie = 'CompanySystem.Jwt=' + encodeURIComponent(accessToken) +
+            '; path=/' + secure + '; samesite=lax';
         // Note: CompanySystem.Auth cookie is managed by the server via SignInAsync
     }
 
@@ -26,9 +28,10 @@
     function removeTokens() {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        // Clear MVC navigation cookies
-        document.cookie = 'CompanySystem.Jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; secure; samesite=lax';
-        document.cookie = 'CompanySystem.Auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; secure; samesite=lax';
+        // Clear client-managed JWT cookie (Auth cookie is HttpOnly — cleared via /api/Auth/Logout)
+        var secure = (location.protocol === 'https:') ? '; secure' : '';
+        document.cookie = 'CompanySystem.Jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC' +
+            secure + '; samesite=lax';
     }
 
     // ── Cookie Helper ──────────────────────────────────────────────
@@ -91,10 +94,12 @@
         return {
             id: decoded[
                 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+                decoded.nameid ||
                 decoded.sub || '',
             username: decoded[
                 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
-                decoded.unique_name || '',
+                decoded.unique_name ||
+                decoded.name || '',
             role: role,
             permissions: permissions
         };
@@ -103,7 +108,25 @@
     // ── Expose Globals (for build-ui integration) ──────────────────
 
     function refreshUserGlobals() {
-        const user = getCurrentUser();
+        var user = getCurrentUser();
+
+        // Fallback: server-rendered claims from auth cookie (layout injects window.serverUser)
+        if ((!user || !user.username) && window.serverUser && window.serverUser.username) {
+            user = {
+                id: window.serverUser.id || '',
+                username: window.serverUser.username || '',
+                role: window.serverUser.role || '',
+                permissions: window.serverUser.permissions || []
+            };
+        } else if (user && (!user.permissions || user.permissions.length === 0) &&
+            window.serverUser && window.serverUser.permissions &&
+            window.serverUser.permissions.length > 0) {
+            // Prefer cookie permission claims when JWT has none
+            user.permissions = window.serverUser.permissions;
+            if (!user.role && window.serverUser.role) user.role = window.serverUser.role;
+            if (!user.id && window.serverUser.id) user.id = window.serverUser.id;
+        }
+
         window.currentUser = user || { id: '', username: '', role: '', permissions: [] };
         window.currentUserRole = window.currentUser.role;
         window.currentUserPermissions = window.currentUser.permissions || [];

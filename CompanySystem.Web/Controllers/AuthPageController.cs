@@ -20,7 +20,8 @@ public class AuthPageController : Controller
     [Route("Auth/Register")]
     public IActionResult Register()
     {
-        return View("~/Views/Auth/Register.cshtml");
+        // Register.cshtml is not used; user creation is handled by User/Create
+        return RedirectToAction("Create", "User");
     }
 
 

@@ -1,0 +1,399 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "User Details";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/User" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Users
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-eye-fill me-2"></i>User Details</h4>
+                </div>
+                <div class="card-body">
+                    <div id="loadingContainer" class="text-center py-5">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading user details...</p>
+                    </div>
+
+                    <div id="detailsContainer" class="d-none">
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">User ID</div>
+                            <div class="col-md-8" id="detailUserId">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Username</div>
+                            <div class="col-md-8" id="detailUsername">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Role</div>
+                            <div class="col-md-8" id="detailRole">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Leader</div>
+                            <div class="col-md-8" id="detailLeader">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Department</div>
+                            <div class="col-md-8" id="detailDepartment">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Phone Number</div>
+                            <div class="col-md-8" id="detailPhone">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Start Date</div>
+                            <div class="col-md-8" id="detailStartDate">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Salary</div>
+                            <div class="col-md-8" id="detailSalary">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Status</div>
+                            <div class="col-md-8" id="detailStatus">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created By</div>
+                            <div class="col-md-8" id="detailCreatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created Date</div>
+                            <div class="col-md-8" id="detailCreatedDate">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated By</div>
+                            <div class="col-md-8" id="detailUpdatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated Date</div>
+                            <div class="col-md-8" id="detailUpdatedDate">—</div>
+                        </div>
+                    </div>
+
+                    <div id="errorContainer" class="d-none text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                        <h5>Failed to load user details</h5>
+                        <p id="errorMessage" class="text-muted"></p>
+                        <a href="/User" class="btn btn-outline-secondary mt-2">Back to Users</a>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="/User" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back
+                    </a>
+                    <div>
+                        <a href="/User/Edit/@ViewContext.RouteData.Values["id"]" class="btn btn-warning d-none" id="editFromDetailsBtn">
+                            <i class="bi bi-pencil-fill me-1"></i>Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            if (!hasPerm('Users.View')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to view user details.</p>' +
+                    '<a href="/User" class="btn btn-outline-secondary mt-3">Back to Users</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Show Edit button if permitted
+            if (hasPerm('Users.Edit')) {
+                var editBtn = document.getElementById('editFromDetailsBtn');
+                if (editBtn) {
+                    editBtn.classList.remove('d-none');
+                }
+            }
+
+            // Get user ID from URL (string ID — do not parseInt)
+            var pathParts = window.location.pathname.split('/');
+            var userId = decodeURIComponent(pathParts[pathParts.length - 1] || '');
+
+            var loadingContainer = document.getElementById('loadingContainer');
+            var detailsContainer = document.getElementById('detailsContainer');
+            var errorContainer = document.getElementById('errorContainer');
+            var errorMessage = document.getElementById('errorMessage');
+
+            // ── FK Lookup Maps (Role / Department / User) ────────────
+            var roleMap = {};
+            var deptMap = {};
+            var userMap = {};
+
+            function loadLookups(callback) {
+                var pending = 3;
+
+                function checkDone() {
+                    pending--;
+                    if (pending <= 0 && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+
+                // Roles: GET /Role/GetAll
+                $.ajax({
+                    url: '/Role/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () { },
+                    success: function (response) {
+                        var roles = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            roles = response.data;
+                        } else if (Array.isArray(response)) {
+                            roles = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            roles = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            roles = response.results;
+                        }
+                        roles.forEach(function (role) {
+                            if (role && role.roleId !== null && role.roleId !== undefined) {
+                                roleMap[role.roleId] = role.roleName || ('Role ' + role.roleId);
+                            }
+                        });
+                    },
+                    error: function () {
+                        // Lookup is best-effort; raw IDs shown as fallback
+                    },
+                    complete: function () {
+                        checkDone();
+                    }
+                });
+
+                // Departments: GET /Department/GetAll
+                $.ajax({
+                    url: '/Department/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () { },
+                    success: function (response) {
+                        var departments = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            departments = response.data;
+                        } else if (Array.isArray(response)) {
+                            departments = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            departments = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            departments = response.results;
+                        }
+                        departments.forEach(function (dept) {
+                            if (dept && dept.departmentId !== null && dept.departmentId !== undefined) {
+                                deptMap[dept.departmentId] = dept.departmentName || ('Department ' + dept.departmentId);
+                            }
+                        });
+                    },
+                    error: function () {
+                        // Lookup is best-effort; raw IDs shown as fallback
+                    },
+                    complete: function () {
+                        checkDone();
+                    }
+                });
+
+                // Users (leaders): GET /User/GetAll
+                $.ajax({
+                    url: '/User/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () { },
+                    success: function (response) {
+                        var users = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            users = response.data;
+                        } else if (Array.isArray(response)) {
+                            users = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            users = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            users = response.results;
+                        }
+                        users.forEach(function (user) {
+                            if (user && user.userId) {
+                                userMap[user.userId] = user.username || user.userId;
+                            }
+                        });
+                    },
+                    error: function () {
+                        // Lookup is best-effort; raw IDs shown as fallback
+                    },
+                    complete: function () {
+                        checkDone();
+                    }
+                });
+            }
+
+            // ── Load User Details ────────────────────────────────────
+            function loadDetails() {
+                if (!userId) {
+                    showError('Invalid user ID.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/User/GetById/' + userId,
+                    type: 'GET',
+                    beforeSend: function () {
+                        loadingContainer.classList.remove('d-none');
+                        detailsContainer.classList.add('d-none');
+                        errorContainer.classList.add('d-none');
+                    },
+                    success: function (response) {
+                        loadingContainer.classList.add('d-none');
+
+                        var user = response;
+                        if (response && response.data) {
+                            user = response.data;
+                        }
+
+                        if (!user || !user.userId) {
+                            showError('User not found.');
+                            return;
+                        }
+
+                        document.getElementById('detailUserId').textContent = user.userId || '—';
+                        document.getElementById('detailUsername').textContent = user.username || '—';
+
+                        var roleName = (user.roleId !== null && user.roleId !== undefined && roleMap[user.roleId])
+                            ? roleMap[user.roleId]
+                            : (user.roleId ? String(user.roleId) : '—');
+                        document.getElementById('detailRole').textContent = roleName;
+
+                        var leaderName = (user.leaderId && userMap[user.leaderId])
+                            ? userMap[user.leaderId]
+                            : (user.leaderId ? user.leaderId : '—');
+                        document.getElementById('detailLeader').textContent = leaderName;
+
+                        var deptName = (user.departmentId !== null && user.departmentId !== undefined && deptMap[user.departmentId])
+                            ? deptMap[user.departmentId]
+                            : (user.departmentId ? String(user.departmentId) : '—');
+                        document.getElementById('detailDepartment').textContent = deptName;
+
+                        document.getElementById('detailPhone').textContent = user.phoneNumber || '—';
+                        document.getElementById('detailStartDate').textContent = user.startDate ? formatDateOnly(user.startDate) : '—';
+                        document.getElementById('detailSalary').textContent = formatCurrency(user.salary);
+
+                        var statusHtml = '';
+                        if (user.isActive) {
+                            statusHtml += '<span class="badge bg-success">Active</span>';
+                        } else {
+                            statusHtml += '<span class="badge bg-secondary">Inactive</span>';
+                        }
+                        if (user.isLeader) {
+                            statusHtml += ' <span class="badge bg-info text-white">Leader</span>';
+                        }
+                        document.getElementById('detailStatus').innerHTML = statusHtml;
+
+                        document.getElementById('detailCreatedBy').textContent = user.createdBy || '—';
+                        document.getElementById('detailCreatedDate').textContent = user.createdDate ? formatDate(user.createdDate) : '—';
+                        document.getElementById('detailUpdatedBy').textContent = user.updatedBy || '—';
+                        document.getElementById('detailUpdatedDate').textContent = user.updatedDate ? formatDate(user.updatedDate) : '—';
+
+                        detailsContainer.classList.remove('d-none');
+                    },
+                    error: function (xhr) {
+                        loadingContainer.classList.add('d-none');
+                        errorContainer.classList.remove('d-none');
+                        var msg = 'Failed to load user details.';
+                        if (xhr.status === 403) {
+                            msg = 'You do not have permission to access this user.';
+                        } else {
+                            try {
+                                msg = JSON.parse(xhr.responseText) || msg;
+                            } catch (e) {
+                                msg = xhr.responseText || msg;
+                            }
+                        }
+                        errorMessage.textContent = msg;
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            function showError(msg) {
+                loadingContainer.classList.add('d-none');
+                errorContainer.classList.remove('d-none');
+                errorMessage.textContent = msg;
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '—';
+                try {
+                    var d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            function formatDateOnly(dateStr) {
+                if (!dateStr) return '—';
+                try {
+                    var d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    return d.toLocaleDateString();
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            function formatCurrency(val) {
+                if (val === null || val === undefined || val === '') return '—';
+                var n = parseFloat(val);
+                if (isNaN(n)) return val;
+                return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                loadLookups(loadDetails);
+            });
+
+        })();
+    </script>
+}

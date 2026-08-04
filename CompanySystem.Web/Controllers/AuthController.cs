@@ -233,58 +233,47 @@ public class AuthController : ControllerBase
 
 
     // POST: api/Auth/Logout
+    // AllowAnonymous so expired JWT still clears the HttpOnly auth cookie.
     [HttpPost("Logout")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> Logout(
-        [FromBody] RefreshTokenRequestDto dto)
+        [FromBody] LogoutRequestDto? dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(
-                ModelState);
+        var currentUserId =
+            User.FindFirst(
+                ClaimTypes.NameIdentifier)
+            ?.Value;
 
 
-        try
+        if (!string.IsNullOrWhiteSpace(dto?.RefreshToken) &&
+            !string.IsNullOrWhiteSpace(currentUserId))
         {
-            var currentUserId =
-                User.FindFirst(
-                    ClaimTypes.NameIdentifier)
-                ?.Value;
-
-
-            if (string.IsNullOrEmpty(
-                    currentUserId))
+            try
             {
-                return Unauthorized(
-                    "Invalid access token.");
+                await _authService.LogoutAsync(
+                    dto.RefreshToken,
+                    currentUserId);
             }
-
-
-            await _authService.LogoutAsync(
-                dto.RefreshToken,
-                currentUserId);
-
-
-            await HttpContext.SignOutAsync(
-                CookieAuthenticationDefaults
-                    .AuthenticationScheme);
-
-
-            return Ok(new
+            catch (BusinessException)
             {
-                Message =
-                    "Logged out successfully."
-            });
+                // Best-effort revoke; always sign out cookie below
+            }
+            catch
+            {
+                // Best-effort revoke; always sign out cookie below
+            }
         }
-        catch (BusinessException ex)
+
+
+        await HttpContext.SignOutAsync(
+            CookieAuthenticationDefaults
+                .AuthenticationScheme);
+
+
+        return Ok(new
         {
-            return BadRequest(
-                ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(
-                500,
-                ex.Message);
-        }
+            Message =
+                "Logged out successfully."
+        });
     }
 }

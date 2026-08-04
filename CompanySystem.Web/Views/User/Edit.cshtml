@@ -1,0 +1,698 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/User" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Users
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit User</h4>
+                </div>
+                <div class="card-body">
+                    <div id="loadingContainer" class="text-center py-5">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading user data...</p>
+                    </div>
+
+                    <form id="userForm" class="d-none" novalidate>
+                        <input type="hidden" id="userId" name="userId" value="" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="username" name="username"
+                                           required maxlength="100"
+                                           placeholder="Enter username" />
+                                    <div class="invalid-feedback" id="usernameError">Username is required and must not exceed 100 characters.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="roleId" class="form-label">Role <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="roleId" name="roleId" required>
+                                        <option value="">Loading roles...</option>
+                                    </select>
+                                    <div class="invalid-feedback" id="roleIdError">Role is required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departmentId" class="form-label">Department <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="departmentId" name="departmentId" required>
+                                        <option value="">Loading departments...</option>
+                                    </select>
+                                    <div class="invalid-feedback" id="departmentIdError">Department is required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="leaderId" class="form-label">Leader</label>
+                                    <select class="form-select" id="leaderId" name="leaderId">
+                                        <option value="">— No Leader —</option>
+                                    </select>
+                                    <div class="form-text">
+                                        Assigned automatically when the user is a leader or the department has a leader.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
+                                           required maxlength="20" inputmode="tel"
+                                           placeholder="e.g. +1 555 123 4567" />
+                                    <div class="invalid-feedback" id="phoneNumberError">A valid phone number is required (max 20 characters).</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="startDate" name="startDate" required />
+                                    <div class="invalid-feedback" id="startDateError">Start date is required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="salary" class="form-label">Salary</label>
+                                    <input type="number" class="form-control" id="salary" name="salary"
+                                           min="0" max="1000000000" step="0.01"
+                                           placeholder="0.00" />
+                                    <div class="invalid-feedback" id="salaryError">Salary must be greater than or equal to zero.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3 pt-2">
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" id="isActive" name="isActive" />
+                                        <label class="form-check-label" for="isActive">Is Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="isLeader" name="isLeader" />
+                                        <label class="form-check-label" for="isLeader">Is Leader</label>
+                                    </div>
+                                    <div class="form-text">
+                                        Check to make this user the leader (manager) of the selected department.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="/User" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning" id="submitBtn">
+                                <i class="bi bi-check-circle me-1"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="errorContainer" class="d-none text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                        <h5>Failed to load user</h5>
+                        <p id="errorMessage" class="text-muted"></p>
+                        <a href="/User" class="btn btn-outline-secondary mt-2">Back to Users</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            if (!hasPerm('Users.Edit')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to edit users.</p>' +
+                    '<a href="/User" class="btn btn-outline-secondary mt-3">Back to Users</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Get user ID from URL (string ID — do not parseInt)
+            var pathParts = window.location.pathname.split('/');
+            var userId = decodeURIComponent(pathParts[pathParts.length - 1] || '');
+
+            var form = document.getElementById('userForm');
+            var submitBtn = document.getElementById('submitBtn');
+            var usernameInput = document.getElementById('username');
+            var roleSelect = document.getElementById('roleId');
+            var departmentSelect = document.getElementById('departmentId');
+            var leaderSelect = document.getElementById('leaderId');
+            var phoneInput = document.getElementById('phoneNumber');
+            var startDateInput = document.getElementById('startDate');
+            var salaryInput = document.getElementById('salary');
+            var isLeaderCheck = document.getElementById('isLeader');
+            var isActiveCheck = document.getElementById('isActive');
+            var loadingContainer = document.getElementById('loadingContainer');
+            var errorContainer = document.getElementById('errorContainer');
+            var errorMessage = document.getElementById('errorMessage');
+
+            var currentRoleId = '';
+            var currentDepartmentId = '';
+            var currentLeaderId = '';
+
+            // ── Load Roles (FK dropdown: /Role/GetAll) ───────────────
+            function loadRoles() {
+                roleSelect.innerHTML = '<option value="">Loading roles...</option>';
+
+                $.ajax({
+                    url: '/Role/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () {
+                        // select shows loading option
+                    },
+                    success: function (response) {
+                        var roles = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            roles = response.data;
+                        } else if (Array.isArray(response)) {
+                            roles = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            roles = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            roles = response.results;
+                        }
+
+                        var html = '<option value="">— Select Role —</option>';
+                        var hasCurrent = false;
+                        roles.forEach(function (role) {
+                            var value = escapeHtml(role.roleId !== null && role.roleId !== undefined ? role.roleId : '');
+                            var label = escapeHtml(role.roleName || ('Role ' + role.roleId));
+                            html += '<option value="' + value + '">' + label + '</option>';
+                            if (role.roleId !== null && role.roleId !== undefined &&
+                                String(role.roleId) === String(currentRoleId)) {
+                                hasCurrent = true;
+                            }
+                        });
+
+                        // Ensure the current role is always available as an option
+                        if (currentRoleId && !hasCurrent) {
+                            html += '<option value="' + escapeHtml(currentRoleId) + '">' +
+                                escapeHtml('Role ' + currentRoleId) + ' (current)</option>';
+                        }
+
+                        roleSelect.innerHTML = html;
+                        if (currentRoleId) {
+                            roleSelect.value = String(currentRoleId);
+                        }
+                        roleSelect.classList.add('is-valid');
+                    },
+                    error: function () {
+                        roleSelect.innerHTML = '<option value="">— Select Role —</option>';
+                        if (currentRoleId) {
+                            roleSelect.innerHTML += '<option value="' + escapeHtml(currentRoleId) + '">' +
+                                escapeHtml('Role ' + currentRoleId) + ' (current)</option>';
+                            roleSelect.value = String(currentRoleId);
+                        }
+                        roleSelect.classList.add('is-valid');
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            // ── Load Departments (FK dropdown: /Department/GetAll) ────
+            function loadDepartments() {
+                departmentSelect.innerHTML = '<option value="">Loading departments...</option>';
+
+                $.ajax({
+                    url: '/Department/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () {
+                        // select shows loading option
+                    },
+                    success: function (response) {
+                        var departments = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            departments = response.data;
+                        } else if (Array.isArray(response)) {
+                            departments = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            departments = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            departments = response.results;
+                        }
+
+                        var html = '<option value="">— Select Department —</option>';
+                        var hasCurrent = false;
+                        departments.forEach(function (dept) {
+                            var value = escapeHtml(dept.departmentId !== null && dept.departmentId !== undefined ? dept.departmentId : '');
+                            var label = escapeHtml(dept.departmentName || ('Department ' + dept.departmentId));
+                            html += '<option value="' + value + '">' + label + '</option>';
+                            if (dept.departmentId !== null && dept.departmentId !== undefined &&
+                                String(dept.departmentId) === String(currentDepartmentId)) {
+                                hasCurrent = true;
+                            }
+                        });
+
+                        // Ensure the current department is always available as an option
+                        if (currentDepartmentId && !hasCurrent) {
+                            html += '<option value="' + escapeHtml(currentDepartmentId) + '">' +
+                                escapeHtml('Department ' + currentDepartmentId) + ' (current)</option>';
+                        }
+
+                        departmentSelect.innerHTML = html;
+                        if (currentDepartmentId) {
+                            departmentSelect.value = String(currentDepartmentId);
+                        }
+                        departmentSelect.classList.add('is-valid');
+                    },
+                    error: function () {
+                        departmentSelect.innerHTML = '<option value="">— Select Department —</option>';
+                        if (currentDepartmentId) {
+                            departmentSelect.innerHTML += '<option value="' + escapeHtml(currentDepartmentId) + '">' +
+                                escapeHtml('Department ' + currentDepartmentId) + ' (current)</option>';
+                            departmentSelect.value = String(currentDepartmentId);
+                        }
+                        departmentSelect.classList.add('is-valid');
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            // ── Load Leaders (FK dropdown: /User/GetAll) ─────────────
+            function loadLeaders() {
+                leaderSelect.innerHTML = '<option value="">Loading leaders...</option>';
+
+                $.ajax({
+                    url: '/User/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () {
+                        // select shows loading option
+                    },
+                    success: function (response) {
+                        var users = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            users = response.data;
+                        } else if (Array.isArray(response)) {
+                            users = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            users = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            users = response.results;
+                        }
+
+                        var html = '<option value="">— No Leader —</option>';
+                        var hasCurrent = false;
+                        users.forEach(function (user) {
+                            var value = escapeHtml(user.userId || '');
+                            var label = escapeHtml(user.username || user.userId || '');
+                            html += '<option value="' + value + '">' + label + '</option>';
+                            if (user.userId === currentLeaderId) {
+                                hasCurrent = true;
+                            }
+                        });
+
+                        // Ensure the current leader is always available as an option
+                        if (currentLeaderId && !hasCurrent) {
+                            html += '<option value="' + escapeHtml(currentLeaderId) + '">' +
+                                escapeHtml(currentLeaderId) + ' (current)</option>';
+                        }
+
+                        leaderSelect.innerHTML = html;
+                        leaderSelect.value = currentLeaderId || '';
+                    },
+                    error: function () {
+                        // Leader is optional — keep empty select with fallback option
+                        leaderSelect.innerHTML = '<option value="">— No Leader —</option>';
+                        if (currentLeaderId) {
+                            leaderSelect.innerHTML += '<option value="' + escapeHtml(currentLeaderId) + '">' +
+                                escapeHtml(currentLeaderId) + ' (current)</option>';
+                            leaderSelect.value = currentLeaderId;
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            // ── Real-time validation ─────────────────────────────────
+            usernameInput.addEventListener('input', function () {
+                var val = this.value.trim();
+                if (val.length > 0 && val.length <= 100) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    if (val.length > 0) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                }
+            });
+
+            roleSelect.addEventListener('change', function () {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            departmentSelect.addEventListener('change', function () {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            phoneInput.addEventListener('input', function () {
+                var val = this.value.trim();
+                if (isValidPhone(val)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    if (val.length > 0) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                }
+            });
+
+            startDateInput.addEventListener('change', function () {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            salaryInput.addEventListener('input', function () {
+                var val = this.value.trim();
+                var num = parseFloat(val);
+                if (val === '' || (!isNaN(num) && num >= 0 && num <= 1000000000)) {
+                    this.classList.remove('is-invalid');
+                    if (val !== '') {
+                        this.classList.add('is-valid');
+                    }
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            function isValidPhone(val) {
+                if (!val || val.length < 7 || val.length > 20) return false;
+                return /^[0-9+\-().\s]+$/.test(val);
+            }
+
+            function toDateValue(dateStr) {
+                if (!dateStr) return '';
+                var d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr;
+                var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+                return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+            }
+
+            // ── Load User Data ───────────────────────────────────────
+            function loadUser() {
+                if (!userId) {
+                    showError('Invalid user ID.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/User/GetById/' + userId,
+                    type: 'GET',
+                    beforeSend: function () {
+                        loadingContainer.classList.remove('d-none');
+                        form.classList.add('d-none');
+                        errorContainer.classList.add('d-none');
+                    },
+                    success: function (response) {
+                        loadingContainer.classList.add('d-none');
+                        form.classList.remove('d-none');
+
+                        var user = response;
+                        // If response is wrapped
+                        if (response && response.data) {
+                            user = response.data;
+                        }
+
+                        if (!user || !user.userId) {
+                            showError('User not found.');
+                            return;
+                        }
+
+                        document.getElementById('userId').value = user.userId || userId;
+                        usernameInput.value = user.username || '';
+                        usernameInput.classList.add('is-valid');
+
+                        phoneInput.value = user.phoneNumber || '';
+                        phoneInput.classList.add('is-valid');
+
+                        startDateInput.value = toDateValue(user.startDate);
+                        if (startDateInput.value) {
+                            startDateInput.classList.add('is-valid');
+                        }
+
+                        salaryInput.value = (user.salary !== null && user.salary !== undefined) ? user.salary : '';
+                        if (salaryInput.value !== '') {
+                            salaryInput.classList.add('is-valid');
+                        }
+
+                        isLeaderCheck.checked = !!user.isLeader;
+                        isActiveCheck.checked = !!user.isActive;
+
+                        currentRoleId = (user.roleId !== null && user.roleId !== undefined) ? String(user.roleId) : '';
+                        currentDepartmentId = (user.departmentId !== null && user.departmentId !== undefined) ? String(user.departmentId) : '';
+                        currentLeaderId = user.leaderId || '';
+
+                        // Load dropdowns with current values preselected
+                        loadRoles();
+                        loadDepartments();
+                        loadLeaders();
+                    },
+                    error: function (xhr) {
+                        loadingContainer.classList.add('d-none');
+                        errorContainer.classList.remove('d-none');
+                        var msg = 'Failed to load user data.';
+                        if (xhr.status === 403) {
+                            msg = 'You do not have permission to access this user.';
+                        } else {
+                            try {
+                                msg = JSON.parse(xhr.responseText) || msg;
+                            } catch (e) {
+                                msg = xhr.responseText || msg;
+                            }
+                        }
+                        errorMessage.textContent = msg;
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            function showError(msg) {
+                loadingContainer.classList.add('d-none');
+                errorContainer.classList.remove('d-none');
+                errorMessage.textContent = msg;
+            }
+
+            // ── Form Submit ──────────────────────────────────────────
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var username = usernameInput.value.trim();
+                var roleId = roleSelect.value;
+                var departmentId = departmentSelect.value;
+                var leaderId = leaderSelect.value || '';
+                var phoneNumber = phoneInput.value.trim();
+                var startDate = startDateInput.value;
+                var salary = salaryInput.value.trim();
+
+                var isValid = true;
+
+                if (!username || username.length === 0 || username.length > 100) {
+                    usernameInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    usernameInput.classList.remove('is-invalid');
+                    usernameInput.classList.add('is-valid');
+                }
+
+                if (!roleId) {
+                    roleSelect.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    roleSelect.classList.remove('is-invalid');
+                    roleSelect.classList.add('is-valid');
+                }
+
+                if (!departmentId) {
+                    departmentSelect.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    departmentSelect.classList.remove('is-invalid');
+                    departmentSelect.classList.add('is-valid');
+                }
+
+                if (!isValidPhone(phoneNumber)) {
+                    phoneInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    phoneInput.classList.remove('is-invalid');
+                    phoneInput.classList.add('is-valid');
+                }
+
+                if (!startDate) {
+                    startDateInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    startDateInput.classList.remove('is-invalid');
+                    startDateInput.classList.add('is-valid');
+                }
+
+                if (salary !== '' && (isNaN(parseFloat(salary)) || parseFloat(salary) < 0 || parseFloat(salary) > 1000000000)) {
+                    salaryInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    salaryInput.classList.remove('is-invalid');
+                    if (salary !== '') {
+                        salaryInput.classList.add('is-valid');
+                    }
+                }
+
+                if (!isValid) return;
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...';
+
+                var dto = {
+                    userId: document.getElementById('userId').value || userId,
+                    username: username,
+                    roleId: parseInt(roleId, 10),
+                    leaderId: leaderId || null,
+                    departmentId: departmentId ? parseInt(departmentId, 10) : null,
+                    isLeader: isLeaderCheck.checked,
+                    phoneNumber: phoneNumber,
+                    startDate: startDate,
+                    salary: salary === '' ? 0 : parseFloat(salary),
+                    isActive: isActiveCheck.checked
+                };
+
+                $.ajax({
+                    url: '/User/Edit',
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(dto),
+                    beforeSend: function () {
+                        // button disabled
+                    },
+                    success: function (response) {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('User updated successfully.', 'success');
+                        } else {
+                            alert('User updated successfully.');
+                        }
+                        window.location.href = '/User';
+                    },
+                    error: function (xhr) {
+                        var msg = 'Failed to update user.';
+                        if (xhr.status === 403) {
+                            msg = 'You do not have permission to edit this user.';
+                        } else {
+                            try {
+                                var resp = JSON.parse(xhr.responseText);
+                                if (typeof resp === 'string') {
+                                    msg = resp;
+                                } else if (resp && resp.title) {
+                                    msg = resp.title;
+                                } else if (resp && resp.message) {
+                                    msg = resp.message;
+                                } else if (typeof resp === 'object') {
+                                    for (var key in resp) {
+                                        if (resp.hasOwnProperty(key) && Array.isArray(resp[key]) && resp[key].length > 0) {
+                                            msg = resp[key][0];
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                if (xhr.responseText) {
+                                    msg = xhr.responseText;
+                                }
+                            }
+                        }
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Changes';
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            });
+
+            // ── Helpers ──────────────────────────────────────────────
+            function escapeHtml(str) {
+                if (!str) return '';
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
+            }
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                loadUser();
+            });
+
+        })();
+    </script>
+}

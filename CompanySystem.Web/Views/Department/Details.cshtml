@@ -1,0 +1,208 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Department Details";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/Department" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Departments
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-eye-fill me-2"></i>Department Details</h4>
+                </div>
+                <div class="card-body">
+                    <div id="loadingContainer" class="text-center py-5">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading department details...</p>
+                    </div>
+
+                    <div id="detailsContainer" class="d-none">
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Department ID</div>
+                            <div class="col-md-8" id="detailDepartmentId">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Department Name</div>
+                            <div class="col-md-8" id="detailDepartmentName">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Manager</div>
+                            <div class="col-md-8" id="detailManagerId">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created By</div>
+                            <div class="col-md-8" id="detailCreatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created Date</div>
+                            <div class="col-md-8" id="detailCreatedDate">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated By</div>
+                            <div class="col-md-8" id="detailUpdatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated Date</div>
+                            <div class="col-md-8" id="detailUpdatedDate">—</div>
+                        </div>
+                    </div>
+
+                    <div id="errorContainer" class="d-none text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                        <h5>Failed to load department details</h5>
+                        <p id="errorMessage" class="text-muted"></p>
+                        <a href="/Department" class="btn btn-outline-secondary mt-2">Back to Departments</a>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="/Department" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back
+                    </a>
+                    <div>
+                        <a href="/Department/Edit/@ViewContext.RouteData.Values["id"]" class="btn btn-warning d-none" id="editFromDetailsBtn">
+                            <i class="bi bi-pencil-fill me-1"></i>Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            if (!hasPerm('Departments.View')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to view department details.</p>' +
+                    '<a href="/Department" class="btn btn-outline-secondary mt-3">Back to Departments</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Show Edit button if permitted
+            if (hasPerm('Departments.Edit')) {
+                var editBtn = document.getElementById('editFromDetailsBtn');
+                if (editBtn) {
+                    editBtn.classList.remove('d-none');
+                }
+            }
+
+            // Get department ID from URL
+            var pathParts = window.location.pathname.split('/');
+            var departmentId = parseInt(pathParts[pathParts.length - 1]) || 0;
+
+            var loadingContainer = document.getElementById('loadingContainer');
+            var detailsContainer = document.getElementById('detailsContainer');
+            var errorContainer = document.getElementById('errorContainer');
+            var errorMessage = document.getElementById('errorMessage');
+
+            // ── Load Department Details ──────────────────────────────
+            function loadDetails() {
+                if (!departmentId || departmentId === 0) {
+                    showError('Invalid department ID.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Department/GetById/' + departmentId,
+                    type: 'GET',
+                    beforeSend: function () {
+                        loadingContainer.classList.remove('d-none');
+                        detailsContainer.classList.add('d-none');
+                        errorContainer.classList.add('d-none');
+                    },
+                    success: function (response) {
+                        loadingContainer.classList.add('d-none');
+
+                        var department = response;
+                        if (response && response.data) {
+                            department = response.data;
+                        }
+
+                        if (!department) {
+                            showError('Department not found.');
+                            return;
+                        }
+
+                        document.getElementById('detailDepartmentId').textContent = department.departmentId || '—';
+                        document.getElementById('detailDepartmentName').textContent = department.departmentName || '—';
+                        document.getElementById('detailManagerId').textContent = department.managerId || '—';
+                        document.getElementById('detailCreatedBy').textContent = department.createdBy || '—';
+                        document.getElementById('detailCreatedDate').textContent = department.createdDate ? formatDate(department.createdDate) : '—';
+                        document.getElementById('detailUpdatedBy').textContent = department.updatedBy || '—';
+                        document.getElementById('detailUpdatedDate').textContent = department.updatedDate ? formatDate(department.updatedDate) : '—';
+
+                        detailsContainer.classList.remove('d-none');
+                    },
+                    error: function (xhr) {
+                        loadingContainer.classList.add('d-none');
+                        errorContainer.classList.remove('d-none');
+                        var msg = 'Failed to load department details.';
+                        try {
+                            msg = JSON.parse(xhr.responseText) || msg;
+                        } catch (e) {
+                            msg = xhr.responseText || msg;
+                        }
+                        errorMessage.textContent = msg;
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            function showError(msg) {
+                loadingContainer.classList.add('d-none');
+                errorContainer.classList.remove('d-none');
+                errorMessage.textContent = msg;
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '—';
+                try {
+                    var d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                loadDetails();
+            });
+
+        })();
+    </script>
+}

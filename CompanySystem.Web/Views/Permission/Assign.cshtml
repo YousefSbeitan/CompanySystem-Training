@@ -1,0 +1,290 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Assign Permissions";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/Permission" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Permissions
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-check me-2"></i>Assign User Permissions</h4>
+                </div>
+                <div class="card-body">
+                    <form id="assignForm" novalidate>
+                        <div class="mb-4">
+                            <label for="userId" class="form-label">User <span class="text-danger">*</span></label>
+                            <select class="form-select" id="userId" name="userId" required>
+                                <option value="">Loading users...</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a user.</div>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <label class="form-label mb-0">Permissions <span class="text-danger">*</span></label>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-secondary" id="selectAllBtn">Select All</button>
+                                <button type="button" class="btn btn-outline-secondary" id="clearAllBtn">Clear</button>
+                            </div>
+                        </div>
+
+                        <div id="permissionsLoading" class="text-center py-4 text-muted">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 mb-0">Loading permissions...</p>
+                        </div>
+
+                        <div id="permissionsContainer" class="border rounded p-3 mb-3 d-none" style="max-height: 420px; overflow-y: auto;">
+                        </div>
+
+                        <div class="invalid-feedback d-block d-none" id="permissionsError">
+                            Select at least one permission.
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="/Permission" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-check-circle me-1"></i>Save Assignments
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            if (!hasPerm('Permissions.Edit')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to assign permissions.</p>' +
+                    '<a href="/Permission" class="btn btn-outline-secondary mt-3">Back to Permissions</a>' +
+                    '</div>';
+                return;
+            }
+
+            var form = document.getElementById('assignForm');
+            var userSelect = document.getElementById('userId');
+            var permissionsContainer = document.getElementById('permissionsContainer');
+            var permissionsLoading = document.getElementById('permissionsLoading');
+            var permissionsError = document.getElementById('permissionsError');
+            var submitBtn = document.getElementById('submitBtn');
+            var allPermissions = [];
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
+            }
+
+            function extractList(response) {
+                if (response && response.data && Array.isArray(response.data)) return response.data;
+                if (Array.isArray(response)) return response;
+                if (response && response.items && Array.isArray(response.items)) return response.items;
+                if (response && response.results && Array.isArray(response.results)) return response.results;
+                return [];
+            }
+
+            function loadUsers() {
+                $.ajax({
+                    url: '/User/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    success: function (response) {
+                        var users = extractList(response);
+                        var html = '<option value="">— Select User —</option>';
+                        users.forEach(function (user) {
+                            var value = escapeHtml(user.userId || '');
+                            var label = escapeHtml(user.username || user.userId || '');
+                            html += '<option value="' + value + '">' + label + '</option>';
+                        });
+                        userSelect.innerHTML = html;
+                    },
+                    error: function () {
+                        userSelect.innerHTML = '<option value="">Failed to load users</option>';
+                    }
+                });
+            }
+
+            function renderPermissionCheckboxes(selectedIds) {
+                selectedIds = selectedIds || [];
+                var html = '';
+                allPermissions.forEach(function (perm) {
+                    var id = perm.permissionId;
+                    var checked = selectedIds.indexOf(id) !== -1 ? ' checked' : '';
+                    html += '<div class="form-check mb-2">';
+                    html += '<input class="form-check-input permission-checkbox" type="checkbox" value="' + id +
+                        '" id="perm_' + id + '"' + checked + '>';
+                    html += '<label class="form-check-label" for="perm_' + id + '">';
+                    html += '<strong>' + escapeHtml(perm.permissionName || '') + '</strong>';
+                    if (perm.description) {
+                        html += '<span class="text-muted ms-2 small">' + escapeHtml(perm.description) + '</span>';
+                    }
+                    html += '</label></div>';
+                });
+                permissionsContainer.innerHTML = html || '<p class="text-muted mb-0">No permissions available.</p>';
+                permissionsLoading.classList.add('d-none');
+                permissionsContainer.classList.remove('d-none');
+            }
+
+            function loadAllPermissions(callback) {
+                $.ajax({
+                    url: '/Permission/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    success: function (response) {
+                        allPermissions = extractList(response);
+                        renderPermissionCheckboxes([]);
+                        if (typeof callback === 'function') callback();
+                    },
+                    error: function () {
+                        permissionsLoading.innerHTML =
+                            '<p class="text-danger mb-0">Failed to load permissions.</p>';
+                    }
+                });
+            }
+
+            function loadUserPermissions(userId) {
+                if (!userId) {
+                    renderPermissionCheckboxes([]);
+                    return;
+                }
+
+                permissionsLoading.classList.remove('d-none');
+                permissionsContainer.classList.add('d-none');
+                permissionsLoading.innerHTML =
+                    '<div class="spinner-border text-primary" role="status">' +
+                    '<span class="visually-hidden">Loading...</span></div>' +
+                    '<p class="mt-2 mb-0">Loading user permissions...</p>';
+
+                $.ajax({
+                    url: '/Permission/GetUserPermissions/' + encodeURIComponent(userId),
+                    type: 'GET',
+                    success: function (response) {
+                        var assigned = extractList(response);
+                        var ids = assigned.map(function (p) { return p.permissionId; });
+                        renderPermissionCheckboxes(ids);
+                    },
+                    error: function () {
+                        renderPermissionCheckboxes([]);
+                        if (window.showToast) {
+                            window.showToast('Could not load existing permissions for this user.', 'warning');
+                        }
+                    }
+                });
+            }
+
+            userSelect.addEventListener('change', function () {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                }
+                loadUserPermissions(this.value);
+            });
+
+            document.getElementById('selectAllBtn').addEventListener('click', function () {
+                permissionsContainer.querySelectorAll('.permission-checkbox').forEach(function (cb) {
+                    cb.checked = true;
+                });
+                permissionsError.classList.add('d-none');
+            });
+
+            document.getElementById('clearAllBtn').addEventListener('click', function () {
+                permissionsContainer.querySelectorAll('.permission-checkbox').forEach(function (cb) {
+                    cb.checked = false;
+                });
+            });
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var userId = userSelect.value;
+                var selected = [];
+                permissionsContainer.querySelectorAll('.permission-checkbox:checked').forEach(function (cb) {
+                    selected.push(parseInt(cb.value, 10));
+                });
+
+                var isValid = true;
+                if (!userId) {
+                    userSelect.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    userSelect.classList.remove('is-invalid');
+                }
+
+                if (selected.length === 0) {
+                    permissionsError.classList.remove('d-none');
+                    isValid = false;
+                } else {
+                    permissionsError.classList.add('d-none');
+                }
+
+                if (!isValid) return;
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...';
+
+                $.ajax({
+                    url: '/Permission/Assign',
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        userId: userId,
+                        permissionIds: selected
+                    }),
+                    success: function () {
+                        if (window.showToast) {
+                            window.showToast('Permissions assigned successfully.', 'success');
+                        }
+                        window.location.href = '/Permission';
+                    },
+                    error: function (xhr) {
+                        var msg = 'Failed to assign permissions.';
+                        try {
+                            var parsed = JSON.parse(xhr.responseText);
+                            if (typeof parsed === 'string') msg = parsed;
+                            else if (parsed.message) msg = parsed.message;
+                        } catch (err) {
+                            if (xhr.responseText) msg = xhr.responseText;
+                        }
+                        if (window.showToast) {
+                            window.showToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Assignments';
+                    }
+                });
+            });
+
+            $(document).ready(function () {
+                loadUsers();
+                loadAllPermissions();
+            });
+        })();
+    </script>
+}

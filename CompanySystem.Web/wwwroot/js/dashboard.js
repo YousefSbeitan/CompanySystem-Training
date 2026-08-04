@@ -52,7 +52,7 @@
             url: '/MainPageSection',
             icon: 'content',
             permission: 'MainPageSections.View',
-            roles: ['Admin', 'Manager', 'HR', 'User']
+            roles: ['Admin', 'Manager', 'HR', 'Employee']
         },
         {
             id: 'permissions',
@@ -151,7 +151,8 @@
         if (r === 'admin') return 'bg-danger';
         if (r === 'manager') return 'bg-warning text-dark';
         if (r === 'hr') return 'bg-purple text-white';
-        return 'bg-info text-dark';
+        if (r === 'employee') return 'bg-info text-dark';
+        return 'bg-secondary text-white';
     }
 
     function escapeHtml(str) {
@@ -184,7 +185,7 @@
 
         // Set body role class for CSS targeting
         var role = user.role || '';
-        document.body.classList.remove('role-admin', 'role-manager', 'role-hr', 'role-user');
+        document.body.classList.remove('role-admin', 'role-manager', 'role-hr', 'role-user', 'role-employee');
         if (role) {
             document.body.classList.add('role-' + role.toLowerCase());
         }
@@ -254,7 +255,7 @@
         // ── Quick Actions ──────────────────────────────────────────
         var hasCreateAny = hasAnyPermission([
             'Users.Create', 'Departments.Create', 'Roles.Create',
-            'Notes.Create', 'MainPageSections.Create', 'Permissions.Create'
+            'Notes.Create', 'MainPageSections.Create', 'Permissions.Edit'
         ]);
 
         if (hasCreateAny || accessibleModules.length > 0) {
@@ -333,6 +334,8 @@
             var createPermName;
             if (mod.id === 'content') {
                 createPermName = 'MainPageSections.Create';
+            } else if (mod.id === 'permissions') {
+                createPermName = 'Permissions.Edit';
             } else {
                 createPermName = createPerm.replace(/([a-z])([A-Z])/g, '$1$2');
                 // Capitalize first letter
@@ -350,7 +353,7 @@
                     'roles': '/Role/Create',
                     'notes': '/Note/Create',
                     'content': '/MainPageSection/Create',
-                    'permissions': '/Permission/Create'
+                    'permissions': '/Permission/Assign'
                 };
                 var actionColors = {
                     'users': 'primary',
@@ -362,19 +365,26 @@
                 };
                 var actionIcons = {
                     'users': 'bi-person-plus-fill',
-                    'departments': 'bi-building-add-fill',
-                    'roles': 'bi-shield-plus-fill',
+                    'departments': 'bi-building-add',
+                    'roles': 'bi-shield-plus',
                     'notes': 'bi-plus-circle-fill',
-                    'content': 'bi-file-plus-fill',
-                    'permissions': 'bi-shield-plus-fill'
+                    'content': 'bi-file-earmark-plus-fill',
+                    'permissions': 'bi-person-check-fill'
                 };
 
+                var actionTitle = mod.id === 'permissions'
+                    ? 'Assign Permissions'
+                    : 'New ' + mod.title.replace('Main Page Sections', 'Section');
+                var actionDesc = mod.id === 'permissions'
+                    ? 'Assign permissions to a user'
+                    : 'Create a new ' + mod.title.toLowerCase().replace('main page sections', 'section');
+
                 actions.push({
-                    title: 'New ' + mod.title.replace('Main Page Sections', 'Section'),
+                    title: actionTitle,
                     icon: actionIcons[mod.id] || 'bi-plus-circle-fill',
                     color: actionColors[mod.id] || 'primary',
                     url: actionUrls[mod.id] || (mod.url + '/Create'),
-                    desc: 'Create a new ' + mod.title.toLowerCase().replace('main page sections', 'section')
+                    desc: actionDesc
                 });
             }
         });
@@ -508,7 +518,7 @@
         var html = '';
 
         // Dashboard link (always for authenticated)
-        var isDashboardActive = (currentPath === '/Home/Dashboard' || currentPath === '/');
+        var isDashboardActive = (currentPath === '/Home/Dashboard');
         html += '<li class="nav-item">';
         html += '<a class="nav-link' + (isDashboardActive ? ' active' : '') + '" href="/Home/Dashboard" role="menuitem">';
         html += '<span class="nav-link-icon"><i class="bi bi-speedometer2"></i></span>';
@@ -640,8 +650,9 @@
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
         }
-        document.cookie = 'CompanySystem.Jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = 'CompanySystem.Auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        var secure = (location.protocol === 'https:') ? '; secure' : '';
+        document.cookie = 'CompanySystem.Jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/' +
+            secure + '; samesite=lax';
         $(window).trigger('authStateChanged');
         window.location.href = '/Auth/Login';
     }

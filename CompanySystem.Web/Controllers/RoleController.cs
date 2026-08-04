@@ -32,7 +32,7 @@ public class RoleController : Controller
 
 
     // API: GET /Role/GetAll
-    [HttpGet("GetAll")]
+    [HttpGet]
     [RequirePermission("Roles.View")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
@@ -62,7 +62,7 @@ public class RoleController : Controller
 
 
     // MVC: GET /Role/Details/{id}
-    [HttpGet("Details/{id}")]
+    [HttpGet]
     [RequirePermission("Roles.View")]
     public IActionResult Details(int id)
     {
@@ -71,7 +71,7 @@ public class RoleController : Controller
 
 
     // API: GET /Role/GetById/{id}
-    [HttpGet("GetById/{id}")]
+    [HttpGet]
     [RequirePermission("Roles.View")]
     public async Task<IActionResult> GetById(
         int id)
@@ -106,7 +106,7 @@ public class RoleController : Controller
 
 
     // MVC: GET /Role/Create
-    [HttpGet("Create")]
+    [HttpGet]
     [RequirePermission("Roles.Create")]
     public IActionResult Create()
     {
@@ -115,7 +115,7 @@ public class RoleController : Controller
 
 
     // POST: /Role/Create
-    [HttpPost("Create")]
+    [HttpPost]
     [RequirePermission("Roles.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateRoleDto dto)
@@ -150,7 +150,7 @@ public class RoleController : Controller
 
 
     // MVC: GET /Role/Edit/{id}
-    [HttpGet("Edit/{id}")]
+    [HttpGet]
     [RequirePermission("Roles.Edit")]
     public IActionResult Edit(int id)
     {
@@ -159,7 +159,7 @@ public class RoleController : Controller
 
 
     // PUT: /Role/Edit
-    [HttpPut("Edit")]
+    [HttpPut]
     [RequirePermission("Roles.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditRoleDto dto)
@@ -199,8 +199,9 @@ public class RoleController : Controller
 
 
     // MVC: GET /Role/Delete/{id}
-    [HttpGet("Delete/{id}")]
+    [HttpGet]
     [RequirePermission("Roles.Delete")]
+    [ActionName("Delete")]
     public IActionResult DeleteView(int id)
     {
         return View("Delete");
@@ -208,7 +209,7 @@ public class RoleController : Controller
 
 
     // DELETE: /Role/Delete/{id}
-    [HttpDelete("Delete/{id}")]
+    [HttpDelete]
     [RequirePermission("Roles.Delete")]
     public async Task<IActionResult> Delete(
         int id)

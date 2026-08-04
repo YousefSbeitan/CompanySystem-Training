@@ -68,8 +68,18 @@ public class PermissionController : Controller
     }
 
 
+    // MVC: GET /Permission/Assign (MVC View)
+    [HttpGet]
+    [ActionName("Assign")]
+    [RequirePermission("Permissions.Edit")]
+    public IActionResult AssignView()
+    {
+        return View("Assign");
+    }
+
+
     // API: GET /Permission/GetAll
-    [HttpGet("GetAll")]
+    [HttpGet]
     [RequirePermission("Permissions.View")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
@@ -99,7 +109,7 @@ public class PermissionController : Controller
 
 
     // API: GET /Permission/GetById/{id}
-    [HttpGet("GetById/{id}")]
+    [HttpGet]
     [RequirePermission("Permissions.View")]
     public async Task<IActionResult> GetById(
         int id)
@@ -142,17 +152,17 @@ public class PermissionController : Controller
     }
 
 
-    // API: GET /Permission/GetUserPermissions/{userId}
-    [HttpGet("GetUserPermissions/{userId}")]
+    // API: GET /Permission/GetUserPermissions/{id}
+    [HttpGet]
     [RequirePermission("Permissions.View")]
     public async Task<IActionResult> GetUserPermissions(
-        string userId)
+        string id)
     {
         try
         {
             var permissions =
                 await _permissionService.GetUserPermissionsAsync(
-                    userId);
+                    id);
 
 
             return Ok(
@@ -173,7 +183,7 @@ public class PermissionController : Controller
 
 
     // API: PUT /Permission/Assign
-    [HttpPut("Assign")]
+    [HttpPut]
     [RequirePermission("Permissions.Edit")]
     public async Task<IActionResult> Assign(
         [FromBody] AssignUserPermissionsDto dto)
