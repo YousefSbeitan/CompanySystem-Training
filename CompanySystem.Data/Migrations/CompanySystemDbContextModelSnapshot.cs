@@ -65,7 +65,7 @@ namespace CompanySystem.Data.Migrations
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DepartmentName = "Human Resources",
                             IsDeleted = false,
-                            ManagerId = "admin"
+                            ManagerId = "ADMIN_001"
                         },
                         new
                         {
@@ -74,7 +74,7 @@ namespace CompanySystem.Data.Migrations
                             CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DepartmentName = "Information Technology",
                             IsDeleted = false,
-                            ManagerId = "admin"
+                            ManagerId = "ADMIN_001"
                         });
                 });
 
@@ -182,6 +182,313 @@ namespace CompanySystem.Data.Migrations
                     b.HasKey("NoteId");
 
                     b.ToTable("Notes");
+                });
+
+            modelBuilder.Entity("CompanySystem.Data.Entities.Permission", b =>
+                {
+                    b.Property<int>("PermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PermissionId"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PermissionName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("PermissionId");
+
+                    b.ToTable("Permissions");
+
+                    b.HasData(
+                        new
+                        {
+                            PermissionId = 1,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "View departments",
+                            IsDeleted = false,
+                            PermissionName = "Departments.View"
+                        },
+                        new
+                        {
+                            PermissionId = 2,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Create departments",
+                            IsDeleted = false,
+                            PermissionName = "Departments.Create"
+                        },
+                        new
+                        {
+                            PermissionId = 3,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Edit departments",
+                            IsDeleted = false,
+                            PermissionName = "Departments.Edit"
+                        },
+                        new
+                        {
+                            PermissionId = 4,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Delete departments",
+                            IsDeleted = false,
+                            PermissionName = "Departments.Delete"
+                        },
+                        new
+                        {
+                            PermissionId = 5,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "View users",
+                            IsDeleted = false,
+                            PermissionName = "Users.View"
+                        },
+                        new
+                        {
+                            PermissionId = 6,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Create users",
+                            IsDeleted = false,
+                            PermissionName = "Users.Create"
+                        },
+                        new
+                        {
+                            PermissionId = 7,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Edit users",
+                            IsDeleted = false,
+                            PermissionName = "Users.Edit"
+                        },
+                        new
+                        {
+                            PermissionId = 8,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Delete users",
+                            IsDeleted = false,
+                            PermissionName = "Users.Delete"
+                        },
+                        new
+                        {
+                            PermissionId = 9,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "View roles",
+                            IsDeleted = false,
+                            PermissionName = "Roles.View"
+                        },
+                        new
+                        {
+                            PermissionId = 10,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Create roles",
+                            IsDeleted = false,
+                            PermissionName = "Roles.Create"
+                        },
+                        new
+                        {
+                            PermissionId = 11,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Edit roles",
+                            IsDeleted = false,
+                            PermissionName = "Roles.Edit"
+                        },
+                        new
+                        {
+                            PermissionId = 12,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Delete roles",
+                            IsDeleted = false,
+                            PermissionName = "Roles.Delete"
+                        },
+                        new
+                        {
+                            PermissionId = 13,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "View notes",
+                            IsDeleted = false,
+                            PermissionName = "Notes.View"
+                        },
+                        new
+                        {
+                            PermissionId = 14,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Create notes",
+                            IsDeleted = false,
+                            PermissionName = "Notes.Create"
+                        },
+                        new
+                        {
+                            PermissionId = 15,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Edit notes",
+                            IsDeleted = false,
+                            PermissionName = "Notes.Edit"
+                        },
+                        new
+                        {
+                            PermissionId = 16,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Delete notes",
+                            IsDeleted = false,
+                            PermissionName = "Notes.Delete"
+                        },
+                        new
+                        {
+                            PermissionId = 17,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "View main page sections",
+                            IsDeleted = false,
+                            PermissionName = "MainPageSections.View"
+                        },
+                        new
+                        {
+                            PermissionId = 18,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Create main page sections",
+                            IsDeleted = false,
+                            PermissionName = "MainPageSections.Create"
+                        },
+                        new
+                        {
+                            PermissionId = 19,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Edit main page sections",
+                            IsDeleted = false,
+                            PermissionName = "MainPageSections.Edit"
+                        },
+                        new
+                        {
+                            PermissionId = 20,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Delete main page sections",
+                            IsDeleted = false,
+                            PermissionName = "MainPageSections.Delete"
+                        },
+                        new
+                        {
+                            PermissionId = 21,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "View permissions",
+                            IsDeleted = false,
+                            PermissionName = "Permissions.View"
+                        },
+                        new
+                        {
+                            PermissionId = 22,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Create permissions",
+                            IsDeleted = false,
+                            PermissionName = "Permissions.Create"
+                        },
+                        new
+                        {
+                            PermissionId = 23,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Edit permissions",
+                            IsDeleted = false,
+                            PermissionName = "Permissions.Edit"
+                        },
+                        new
+                        {
+                            PermissionId = 24,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Delete permissions",
+                            IsDeleted = false,
+                            PermissionName = "Permissions.Delete"
+                        },
+                        new
+                        {
+                            PermissionId = 25,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "View dashboard",
+                            IsDeleted = false,
+                            PermissionName = "Dashboard.View"
+                        });
+                });
+
+            modelBuilder.Entity("CompanySystem.Data.Entities.RefreshToken", b =>
+                {
+                    b.Property<int>("RefreshTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RefreshTokenId"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("RefreshTokenId");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("CompanySystem.Data.Entities.Role", b =>
@@ -298,6 +605,306 @@ namespace CompanySystem.Data.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "ADMIN_001",
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DepartmentId = 1,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaderId = "ADMIN_001",
+                            PasswordHash = "$2a$12$0abb8Tyz65y2IVbOZh8eReGMQNUXrk9L4.BbE5uNjWIp6dmXzml7q",
+                            PhoneNumber = "0000000000",
+                            RoleId = 1,
+                            Salary = 0m,
+                            StartDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Username = "admin"
+                        });
+                });
+
+            modelBuilder.Entity("CompanySystem.Data.Entities.UserPermission", b =>
+                {
+                    b.Property<int>("UserPermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserPermissionId"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserPermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserPermissions");
+
+                    b.HasData(
+                        new
+                        {
+                            UserPermissionId = 1,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 1,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 2,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 2,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 3,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 3,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 4,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 4,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 5,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 5,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 6,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 6,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 7,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 7,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 8,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 8,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 9,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 9,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 10,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 10,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 11,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 11,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 12,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 12,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 13,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 13,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 14,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 14,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 15,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 15,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 16,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 16,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 17,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 17,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 18,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 18,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 19,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 19,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 20,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 20,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 21,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 21,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 22,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 22,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 23,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 23,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 24,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 24,
+                            UserId = "ADMIN_001"
+                        },
+                        new
+                        {
+                            UserPermissionId = 25,
+                            CreatedBy = "System",
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            PermissionId = 25,
+                            UserId = "ADMIN_001"
+                        });
+                });
+
+            modelBuilder.Entity("CompanySystem.Data.Entities.UserPermission", b =>
+                {
+                    b.HasOne("CompanySystem.Data.Entities.Permission", null)
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CompanySystem.Data.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

@@ -2,13 +2,19 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CompanySystem.Web.Controllers;
 
+
+[Authorize]
 public class UserController : Controller
 {
     private readonly IUserService _userService;
+
 
     public UserController(
         IUserService userService)
@@ -19,6 +25,7 @@ public class UserController : Controller
 
     // GET: /User (MVC View)
     [HttpGet]
+    [RequirePermission("Users.View")]
     public IActionResult Index()
     {
         return View();
@@ -27,67 +34,111 @@ public class UserController : Controller
 
     // GET: /User/Create (MVC View)
     [HttpGet]
+    [RequirePermission("Users.Create")]
     public IActionResult Create()
     {
         return View();
     }
 
 
-    // GET: /User/Edit/{id} (MVC View)
+
     [HttpGet]
-    public IActionResult Edit(string id)
+    [RequirePermission("Users.Edit")]
+    public async Task<IActionResult> Edit(
+        string id)
     {
+        if (!await CanAccessUserAsync(id))
+            return Forbid();
+
+
         return View();
     }
-
 
     // GET: /User/Details/{id} (MVC View)
     [HttpGet]
-    public IActionResult Details(string id)
+    [RequirePermission("Users.View")]
+    public async Task<IActionResult> Details(
+        string id)
     {
+        if (!await CanAccessUserAsync(id))
+            return Forbid();
+
+
         return View();
     }
-
 
     // GET: /User/Delete/{id} (MVC View)
     [HttpGet]
+    [RequirePermission("Users.Delete")]
     [ActionName("Delete")]
-    public IActionResult DeleteView(string id)
+    public IActionResult DeleteView(
+        string id)
     {
-        return View();
+        return View("Delete");
     }
 
-
     // API: GET /User/GetAll
+    // Admin + Manager
     [HttpGet]
+    [RequirePermission("Users.View")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
         {
+            var currentUserId =
+                User.FindFirst(
+                    ClaimTypes.NameIdentifier)
+                ?.Value;
+
+
+            var currentUserRole =
+                User.FindFirst(
+                    ClaimTypes.Role)
+                ?.Value;
+
+
+            if (string.IsNullOrEmpty(currentUserId) ||
+                string.IsNullOrEmpty(currentUserRole))
+            {
+                return Unauthorized(
+                    "Invalid access token.");
+            }
+
+
             var users =
                 await _userService.GetAllAsync(
-                    request);
+                    request,
+                    currentUserId,
+                    currentUserRole);
 
 
-            return Ok(users);
+            return Ok(
+                users);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
-    // API: GET /User/GetById/EMP001
     [HttpGet]
+    [RequirePermission("Users.View")]
     public async Task<IActionResult> GetById(
         string id)
     {
+        if (!await CanAccessUserAsync(id))
+            return Forbid();
+
+
         try
         {
             var user =
@@ -95,30 +146,36 @@ public class UserController : Controller
                     id);
 
 
-            return Ok(user);
+            return Ok(
+                user);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
-
     // API: POST /User/Create
     [HttpPost]
+    [RequirePermission("Users.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateUserDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -128,27 +185,33 @@ public class UserController : Controller
                     dto);
 
 
-            return Ok(user);
+            return Ok(
+                user);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // API: PUT /User/Edit
+    // Admin only because DTO contains Role, Salary, Department
     [HttpPut]
+    [RequirePermission("Users.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditUserDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
+            return BadRequest(
+                ModelState);
 
         try
         {
@@ -157,25 +220,29 @@ public class UserController : Controller
                     dto);
 
 
-            return Ok(user);
+            return Ok(
+                user);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
-
-    // API: DELETE /User/Delete/EMP001
     [HttpDelete]
+    [RequirePermission("Users.Delete")]
     public async Task<IActionResult> Delete(
         string id)
     {
@@ -193,15 +260,60 @@ public class UserController : Controller
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
+    }
+
+
+
+    private async Task<bool> CanAccessUserAsync(
+        string userId)
+    {
+        var currentUserId =
+            User.FindFirst(
+                ClaimTypes.NameIdentifier)
+            ?.Value;
+
+
+        if (currentUserId == null)
+            return false;
+
+
+        // Admin and HR can access everyone
+        if (User.IsInRole("Admin") ||
+            User.IsInRole("HR"))
+        {
+            return true;
+        }
+
+
+        // User can access himself
+        if (currentUserId == userId)
+            return true;
+
+
+        // Manager can access his employees only
+        if (User.IsInRole("Manager"))
+        {
+            return await _userService
+                .CanManageUserAsync(
+                    currentUserId,
+                    userId);
+        }
+
+
+        return false;
     }
 }

@@ -1,0 +1,324 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Edit Main Page Section";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/MainPageSection" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Main Page Sections
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Main Page Section</h4>
+                </div>
+                <div class="card-body">
+                    <div id="loadingContainer" class="text-center py-5">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading section data...</p>
+                    </div>
+
+                    <form id="sectionForm" class="d-none" novalidate>
+                        <input type="hidden" id="sectionId" name="sectionId" value="0" />
+
+                        <div class="mb-3">
+                            <label for="sectionType" class="form-label">Section Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="sectionType" name="sectionType" required>
+                                <option value="">— Select Section Type —</option>
+                                <option value="1">About Us</option>
+                                <option value="2">Services</option>
+                                <option value="3">Contact Us</option>
+                                <option value="4">Home</option>
+                            </select>
+                            <div class="invalid-feedback" id="sectionTypeError">Please select a section type.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title"
+                                   required maxlength="200"
+                                   placeholder="Enter section title" />
+                            <div class="invalid-feedback" id="titleError">Title is required and must not exceed 200 characters.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="content" name="content" rows="6"
+                                      required placeholder="Enter section content"></textarea>
+                            <div class="invalid-feedback" id="contentError">Content is required.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="/MainPageSection" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning" id="submitBtn">
+                                <i class="bi bi-check-circle me-1"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="errorContainer" class="d-none text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                        <h5>Failed to load section</h5>
+                        <p id="errorMessage" class="text-muted"></p>
+                        <a href="/MainPageSection" class="btn btn-outline-secondary mt-2">Back to Main Page Sections</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            if (!hasPerm('MainPageSections.Edit')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to edit main page sections.</p>' +
+                    '<a href="/MainPageSection" class="btn btn-outline-secondary mt-3">Back to Main Page Sections</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Get section ID from URL
+            var pathParts = window.location.pathname.split('/');
+            var sectionId = parseInt(pathParts[pathParts.length - 1]) || 0;
+
+            var form = document.getElementById('sectionForm');
+            var submitBtn = document.getElementById('submitBtn');
+            var sectionTypeSelect = document.getElementById('sectionType');
+            var titleInput = document.getElementById('title');
+            var contentInput = document.getElementById('content');
+            var loadingContainer = document.getElementById('loadingContainer');
+            var errorContainer = document.getElementById('errorContainer');
+            var errorMessage = document.getElementById('errorMessage');
+
+            // ── Real-time validation ─────────────────────────────────
+            sectionTypeSelect.addEventListener('change', function () {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            titleInput.addEventListener('input', function () {
+                var val = this.value.trim();
+                if (val.length > 0 && val.length <= 200) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    if (val.length > 0) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                }
+            });
+
+            contentInput.addEventListener('input', function () {
+                var val = this.value.trim();
+                if (val.length > 0) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            // ── Load Section Data ────────────────────────────────────
+            function loadSection() {
+                if (!sectionId || sectionId === 0) {
+                    showError('Invalid section ID.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/MainPageSection/GetById/' + sectionId,
+                    type: 'GET',
+                    beforeSend: function () {
+                        loadingContainer.classList.remove('d-none');
+                        form.classList.add('d-none');
+                        errorContainer.classList.add('d-none');
+                    },
+                    success: function (response) {
+                        loadingContainer.classList.add('d-none');
+                        form.classList.remove('d-none');
+
+                        var section = response;
+                        // If response is wrapped
+                        if (response && response.data) {
+                            section = response.data;
+                        }
+
+                        if (!section) {
+                            showError('Section not found.');
+                            return;
+                        }
+
+                        document.getElementById('sectionId').value = section.sectionId || sectionId;
+                        sectionTypeSelect.value = section.sectionType !== null && section.sectionType !== undefined
+                            ? String(section.sectionType)
+                            : '';
+                        sectionTypeSelect.classList.add('is-valid');
+                        titleInput.value = section.title || '';
+                        titleInput.classList.add('is-valid');
+                        contentInput.value = section.content || '';
+                        contentInput.classList.add('is-valid');
+                    },
+                    error: function (xhr) {
+                        loadingContainer.classList.add('d-none');
+                        errorContainer.classList.remove('d-none');
+                        var msg = 'Failed to load section data.';
+                        try {
+                            msg = JSON.parse(xhr.responseText) || msg;
+                        } catch (e) {
+                            msg = xhr.responseText || msg;
+                        }
+                        errorMessage.textContent = msg;
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            function showError(msg) {
+                loadingContainer.classList.add('d-none');
+                errorContainer.classList.remove('d-none');
+                errorMessage.textContent = msg;
+            }
+
+            // ── Form Submit ──────────────────────────────────────────
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var sectionType = sectionTypeSelect.value;
+                var title = titleInput.value.trim();
+                var content = contentInput.value.trim();
+                var isValid = true;
+
+                if (!sectionType) {
+                    sectionTypeSelect.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    sectionTypeSelect.classList.remove('is-invalid');
+                    sectionTypeSelect.classList.add('is-valid');
+                }
+
+                if (!title || title.length === 0 || title.length > 200) {
+                    titleInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    titleInput.classList.remove('is-invalid');
+                    titleInput.classList.add('is-valid');
+                }
+
+                if (!content || content.length === 0) {
+                    contentInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    contentInput.classList.remove('is-invalid');
+                    contentInput.classList.add('is-valid');
+                }
+
+                if (!isValid) return;
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...';
+
+                var dto = {
+                    sectionId: sectionId,
+                    sectionType: parseInt(sectionType, 10),
+                    title: title,
+                    content: content
+                };
+
+                $.ajax({
+                    url: '/MainPageSection/Edit',
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(dto),
+                    beforeSend: function () {
+                        // button disabled
+                    },
+                    success: function (response) {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('Main page section updated successfully.', 'success');
+                        } else {
+                            alert('Main page section updated successfully.');
+                        }
+                        window.location.href = '/MainPageSection';
+                    },
+                    error: function (xhr) {
+                        var msg = 'Failed to update main page section.';
+                        try {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (typeof resp === 'string') {
+                                msg = resp;
+                            } else if (resp && resp.title) {
+                                msg = resp.title;
+                            } else if (resp && resp.message) {
+                                msg = resp.message;
+                            } else if (resp && resp.sectionType && resp.sectionType.length > 0) {
+                                msg = resp.sectionType[0];
+                            } else if (resp && resp.title && resp.title.length > 0) {
+                                msg = resp.title[0];
+                            } else if (resp && resp.content && resp.content.length > 0) {
+                                msg = resp.content[0];
+                            }
+                        } catch (e) {
+                            if (xhr.responseText) {
+                                msg = xhr.responseText;
+                            }
+                        }
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Changes';
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            });
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                loadSection();
+            });
+
+        })();
+    </script>
+}

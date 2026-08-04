@@ -1,50 +1,89 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CompanySystem.Web</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - CompanySystem</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CompanySystem.Web.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-utilities.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/theme.css" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CompanySystem.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+    <!-- Sidebar -->
+    <aside class="main-sidebar" id="sidebar" aria-label="Sidebar">
+        <div class="sidebar-brand">
+            <a href="/Home/Dashboard">
+                <span class="sidebar-brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M3 21h18v-2H3v2zM3 3v6h6V3H3zm2 2h2v2H5V5zm4 6H3v6h6v-6zm2-6h6v2h-6V5zm8 0h2v2h-2V5zm-8 8h6v6h-6v-6zm8-2h2v8h-2v-8z"/>
+                    </svg>
+                </span>
+                <span>CompanySystem</span>
+            </a>
+        </div>
+        <hr class="sidebar-divider" />
+        <ul class="sidebar-nav" id="sidebarNav">
+            <!-- Populated by dashboard.js based on permissions -->
+        </ul>
+    </aside>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main content -->
+    <div class="content-wrapper" id="contentWrapper">
+        <nav class="top-navbar" aria-label="Top navigation">
+            <div class="top-navbar-left">
+                <button class="sidebar-toggle-btn" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                    </svg>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+                <a class="top-navbar-brand" href="/Home/Dashboard">
+                    <i class="bi bi-building me-1"></i>CompanySystem
+                </a>
+            </div>
+            <div class="top-navbar-right" id="topNavRight">
+                <!-- Populated by dashboard.js / auth state -->
             </div>
         </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+        <main class="main-content" role="main">
             @RenderBody()
         </main>
+
+        <footer class="main-footer">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span>&copy; <span id="footerYear">2026</span> CompanySystem. All rights reserved.</span>
+                <a href="/Home/Privacy">Privacy</a>
+            </div>
+        </footer>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - CompanySystem.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
+    <div id="toastContainer" class="toast-container-custom"></div>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var permClaims = User.FindAll("Permission").Select(c => c.Value).ToList();
+        var permJson = System.Text.Json.JsonSerializer.Serialize(permClaims);
+        <script>
+            window.serverUser = {
+                id: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "")),
+                username: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.Identity?.Name ?? "")),
+                role: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "")),
+                permissions: @Html.Raw(permJson)
+            };
+        </script>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/auth.js"></script>
+    <script src="~/js/dashboard.js"></script>
+    <script src="~/js/site.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

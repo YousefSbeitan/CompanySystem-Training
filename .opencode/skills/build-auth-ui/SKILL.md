@@ -1,0 +1,522 @@
+---
+name: build-auth-ui
+description: Builds Authentication Razor UI for CompanySystem using existing AuthController. Handles Login, Logout, JWT storage, user state, permission claims, and role exposure for downstream skills without modifying backend security.
+---
+
+# Build Auth UI Skill - ASP.NET Core MVC Authentication Frontend Agent
+
+You are a Senior ASP.NET Core MVC Security Frontend Engineer.
+
+Your responsibility:
+
+Create the Authentication frontend only.
+
+The backend Authentication system already exists.
+
+Do NOT change backend authentication.
+
+---
+
+# Project Architecture
+
+Solution:
+
+CompanySystem
+
+Layers:
+
+- CompanySystem.Web
+- CompanySystem.Business
+- CompanySystem.Data
+- CompanySystem.Shared
+
+Frontend:
+
+- Razor Views
+- Bootstrap 5
+- jQuery
+- AJAX
+- JWT Authentication
+
+---
+
+# Agent Responsibility Boundary
+
+This agent handles:
+
+- Login UI
+- Logout functionality
+- Authentication state
+- Token storage
+- Current user data
+- Role exposure for other UI pages
+
+---
+
+# Cooperation With build-ui
+
+build-ui handles:
+
+- CRUD pages
+- Tables
+- Pagination
+- Sorting
+- Filtering
+
+This agent provides:
+
+```javascript
+window.currentUser
+
+window.currentUserPermissions
+
+window.currentUserRole (legacy, prefer permissions)
+```
+
+for build-ui and other downstream skills.
+
+window.currentUserPermissions is an array of permission strings decoded from JWT claim "Permission".
+
+Example:
+
+```javascript
+["Dashboard.View", "Users.View", "Users.Create", "Departments.View"]
+```
+
+Downstream skills use permissions to control UI visibility.
+
+---
+
+# Allowed Changes
+
+You MAY create/update:
+
+CompanySystem.Web/Views/Auth/
+
+Files:
+
+Login.cshtml
+
+AccessDenied.cshtml
+
+
+You MAY modify:
+
+CompanySystem.Web/Views/Shared/_Layout.cshtml
+
+ONLY for:
+
+- Login link
+- Logout button
+- Current username display
+- Role based navigation
+
+
+You MAY create:
+
+CompanySystem.Web/wwwroot/js/auth.js
+
+
+Purpose:
+
+- Store token
+- Attach Authorization headers
+- Decode JWT
+- Expose current user
+
+---
+
+# Forbidden Changes
+
+NEVER modify:
+
+- AuthController
+- UserController
+- RoleController
+- Services
+- Interfaces
+- DTOs
+- Entities
+- DbContext
+- Migrations
+- Program.cs
+- appsettings.json
+
+---
+
+# Security Rules
+
+Backend security already exists.
+
+NEVER edit:
+
+```csharp
+[Authorize]
+
+[Authorize(Roles="...")]
+```
+
+NEVER add:
+
+```csharp
+[AllowAnonymous]
+```
+
+Never change:
+
+- JWT creation
+- Refresh Token logic
+- Password hashing
+- Claims creation
+
+---
+
+# Existing Auth API
+
+AuthController already exposes:
+
+
+Login:
+
+POST
+
+```text
+/api/Auth/Login
+```
+
+
+Refresh Token:
+
+POST
+
+```text
+/api/Auth/RefreshToken
+```
+
+
+Logout:
+
+POST
+
+```text
+/api/Auth/Logout
+```
+
+
+Use these endpoints only.
+
+Do not create new endpoints.
+
+---
+
+# Login Page Rules
+
+Create:
+
+Views/Auth/Login.cshtml
+
+
+Must contain:
+
+- Username input
+- Password input
+- Bootstrap form
+- Validation messages
+
+
+Submit using AJAX:
+
+```javascript
+POST /api/Auth/Login
+```
+
+Send:
+
+JSON body matching LoginDto.
+
+
+On success:
+
+Store:
+
+accessToken
+
+refreshToken
+
+
+Example:
+
+```javascript
+localStorage.setItem(
+ "accessToken",
+ response.accessToken
+);
+```
+
+Redirect:
+
+```text
+/
+```
+
+---
+
+# Logout Rules
+
+Logout uses:
+
+```text
+POST /api/Auth/Logout
+```
+
+Send refresh token.
+
+After success:
+
+Remove:
+
+- accessToken
+- refreshToken
+- current user
+
+
+Redirect:
+
+```text
+/Auth/Login
+```
+
+---
+
+# Token Management
+
+Create:
+
+wwwroot/js/auth.js
+
+
+Must handle:
+
+- Save token
+- Get token
+- Remove token
+- Decode JWT
+- Extract username
+- Extract role
+- Extract permission claims
+- Expose current user data
+
+---
+
+# AJAX Authentication
+
+Configure global AJAX:
+
+```javascript
+$.ajaxSetup({
+
+ beforeSend:function(xhr){
+
+  let token =
+  localStorage.getItem("accessToken");
+
+
+  if(token){
+
+   xhr.setRequestHeader(
+    "Authorization",
+    "Bearer " + token
+   );
+
+  }
+
+ }
+
+});
+```
+
+---
+
+# Current User Contract
+
+Expose:
+
+```javascript
+window.currentUser =
+{
+ id:"",
+ username:"",
+ role:"",
+ permissions: []
+};
+```
+
+Also expose:
+
+```javascript
+window.currentUserPermissions
+```
+
+Example:
+
+```javascript
+// Decode JWT payload
+function parseJwt(token) {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    var jsonPayload = decodeURIComponent(
+        atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join('')
+    );
+    return JSON.parse(jsonPayload);
+}
+
+// Extract permission claims
+var decoded = parseJwt(accessToken);
+window.currentUserPermissions = decoded.Permission || [];
+
+// Legacy role support
+window.currentUserRole = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded.role || "";
+
+window.currentUser = {
+    id: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded.nameid || "",
+    username: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || decoded.unique_name || "",
+    role: window.currentUserRole,
+    permissions: window.currentUserPermissions
+};
+```
+
+Downstream skills depend on:
+
+- window.currentUserPermissions for permission-based UI
+- window.currentUserRole for legacy role fallback
+
+---
+
+# Unauthorized Handling
+
+Handle:
+
+401 Unauthorized
+
+Action:
+
+Redirect:
+
+```text
+/Auth/Login
+```
+
+
+Handle:
+
+403 Forbidden
+
+Show Bootstrap message:
+
+"You do not have permission."
+
+---
+
+# Layout Rules
+
+Update _Layout.cshtml only for:
+
+Anonymous user:
+
+Show:
+
+- Login
+
+
+Authenticated user:
+
+Show:
+
+- Username
+- Permissions / Role
+- Logout
+
+
+---
+
+# Styling
+
+Use Bootstrap 5:
+
+- container
+- card
+- form-control
+- form-label
+- btn
+- alert
+
+Professional admin system style.
+
+---
+
+# Execution Rule
+
+When user runs:
+
+build-auth-ui
+
+
+ALWAYS:
+
+1. Read AuthController
+
+2. Read:
+
+- LoginDto
+
+3. Detect returned token structure
+
+4. Generate Auth Views
+
+5. Create auth.js
+
+6. Update Layout navigation
+
+7. Run:
+
+dotnet build
+
+---
+
+# Final Verification
+
+Before finishing verify:
+
+✓ AuthController unchanged
+
+✓ Login works
+
+✓ Logout works
+
+✓ JWT stored
+
+✓ Authorization header added
+
+✓ User role detected
+
+✓ Permission claims extracted
+
+✓ window.currentUserPermissions exists (array of permission strings)
+
+✓ window.currentUserRole exists (legacy fallback)
+
+✓ Downstream skills can read permissions
+
+✓ No backend security modified
+
+
+Run:
+
+dotnet build
+
+
+Required:
+
+0 errors

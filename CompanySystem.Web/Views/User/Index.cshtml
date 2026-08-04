@@ -1,0 +1,601 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Users";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-people-fill me-2"></i>Users
+        </h1>
+        <div>
+            <button id="createUserBtn" class="btn btn-primary d-none" onclick="location.href='/User/Create'">
+                <i class="bi bi-plus-lg me-1"></i>Create User
+            </button>
+        </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search by user ID, username, or phone..." />
+                        <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select id="pageSizeSelect" class="form-select">
+                        <option value="5">5 per page</option>
+                        <option value="10" selected>10 per page</option>
+                        <option value="20">20 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span id="recordCount" class="text-muted"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0" id="usersTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:120px;">User ID</th>
+                            <th class="sortable" data-sort="username" style="cursor:pointer;">
+                                Username <i class="bi bi-arrow-down-up sort-icon"></i>
+                            </th>
+                            <th>Role</th>
+                            <th>Department</th>
+                            <th>Phone Number</th>
+                            <th class="sortable" data-sort="startdate" style="cursor:pointer;">
+                                Start Date <i class="bi bi-arrow-down-up sort-icon"></i>
+                            </th>
+                            <th class="sortable" data-sort="salary" style="cursor:pointer;">
+                                Salary <i class="bi bi-arrow-down-up sort-icon"></i>
+                            </th>
+                            <th>Status</th>
+                            <th class="sortable" data-sort="createddate" style="cursor:pointer;">
+                                Created Date <i class="bi bi-arrow-down-up sort-icon"></i>
+                            </th>
+                            <th style="width:180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr id="loadingRow">
+                            <td colspan="10" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Loading users...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <span id="paginationInfo" class="text-muted small"></span>
+            <nav aria-label="Users pagination">
+                <ul class="pagination pagination-sm mb-0" id="paginationUl"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Error Alert -->
+<div id="errorAlert" class="alert alert-danger alert-dismissible fade d-none position-fixed bottom-0 end-0 m-4 shadow" role="alert">
+    <span id="errorMessage"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+            var currentPage = 1;
+            var currentPageSize = 10;
+            var currentSearch = '';
+            var currentSortBy = '';
+            var currentSortDir = '';
+
+            // ── Permission Checks ────────────────────────────────────
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            var canCreate = hasPerm('Users.Create');
+            var canEdit = hasPerm('Users.Edit');
+            var canDelete = hasPerm('Users.Delete');
+            var canView = hasPerm('Users.View');
+
+            // ── Show Create button if permitted ──────────────────────
+            if (canCreate) {
+                document.getElementById('createUserBtn').classList.remove('d-none');
+            }
+
+            // ── FK Lookup Maps (Role / Department) ───────────────────
+            var roleMap = {};
+            var deptMap = {};
+
+            function loadLookups(callback) {
+                var pending = 2;
+
+                function checkDone() {
+                    pending--;
+                    if (pending <= 0 && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+
+                // Roles: GET /Role/GetAll
+                $.ajax({
+                    url: '/Role/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () { },
+                    success: function (response) {
+                        var roles = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            roles = response.data;
+                        } else if (Array.isArray(response)) {
+                            roles = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            roles = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            roles = response.results;
+                        }
+                        roles.forEach(function (role) {
+                            if (role && role.roleId !== null && role.roleId !== undefined) {
+                                roleMap[role.roleId] = role.roleName || ('Role ' + role.roleId);
+                            }
+                        });
+                    },
+                    error: function () {
+                        // Lookup is best-effort; raw IDs shown as fallback
+                    },
+                    complete: function () {
+                        checkDone();
+                    }
+                });
+
+                // Departments: GET /Department/GetAll
+                $.ajax({
+                    url: '/Department/GetAll',
+                    type: 'GET',
+                    data: { pageNumber: 1, pageSize: 1000, search: '' },
+                    beforeSend: function () { },
+                    success: function (response) {
+                        var departments = [];
+                        if (response && response.data && Array.isArray(response.data)) {
+                            departments = response.data;
+                        } else if (Array.isArray(response)) {
+                            departments = response;
+                        } else if (response && response.items && Array.isArray(response.items)) {
+                            departments = response.items;
+                        } else if (response && response.results && Array.isArray(response.results)) {
+                            departments = response.results;
+                        }
+                        departments.forEach(function (dept) {
+                            if (dept && dept.departmentId !== null && dept.departmentId !== undefined) {
+                                deptMap[dept.departmentId] = dept.departmentName || ('Department ' + dept.departmentId);
+                            }
+                        });
+                    },
+                    error: function () {
+                        // Lookup is best-effort; raw IDs shown as fallback
+                    },
+                    complete: function () {
+                        checkDone();
+                    }
+                });
+            }
+
+            // ── Load Data ────────────────────────────────────────────
+            function loadData() {
+                var tableBody = document.getElementById('usersTableBody');
+
+                // Show loading (rebuild HTML — do not clone #loadingRow after clearing tbody)
+                tableBody.innerHTML =
+                    '<tr><td colspan="10" class="text-center py-5">' +
+                    '<div class="spinner-border text-primary" role="status">' +
+                    '<span class="visually-hidden">Loading...</span></div>' +
+                    '<p class="mt-2 text-muted">Loading users...</p></td></tr>';
+
+                var params = {
+                    pageNumber: currentPage,
+                    pageSize: currentPageSize,
+                    search: currentSearch || ''
+                };
+
+                if (currentSortBy) {
+                    params.sortBy = currentSortBy;
+                    params.isDescending = currentSortDir === 'desc';
+                }
+
+                $.ajax({
+                    url: '/User/GetAll',
+                    type: 'GET',
+                    data: params,
+                    beforeSend: function () {
+                        // loading state already set
+                    },
+                    success: function (response) {
+                        renderTable(response);
+                    },
+                    error: function (xhr) {
+                        var msg = 'Failed to load users.';
+                        try {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (typeof resp === 'string') {
+                                msg = resp;
+                            }
+                        } catch (e) {
+                            if (xhr.responseText) {
+                                msg = xhr.responseText;
+                            }
+                        }
+                        tableBody.innerHTML =
+                            '<tr><td colspan="10" class="text-center py-5 text-danger">' +
+                            '<i class="bi bi-exclamation-triangle-fill fs-3"></i>' +
+                            '<p class="mt-2 mb-0">' + escapeHtml(msg) + '</p>' +
+                            '</td></tr>';
+                        showError('Failed to load users. Please try again.');
+                    },
+                    complete: function () {
+                        // Ensure loading is hidden
+                    }
+                });
+            }
+
+            // ── Render Table ─────────────────────────────────────────
+            function renderTable(response) {
+                var tableBody = document.getElementById('usersTableBody');
+                var data = [];
+                var totalRecords = 0;
+                var totalPages = 0;
+
+                if (response && response.data && Array.isArray(response.data)) {
+                    data = response.data;
+                    totalRecords = response.totalRecords || 0;
+                    totalPages = response.totalPages || 0;
+                    currentPage = response.pageNumber || 1;
+                } else if (Array.isArray(response)) {
+                    data = response;
+                    totalRecords = data.length;
+                    totalPages = 1;
+                } else if (response && response.items && Array.isArray(response.items)) {
+                    data = response.items;
+                    totalRecords = response.totalRecords || response.totalCount || 0;
+                    totalPages = response.totalPages || 1;
+                } else if (response && response.results && Array.isArray(response.results)) {
+                    data = response.results;
+                    totalRecords = response.totalRecords || response.totalCount || 0;
+                    totalPages = response.totalPages || 1;
+                }
+
+                if (data.length === 0) {
+                    tableBody.innerHTML =
+                        '<tr><td colspan="10" class="text-center py-5 text-muted">' +
+                        '<i class="bi bi-inbox fs-3 d-block mb-2"></i>' +
+                        'No users found.' +
+                        '</td></tr>';
+                    updatePagination(0, 0);
+                    return;
+                }
+
+                var html = '';
+                data.forEach(function (user) {
+                    var userId = escapeHtml(user.userId || '');
+                    var username = escapeHtml(user.username || '—');
+                    var roleName = (user.roleId !== null && user.roleId !== undefined && roleMap[user.roleId])
+                        ? escapeHtml(roleMap[user.roleId])
+                        : (user.roleId ? user.roleId : '—');
+                    var deptName = (user.departmentId !== null && user.departmentId !== undefined && deptMap[user.departmentId])
+                        ? escapeHtml(deptMap[user.departmentId])
+                        : (user.departmentId ? user.departmentId : '—');
+                    var phone = escapeHtml(user.phoneNumber || '—');
+                    var startDate = user.startDate ? formatDateOnly(user.startDate) : '—';
+                    var salary = formatCurrency(user.salary);
+                    var statusBadge = user.isActive
+                        ? '<span class="badge bg-success">Active</span>'
+                        : '<span class="badge bg-secondary">Inactive</span>';
+                    var leaderBadge = user.isLeader
+                        ? ' <span class="badge bg-info text-white">Leader</span>'
+                        : '';
+                    var createdDate = user.createdDate ? formatDate(user.createdDate) : '—';
+
+                    var actionsHtml = '<div class="btn-group btn-group-sm">';
+
+                    if (canView) {
+                        actionsHtml +=
+                            '<a href="/User/Details/' + userId + '" class="btn btn-info text-white" title="Details">' +
+                            '<i class="bi bi-eye-fill"></i></a>';
+                    }
+
+                    if (canEdit) {
+                        actionsHtml +=
+                            '<a href="/User/Edit/' + userId + '" class="btn btn-warning" title="Edit">' +
+                            '<i class="bi bi-pencil-fill"></i></a>';
+                    }
+
+                    if (canDelete) {
+                        actionsHtml +=
+                            '<a href="/User/Delete/' + userId + '" class="btn btn-danger" title="Delete">' +
+                            '<i class="bi bi-trash-fill"></i></a>';
+                    }
+
+                    actionsHtml += '</div>';
+
+                    if (actionsHtml === '<div class="btn-group btn-group-sm"></div>') {
+                        actionsHtml = '<span class="text-muted">—</span>';
+                    }
+
+                    html += '<tr>' +
+                        '<td><code>' + userId + '</code></td>' +
+                        '<td><strong>' + username + '</strong>' + leaderBadge + '</td>' +
+                        '<td>' + roleName + '</td>' +
+                        '<td>' + deptName + '</td>' +
+                        '<td>' + phone + '</td>' +
+                        '<td>' + startDate + '</td>' +
+                        '<td>' + salary + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td>' + createdDate + '</td>' +
+                        '<td>' + actionsHtml + '</td>' +
+                        '</tr>';
+                });
+
+                tableBody.innerHTML = html;
+                updatePagination(totalRecords, totalPages);
+            }
+
+            // ── Pagination ───────────────────────────────────────────
+            function updatePagination(totalRecords, totalPages) {
+                var infoEl = document.getElementById('paginationInfo');
+                var ul = document.getElementById('paginationUl');
+
+                if (totalRecords === 0) {
+                    infoEl.textContent = 'No records found.';
+                    ul.innerHTML = '';
+                    return;
+                }
+
+                var start = ((currentPage - 1) * currentPageSize) + 1;
+                var end = Math.min(currentPage * currentPageSize, totalRecords);
+                infoEl.textContent = 'Showing ' + start + ' to ' + end + ' of ' + totalRecords + ' records';
+
+                document.getElementById('recordCount').textContent = 'Total: ' + totalRecords + ' user(s)';
+
+                if (totalPages <= 1) {
+                    ul.innerHTML = '';
+                    return;
+                }
+
+                var html = '';
+
+                // Previous
+                html += '<li class="page-item' + (currentPage <= 1 ? ' disabled' : '') + '">';
+                html += '<a class="page-link" href="#" data-page="' + (currentPage - 1) + '" aria-label="Previous">';
+                html += '<span aria-hidden="true">&laquo;</span></a></li>';
+
+                // Pages
+                var maxVisible = 5;
+                var startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                var endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                if (endPage - startPage < maxVisible - 1) {
+                    startPage = Math.max(1, endPage - maxVisible + 1);
+                }
+
+                if (startPage > 1) {
+                    html += '<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>';
+                    if (startPage > 2) {
+                        html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    }
+                }
+
+                for (var i = startPage; i <= endPage; i++) {
+                    html += '<li class="page-item' + (i === currentPage ? ' active' : '') + '">';
+                    html += '<a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    }
+                    html += '<li class="page-item"><a class="page-link" href="#" data-page="' + totalPages + '">' + totalPages + '</a></li>';
+                }
+
+                // Next
+                html += '<li class="page-item' + (currentPage >= totalPages ? ' disabled' : '') + '">';
+                html += '<a class="page-link" href="#" data-page="' + (currentPage + 1) + '" aria-label="Next">';
+                html += '<span aria-hidden="true">&raquo;</span></a></li>';
+
+                ul.innerHTML = html;
+
+                // Bind pagination clicks
+                ul.querySelectorAll('.page-link').forEach(function (link) {
+                    link.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var page = parseInt(this.getAttribute('data-page'));
+                        if (!isNaN(page) && page !== currentPage) {
+                            currentPage = page;
+                            loadData();
+                        }
+                    });
+                });
+            }
+
+            // ── Sorting ──────────────────────────────────────────────
+            function initSorting() {
+                document.querySelectorAll('.sortable').forEach(function (th) {
+                    th.addEventListener('click', function () {
+                        var sortBy = this.getAttribute('data-sort');
+                        if (!sortBy) return;
+
+                        // Toggle direction
+                        if (currentSortBy === sortBy) {
+                            currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            currentSortBy = sortBy;
+                            currentSortDir = 'asc';
+                        }
+
+                        // Update sort icons
+                        document.querySelectorAll('.sortable .sort-icon').forEach(function (icon) {
+                            icon.className = 'bi bi-arrow-down-up sort-icon ms-1';
+                        });
+
+                        var icon = this.querySelector('.sort-icon');
+                        if (icon) {
+                            icon.className = 'bi bi-arrow-' + (currentSortDir === 'asc' ? 'up' : 'down') + ' sort-icon ms-1';
+                        }
+
+                        currentPage = 1;
+                        loadData();
+                    });
+                });
+            }
+
+            // ── Helpers ──────────────────────────────────────────────
+            function escapeHtml(str) {
+                if (!str) return '';
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '—';
+                try {
+                    var d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            function formatDateOnly(dateStr) {
+                if (!dateStr) return '—';
+                try {
+                    var d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    return d.toLocaleDateString();
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            function formatCurrency(val) {
+                if (val === null || val === undefined || val === '') return '—';
+                var n = parseFloat(val);
+                if (isNaN(n)) return val;
+                return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function showError(msg) {
+                var alert = document.getElementById('errorAlert');
+                var msgEl = document.getElementById('errorMessage');
+                if (alert && msgEl) {
+                    msgEl.textContent = msg;
+                    alert.classList.remove('d-none');
+                    alert.classList.add('show');
+                    setTimeout(function () {
+                        alert.classList.add('d-none');
+                        alert.classList.remove('show');
+                    }, 5000);
+                }
+            }
+
+            // ── Search ───────────────────────────────────────────────
+            function initSearch() {
+                var searchInput = document.getElementById('searchInput');
+                var clearBtn = document.getElementById('clearSearchBtn');
+                var searchTimer;
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', function () {
+                        clearTimeout(searchTimer);
+                        searchTimer = setTimeout(function () {
+                            var val = searchInput.value.trim();
+                            if (val !== currentSearch) {
+                                currentSearch = val;
+                                currentPage = 1;
+                                loadData();
+                            }
+                        }, 400);
+                    });
+
+                    searchInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            clearTimeout(searchTimer);
+                            var val = searchInput.value.trim();
+                            if (val !== currentSearch) {
+                                currentSearch = val;
+                                currentPage = 1;
+                                loadData();
+                            }
+                        }
+                    });
+                }
+
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', function () {
+                        if (searchInput) {
+                            searchInput.value = '';
+                        }
+                        if (currentSearch !== '') {
+                            currentSearch = '';
+                            currentPage = 1;
+                            loadData();
+                        }
+                    });
+                }
+            }
+
+            // ── Page Size ────────────────────────────────────────────
+            function initPageSize() {
+                var select = document.getElementById('pageSizeSelect');
+                if (select) {
+                    select.addEventListener('change', function () {
+                        var newSize = parseInt(this.value);
+                        if (newSize && newSize !== currentPageSize) {
+                            currentPageSize = newSize;
+                            currentPage = 1;
+                            loadData();
+                        }
+                    });
+                }
+            }
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                if (!canView && !canCreate && !canEdit && !canDelete) {
+                    document.getElementById('usersTableBody').innerHTML =
+                        '<tr><td colspan="10" class="text-center py-5 text-danger">' +
+                        '<i class="bi bi-shield-exclamation fs-3 d-block mb-2"></i>' +
+                        'You do not have permission to view users.' +
+                        '</td></tr>';
+                    return;
+                }
+
+                initSorting();
+                initSearch();
+                initPageSize();
+                loadLookups(loadData);
+            });
+
+        })();
+    </script>
+}

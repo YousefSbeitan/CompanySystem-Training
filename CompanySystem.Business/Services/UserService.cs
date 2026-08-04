@@ -23,11 +23,22 @@ public class UserService : IUserService
         _departmentRepository = departmentRepository;
     }
 
-    public async Task<PagedResponse<UserDto>> GetAllAsync(PaginationFilterRequest request)
+    public async Task<PagedResponse<UserDto>> GetAllAsync(
+        PaginationFilterRequest request,
+        string currentUserId,
+        string currentUserRole)
     {
         try
         {
             var users = await _userRepository.FindAsync(u => !u.IsDeleted);
+
+            // Manager can see himself + his employees only
+            if (currentUserRole == "Manager")
+            {
+                users = users.Where(u =>
+                    u.UserId == currentUserId ||
+                    u.LeaderId == currentUserId);
+            }
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
@@ -101,10 +112,8 @@ public class UserService : IUserService
 
         ValidateUserData(dto.Username,dto.PhoneNumber,dto.DepartmentId,dto.Salary);
 
-        if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+        if (string.IsNullOrWhiteSpace(dto.Password))
             throw new BusinessException("Password is required.");
-
-        
 
         dto.Username = dto.Username.Trim();
         dto.PhoneNumber = dto.PhoneNumber.Trim();
@@ -116,6 +125,8 @@ public class UserService : IUserService
             var department = await GetDepartmentAsync(dto.DepartmentId!.Value);
 
             var user = UserMapper.ToEntity(dto);
+
+            user.PasswordHash = PasswordHasher.HashPassword(dto.Password);
 
             user.UserId = UserIdGenerator.Generate(dto.DepartmentId);
 
@@ -273,5 +284,35 @@ public class UserService : IUserService
 
         if (salary < 0)
             throw new BusinessException("Salary cannot be negative.");
+    }
+
+    public async Task<bool> CanManageUserAsync(
+        string managerId,
+        string userId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(managerId) ||
+                string.IsNullOrWhiteSpace(userId))
+            {
+                return false;
+            }
+
+            var user =
+                await _userRepository.FirstOrDefaultAsync(
+                    u => u.UserId == userId &&
+                         !u.IsDeleted);
+
+            if (user == null)
+                return false;
+
+            return user.LeaderId == managerId;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to check user permission.",
+                ex);
+        }
     }
 }

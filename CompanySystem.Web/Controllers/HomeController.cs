@@ -1,0 +1,31 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CompanySystem.Web.Controllers;
+
+public class HomeController : Controller
+{
+    [AllowAnonymous]
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    [Authorize]
+    public IActionResult Dashboard()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    public IActionResult Error()
+    {
+        return View();
+    }
+}

@@ -2,143 +2,271 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CompanySystem.Web.Controllers;
 
+
+[Authorize]
 public class NoteController : Controller
 {
     private readonly INoteService _noteService;
+    private readonly IUserService _userService;
+
 
     public NoteController(
-        INoteService noteService)
+    INoteService noteService,
+    IUserService userService)
     {
         _noteService = noteService;
+        _userService = userService;
     }
 
 
-    // GET: /Note
+    // API: GET /Note/GetAll
     [HttpGet]
-    public async Task<IActionResult> Index(
+    [RequirePermission("Notes.View")]
+    public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+                return Unauthorized();
+
+
             var notes =
                 await _noteService.GetAllAsync(
-                    request);
+                    request,
+                    currentUserId,
+                    currentUserRole);
 
 
-            return Ok(notes);
+            return Ok(
+                notes);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
-    // GET: /Note/Details/1
+    // API: GET /Note/GetById/1
     [HttpGet]
-    public async Task<IActionResult> Details(
+    [RequirePermission("Notes.View")]
+    public async Task<IActionResult> GetById(
         int id)
     {
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+                return Unauthorized();
+
+
+            var canAccess =
+                await _noteService.CanAccessNoteAsync(
+                    id,
+                    currentUserId,
+                    currentUserRole);
+
+
+            if (!canAccess)
+                return Forbid();
+
+
             var note =
                 await _noteService.GetByIdAsync(
                     id);
 
 
-            return Ok(note);
+            return Ok(
+                note);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // POST: /Note/Create
     [HttpPost]
+    [RequirePermission("Notes.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateNoteDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+            {
+                return Unauthorized();
+            }
+
+
+            if (currentUserRole == "Manager")
+            {
+                var canCreate =
+                    dto.UserId == currentUserId
+                    ||
+                    await _userService
+                        .CanManageUserAsync(
+                            currentUserId,
+                            dto.UserId);
+
+
+                if (!canCreate)
+                    return Forbid();
+            }
+
+
             var note =
                 await _noteService.CreateAsync(
                     dto);
 
 
-            return Ok(note);
+            return Ok(
+                note);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
+
     // PUT: /Note/Edit
     [HttpPut]
+    [RequirePermission("Notes.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditNoteDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
         {
+            var currentUserId =
+                GetCurrentUserId();
+
+            var currentUserRole =
+                GetCurrentUserRole();
+
+
+            if (currentUserId == null ||
+                currentUserRole == null)
+                return Unauthorized();
+
+
+            var canAccess =
+                await _noteService.CanAccessNoteAsync(
+                    dto.NoteId,
+                    currentUserId,
+                    currentUserRole);
+
+
+            if (!canAccess)
+                return Forbid();
+
+
             var note =
                 await _noteService.UpdateAsync(
                     dto);
 
 
-            return Ok(note);
+            return Ok(
+                note);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
+
     // DELETE: /Note/Delete/1
     [HttpDelete]
+    [RequirePermission("Notes.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {
@@ -156,15 +284,81 @@ public class NoteController : Controller
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
+    }
+
+
+
+    // ──────────────────────────────────────────────
+    // MVC View Actions
+    // ──────────────────────────────────────────────
+
+    // GET /Note
+    [HttpGet]
+    [RequirePermission("Notes.View")]
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    // GET /Note/Create
+    [HttpGet]
+    [RequirePermission("Notes.Create")]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    // GET /Note/Edit/{id}
+    [HttpGet]
+    [RequirePermission("Notes.Edit")]
+    public IActionResult Edit(int id)
+    {
+        return View();
+    }
+
+    // GET /Note/Details/{id}
+    [HttpGet]
+    [RequirePermission("Notes.View")]
+    public IActionResult Details(int id)
+    {
+        return View();
+    }
+
+    // GET /Note/Delete/{id}
+    [HttpGet]
+    [ActionName("Delete")]
+    [RequirePermission("Notes.Delete")]
+    public IActionResult DeleteView(int id)
+    {
+        return View("Delete");
+    }
+
+    private string? GetCurrentUserId()
+    {
+        return User.FindFirst(
+            ClaimTypes.NameIdentifier)
+            ?.Value;
+    }
+
+
+    private string? GetCurrentUserRole()
+    {
+        return User.FindFirst(
+            ClaimTypes.Role)
+            ?.Value;
     }
 }

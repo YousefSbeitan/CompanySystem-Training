@@ -21,6 +21,8 @@ public class UserDto : TrackingDto
     public decimal Salary { get; set; }
 
     public bool IsActive { get; set; }
+
+    public bool IsLeader { get; set; }
 }
 
 
@@ -39,7 +41,7 @@ public class CreateUserDto
         255,
         ErrorMessage = "Password must not exceed 255 characters.")]
     [Display(Name = "Password")]
-    public string PasswordHash { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 
 
     [Required(ErrorMessage = "Role is required.")]

@@ -320,6 +320,12 @@ public class AuthService : IAuthService
             Username =
                 user.Username,
 
+            Role =
+                roleName,
+
+            Permissions =
+                permissions,
+
             AccessToken =
                 accessToken,
 

@@ -1,0 +1,231 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Main Page Section Details";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/MainPageSection" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Main Page Sections
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-eye-fill me-2"></i>Main Page Section Details</h4>
+                </div>
+                <div class="card-body">
+                    <div id="loadingContainer" class="text-center py-5">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading section details...</p>
+                    </div>
+
+                    <div id="detailsContainer" class="d-none">
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Section ID</div>
+                            <div class="col-md-8" id="detailSectionId">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Section Type</div>
+                            <div class="col-md-8" id="detailSectionType">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Title</div>
+                            <div class="col-md-8" id="detailTitle">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Content</div>
+                            <div class="col-md-8" id="detailContent">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created By</div>
+                            <div class="col-md-8" id="detailCreatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Created Date</div>
+                            <div class="col-md-8" id="detailCreatedDate">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated By</div>
+                            <div class="col-md-8" id="detailUpdatedBy">—</div>
+                        </div>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-4 fw-bold text-muted">Updated Date</div>
+                            <div class="col-md-8" id="detailUpdatedDate">—</div>
+                        </div>
+                    </div>
+
+                    <div id="errorContainer" class="d-none text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                        <h5>Failed to load section details</h5>
+                        <p id="errorMessage" class="text-muted"></p>
+                        <a href="/MainPageSection" class="btn btn-outline-secondary mt-2">Back to Main Page Sections</a>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="/MainPageSection" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back
+                    </a>
+                    <div>
+                        <a href="/MainPageSection/Edit/@ViewContext.RouteData.Values["id"]" class="btn btn-warning d-none" id="editFromDetailsBtn">
+                            <i class="bi bi-pencil-fill me-1"></i>Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var permissions = window.currentUserPermissions || [];
+
+            function hasPerm(perm) {
+                return permissions.indexOf(perm) !== -1;
+            }
+
+            if (!hasPerm('MainPageSections.View')) {
+                document.body.innerHTML =
+                    '<div class="container-fluid py-5 text-center text-danger">' +
+                    '<i class="bi bi-shield-exclamation fs-1 d-block mb-3"></i>' +
+                    '<h3>Access Denied</h3>' +
+                    '<p>You do not have permission to view main page section details.</p>' +
+                    '<a href="/MainPageSection" class="btn btn-outline-secondary mt-3">Back to Main Page Sections</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Show Edit button if permitted
+            if (hasPerm('MainPageSections.Edit')) {
+                var editBtn = document.getElementById('editFromDetailsBtn');
+                if (editBtn) {
+                    editBtn.classList.remove('d-none');
+                }
+            }
+
+            // Get section ID from URL
+            var pathParts = window.location.pathname.split('/');
+            var sectionId = parseInt(pathParts[pathParts.length - 1]) || 0;
+
+            var loadingContainer = document.getElementById('loadingContainer');
+            var detailsContainer = document.getElementById('detailsContainer');
+            var errorContainer = document.getElementById('errorContainer');
+            var errorMessage = document.getElementById('errorMessage');
+
+            // ── Section Type label mapping (enum serialized as number) ──
+            function sectionTypeLabel(value) {
+                var map = {
+                    1: 'About Us',
+                    2: 'Services',
+                    3: 'Contact Us',
+                    4: 'Home'
+                };
+                if (map[value] !== undefined) {
+                    return map[value];
+                }
+                if (value === null || value === undefined || value === '') {
+                    return '—';
+                }
+                return String(value);
+            }
+
+            // ── Load Section Details ─────────────────────────────────
+            function loadDetails() {
+                if (!sectionId || sectionId === 0) {
+                    showError('Invalid section ID.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/MainPageSection/GetById/' + sectionId,
+                    type: 'GET',
+                    beforeSend: function () {
+                        loadingContainer.classList.remove('d-none');
+                        detailsContainer.classList.add('d-none');
+                        errorContainer.classList.add('d-none');
+                    },
+                    success: function (response) {
+                        loadingContainer.classList.add('d-none');
+
+                        var section = response;
+                        if (response && response.data) {
+                            section = response.data;
+                        }
+
+                        if (!section) {
+                            showError('Section not found.');
+                            return;
+                        }
+
+                        document.getElementById('detailSectionId').textContent = section.sectionId || '—';
+                        document.getElementById('detailSectionType').textContent = sectionTypeLabel(section.sectionType);
+                        document.getElementById('detailTitle').textContent = section.title || '—';
+                        document.getElementById('detailContent').textContent = section.content || '—';
+                        document.getElementById('detailCreatedBy').textContent = section.createdBy || '—';
+                        document.getElementById('detailCreatedDate').textContent = section.createdDate ? formatDate(section.createdDate) : '—';
+                        document.getElementById('detailUpdatedBy').textContent = section.updatedBy || '—';
+                        document.getElementById('detailUpdatedDate').textContent = section.updatedDate ? formatDate(section.updatedDate) : '—';
+
+                        detailsContainer.classList.remove('d-none');
+                    },
+                    error: function (xhr) {
+                        loadingContainer.classList.add('d-none');
+                        errorContainer.classList.remove('d-none');
+                        var msg = 'Failed to load section details.';
+                        try {
+                            msg = JSON.parse(xhr.responseText) || msg;
+                        } catch (e) {
+                            msg = xhr.responseText || msg;
+                        }
+                        errorMessage.textContent = msg;
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'error');
+                        }
+                    },
+                    complete: function () {
+                        // handled
+                    }
+                });
+            }
+
+            function showError(msg) {
+                loadingContainer.classList.add('d-none');
+                errorContainer.classList.remove('d-none');
+                errorMessage.textContent = msg;
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '—';
+                try {
+                    var d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            // ── Initialize ──────────────────────────────────────────
+            $(document).ready(function () {
+                loadDetails();
+            });
+
+        })();
+    </script>
+}

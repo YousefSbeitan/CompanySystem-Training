@@ -1,0 +1,28 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "mvc-frontend-builder": {
+      "description": "Frontend engineer for CompanySystem MVC project. Builds Razor UI only from existing backend code. Reads Controllers, DTOs, and existing patterns then generates Bootstrap 5 Razor pages using jQuery AJAX. Never modifies backend files.",
+      "mode": "subagent",
+      "permission": {
+        "edit": "allow",
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": "ask"
+      }
+    }
+  },
+  "command": {
+    "build-ui": {
+      "description": "Generate complete Razor MVC frontend for an entity.",
+      "agent": "mvc-frontend-builder",
+      "template": "Generate Razor MVC frontend views for $ARGUMENTS. Read the existing controller and DTOs first. Create only Views/$ARGUMENTS files: Index.cshtml, Create.cshtml, Edit.cshtml, Details.cshtml, Delete.cshtml. Use Bootstrap 5 and jQuery AJAX. Do not modify Controllers, Services, DTOs, Entities, DbContext, or Program.cs."
+    }
+  },
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  }
+}

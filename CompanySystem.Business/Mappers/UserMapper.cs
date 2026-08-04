@@ -18,6 +18,7 @@ public static class UserMapper
             StartDate = user.StartDate,
             Salary = user.Salary,
             IsActive = user.IsActive,
+            IsLeader = user.LeaderId == user.UserId,
             CreatedBy = user.CreatedBy,
             CreatedDate = user.CreatedDate,
             UpdatedBy = user.UpdatedBy,
@@ -31,7 +32,7 @@ public static class UserMapper
         return new User
         {
             Username = dto.Username,
-            PasswordHash = dto.PasswordHash,
+            PasswordHash = string.Empty,
             RoleId = dto.RoleId,
             DepartmentId = dto.DepartmentId,
             PhoneNumber = dto.PhoneNumber,

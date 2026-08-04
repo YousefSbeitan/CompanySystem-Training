@@ -1,4 +1,4 @@
-﻿using CompanySystem.Data.Entities;
+using CompanySystem.Data.Entities;
 
 namespace CompanySystem.Data.Entities;
 

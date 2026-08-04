@@ -1,0 +1,33 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Edit Permission";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a href="/Permission" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Permissions
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Edit Permission</h4>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-lock-fill fs-1 text-secondary d-block mb-3"></i>
+                    <h5 class="mb-2">Permissions are system-managed</h5>
+                    <p class="text-muted mb-4">
+                        Permissions are seeded reference data and cannot be modified individually.
+                        Permission definitions are controlled by the system.
+                    </p>
+                    <a href="/Permission" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Permissions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

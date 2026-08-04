@@ -7,7 +7,9 @@ namespace CompanySystem.Business.Interfaces;
 public interface INoteService
 {
     Task<PagedResponse<NoteDto>> GetAllAsync(
-        PaginationFilterRequest request);
+        PaginationFilterRequest request,
+        string currentUserId,
+        string currentUserRole);
 
 
     Task<NoteDto?> GetByIdAsync(
@@ -24,4 +26,10 @@ public interface INoteService
 
     Task<bool> DeleteAsync(
         int noteId);
+
+
+    Task<bool> CanAccessNoteAsync(
+        int noteId,
+        string currentUserId,
+        string currentUserRole);
 }

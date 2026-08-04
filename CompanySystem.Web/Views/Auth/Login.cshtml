@@ -1,0 +1,428 @@
+@{
+    ViewData["Title"] = "Login";
+    Layout = null; // Standalone page, no sidebar
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - CompanySystem</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-utilities.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/theme.css" />
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .login-header {
+            background: linear-gradient(135deg, #0f3460, #1a1a2e);
+            color: white;
+            padding: 32px 32px 24px;
+            text-align: center;
+        }
+        .login-header .brand-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        .login-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .login-header p {
+            margin: 4px 0 0;
+            opacity: 0.8;
+            font-size: 0.875rem;
+        }
+        .login-body {
+            padding: 32px;
+            background: #fff;
+        }
+        .login-body .form-label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #333;
+        }
+        .login-body .form-control {
+            border-radius: 8px;
+            padding: 10px 14px;
+            border: 1px solid #d0d5dd;
+            font-size: 0.9rem;
+        }
+        .login-body .form-control:focus {
+            border-color: #0f3460;
+            box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.15);
+        }
+        .login-body .input-group-text {
+            background: transparent;
+            border: 1px solid #d0d5dd;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            color: #667085;
+        }
+        .login-body .input-group .form-control {
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+        }
+        .login-body .input-group .form-control:focus {
+            border-left: none;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #0f3460, #1a1a2e);
+            border: none;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        .login-btn:hover {
+            opacity: 0.9;
+            color: white;
+        }
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .login-footer {
+            text-align: center;
+            padding: 16px 32px;
+            background: #f9fafb;
+            border-top: 1px solid #eaecf0;
+            font-size: 0.8rem;
+            color: #667085;
+        }
+        .login-alert {
+            display: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 0.875rem;
+        }
+        .login-alert.show {
+            display: block;
+        }
+        .password-toggle-btn {
+            border: 1px solid #d0d5dd;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            background: transparent;
+            color: #667085;
+            cursor: pointer;
+        }
+        .password-toggle-btn:hover {
+            background: #f3f4f6;
+        }
+        .spinner-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            z-index: 10;
+            border-radius: 0 0 16px 16px;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner-overlay.show {
+            display: flex;
+        }
+        .login-card-wrapper {
+            position: relative;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-card-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-icon"><i class="bi bi-building"></i></div>
+                <h1>CompanySystem</h1>
+                <p>Sign in to your account</p>
+            </div>
+            <div class="login-body position-relative">
+                <div class="spinner-overlay" id="loginSpinner">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-danger login-alert" id="loginAlert" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <span id="loginAlertMessage"></span>
+                </div>
+
+                <form id="loginForm" autocomplete="off" novalidate>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" name="username"
+                                   placeholder="Enter your username" required autofocus
+                                   autocomplete="username" />
+                        </div>
+                        <div class="invalid-feedback" id="usernameError">Please enter your username.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group password-toggle-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="Enter your password" required
+                                   autocomplete="current-password" />
+                            <button class="btn password-toggle-btn" type="button"
+                                    title="Show password" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback" id="passwordError">Please enter your password.</div>
+                    </div>
+
+                    <button type="submit" class="btn login-btn" id="loginBtn">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+                </form>
+            </div>
+            <div class="login-footer">
+                &copy; 2026 CompanySystem. All rights reserved.
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            // ── Password Toggle ──────────────────────────────────────
+            function initPasswordToggle() {
+                var btn = document.querySelector('.password-toggle-btn');
+                if (!btn || btn.dataset.toggleInit) return;
+                btn.dataset.toggleInit = 'true';
+
+                btn.addEventListener('click', function () {
+                    var container = this.closest('.input-group');
+                    if (!container) return;
+                    var input = container.querySelector('input[type="password"], input[type="text"]');
+                    if (!input) return;
+                    var icon = this.querySelector('.bi-eye, .bi-eye-slash');
+                    var isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    if (icon) {
+                        icon.classList.remove('bi-eye', 'bi-eye-slash');
+                        icon.classList.add(isPassword ? 'bi-eye-slash' : 'bi-eye');
+                    }
+                    this.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+                    this.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+                });
+            }
+
+            // ── Show Alert ───────────────────────────────────────────
+            function showAlert(message) {
+                var alert = document.getElementById('loginAlert');
+                var msgEl = document.getElementById('loginAlertMessage');
+                if (alert && msgEl) {
+                    msgEl.textContent = message || 'An unexpected error occurred.';
+                    alert.classList.add('show');
+                }
+            }
+
+            function hideAlert() {
+                var alert = document.getElementById('loginAlert');
+                if (alert) {
+                    alert.classList.remove('show');
+                }
+            }
+
+            // ── Set Loading ──────────────────────────────────────────
+            function setLoading(loading) {
+                var spinner = document.getElementById('loginSpinner');
+                var btn = document.getElementById('loginBtn');
+                var form = document.getElementById('loginForm');
+                if (spinner) spinner.classList.toggle('show', loading);
+                if (btn) btn.disabled = loading;
+                if (form) {
+                    var inputs = form.querySelectorAll('input');
+                    inputs.forEach(function (input) { input.disabled = loading; });
+                }
+            }
+
+            // ── Validate Form ────────────────────────────────────────
+            function validateForm() {
+                var isValid = true;
+                var username = document.getElementById('username');
+                var password = document.getElementById('password');
+                var usernameError = document.getElementById('usernameError');
+                var passwordError = document.getElementById('passwordError');
+
+                // Reset
+                username.classList.remove('is-invalid');
+                password.classList.remove('is-invalid');
+                if (usernameError) usernameError.style.display = 'none';
+                if (passwordError) passwordError.style.display = 'none';
+
+                if (!username.value || !username.value.trim()) {
+                    username.classList.add('is-invalid');
+                    if (usernameError) usernameError.style.display = 'block';
+                    isValid = false;
+                }
+
+                if (!password.value) {
+                    password.classList.add('is-invalid');
+                    if (passwordError) passwordError.style.display = 'block';
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            // ── Handle Login Response ────────────────────────────────
+            function handleLoginSuccess(response) {
+                // Store tokens using auth.js (if loaded) or directly
+                if (window.auth && window.auth.saveTokens) {
+                    window.auth.saveTokens(response.accessToken, response.refreshToken);
+                    window.auth.refreshUserGlobals();
+                } else {
+                    // Fallback: store directly
+                    localStorage.setItem('accessToken', response.accessToken);
+                    localStorage.setItem('refreshToken', response.refreshToken);
+                    var secure = (location.protocol === 'https:') ? '; secure' : '';
+                    document.cookie = 'CompanySystem.Jwt=' + encodeURIComponent(response.accessToken) +
+                        '; path=/' + secure + '; samesite=lax';
+                }
+
+                // Redirect to dashboard (authenticated landing)
+                window.location.href = '/Home/Dashboard';
+            }
+
+            function handleLoginError(xhr) {
+                var message = 'Login failed. Please check your credentials.';
+                if (xhr && xhr.responseText) {
+                    try {
+                        var parsed = JSON.parse(xhr.responseText);
+                        if (typeof parsed === 'string') {
+                            message = parsed;
+                        } else if (parsed.message) {
+                            message = parsed.message;
+                        } else if (parsed.title) {
+                            message = parsed.title;
+                        } else if (parsed.errors) {
+                            // ModelState errors
+                            var errs = [];
+                            for (var key in parsed.errors) {
+                                if (parsed.errors.hasOwnProperty(key)) {
+                                    errs.push(parsed.errors[key]);
+                                }
+                            }
+                            message = errs.join(' ');
+                        }
+                    } catch (e) {
+                        // Use the raw response text if it looks like a string message
+                        if (xhr.responseText && xhr.responseText.indexOf('{') !== 0) {
+                            message = xhr.responseText;
+                        }
+                    }
+                }
+                showAlert(message);
+            }
+
+            // ── Form Submit ──────────────────────────────────────────
+            function handleSubmit(e) {
+                e.preventDefault();
+                hideAlert();
+
+                if (!validateForm()) return;
+
+                setLoading(true);
+
+                var loginData = {
+                    username: document.getElementById('username').value.trim(),
+                    password: document.getElementById('password').value
+                };
+
+                $.ajax({
+                    url: '/api/Auth/Login',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(loginData),
+                    success: function (response) {
+                        handleLoginSuccess(response);
+                    },
+                    error: function (xhr) {
+                        setLoading(false);
+                        handleLoginError(xhr);
+                    }
+                });
+            }
+
+            // ── Init ─────────────────────────────────────────────────
+            function clearLocalAuth() {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                var secure = (location.protocol === 'https:') ? '; secure' : '';
+                document.cookie = 'CompanySystem.Jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC' +
+                    secure + '; samesite=lax';
+            }
+
+            function isTokenExpired(token) {
+                try {
+                    var payload = token.split('.')[1];
+                    var decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+                    if (!decoded || !decoded.exp) return true;
+                    return decoded.exp < Math.floor(Date.now() / 1000);
+                } catch (e) {
+                    return true;
+                }
+            }
+
+            function init() {
+                initPasswordToggle();
+                var form = document.getElementById('loginForm');
+                if (form) {
+                    form.addEventListener('submit', handleSubmit);
+                }
+
+                // If already signed in with a valid JWT, go straight to dashboard.
+                // Do NOT call /api/Auth/Logout on page load — it races with a new
+                // SignInAsync and can clear the fresh auth cookie after login.
+                var existingToken = localStorage.getItem('accessToken');
+                if (existingToken && !isTokenExpired(existingToken)) {
+                    window.location.href = '/Home/Dashboard';
+                    return;
+                }
+
+                // Drop stale client tokens only; server cookie is replaced on login
+                clearLocalAuth();
+
+                // Focus username field
+                setTimeout(function () {
+                    var usernameInput = document.getElementById('username');
+                    if (usernameInput) usernameInput.focus();
+                }, 100);
+            }
+
+            $(document).ready(init);
+
+        })();
+    </script>
+</body>
+</html>

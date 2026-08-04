@@ -1,4 +1,4 @@
-﻿using CompanySystem.Business.DTOs;
+using CompanySystem.Business.DTOs;
 using CompanySystem.Data.Entities;
 
 namespace CompanySystem.Business.Mappers;

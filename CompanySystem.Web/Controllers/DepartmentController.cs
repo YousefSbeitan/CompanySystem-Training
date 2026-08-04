@@ -2,13 +2,18 @@
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Shared.Exceptions;
 using CompanySystem.Shared.Requests;
+using CompanySystem.Web.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompanySystem.Web.Controllers;
 
+
+[Authorize]
 public class DepartmentController : Controller
 {
     private readonly IDepartmentService _departmentService;
+
 
     public DepartmentController(
         IDepartmentService departmentService)
@@ -17,8 +22,10 @@ public class DepartmentController : Controller
     }
 
 
+
     // GET: /Department (MVC View)
     [HttpGet]
+    [RequirePermission("Departments.View")]
     public IActionResult Index()
     {
         return View();
@@ -27,6 +34,7 @@ public class DepartmentController : Controller
 
     // GET: /Department/Create (MVC View)
     [HttpGet]
+    [RequirePermission("Departments.Create")]
     public IActionResult Create()
     {
         return View();
@@ -35,7 +43,9 @@ public class DepartmentController : Controller
 
     // GET: /Department/Edit/{id} (MVC View)
     [HttpGet]
-    public IActionResult Edit(int id)
+    [RequirePermission("Departments.Edit")]
+    public IActionResult Edit(
+        int id)
     {
         return View();
     }
@@ -43,7 +53,9 @@ public class DepartmentController : Controller
 
     // GET: /Department/Details/{id} (MVC View)
     [HttpGet]
-    public IActionResult Details(int id)
+    [RequirePermission("Departments.View")]
+    public IActionResult Details(
+        int id)
     {
         return View();
     }
@@ -51,15 +63,18 @@ public class DepartmentController : Controller
 
     // GET: /Department/Delete/{id} (MVC View)
     [HttpGet]
+    [RequirePermission("Departments.Delete")]
     [ActionName("Delete")]
-    public IActionResult DeleteView(int id)
+    public IActionResult DeleteView(
+        int id)
     {
-        return View();
+        return View("Delete");
     }
 
 
     // API: GET /Department/GetAll
     [HttpGet]
+    [RequirePermission("Departments.View")]
     public async Task<IActionResult> GetAll(
         [FromQuery] PaginationFilterRequest request)
     {
@@ -70,21 +85,26 @@ public class DepartmentController : Controller
                     request);
 
 
-            return Ok(departments);
+            return Ok(
+                departments);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // API: GET /Department/GetById/1
     [HttpGet]
+    [RequirePermission("Departments.View")]
     public async Task<IActionResult> GetById(
         int id)
     {
@@ -95,30 +115,37 @@ public class DepartmentController : Controller
                     id);
 
 
-            return Ok(department);
+            return Ok(
+                department);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // API: POST /Department/Create
     [HttpPost]
+    [RequirePermission("Departments.Create")]
     public async Task<IActionResult> Create(
         [FromBody] CreateDepartmentDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -128,26 +155,32 @@ public class DepartmentController : Controller
                     dto);
 
 
-            return Ok(department);
+            return Ok(
+                department);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // API: PUT /Department/Edit
     [HttpPut]
+    [RequirePermission("Departments.Edit")]
     public async Task<IActionResult> Edit(
         [FromBody] EditDepartmentDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(
+                ModelState);
 
 
         try
@@ -157,25 +190,31 @@ public class DepartmentController : Controller
                     dto);
 
 
-            return Ok(department);
+            return Ok(
+                department);
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 
 
     // API: DELETE /Department/Delete/1
     [HttpDelete]
+    [RequirePermission("Departments.Delete")]
     public async Task<IActionResult> Delete(
         int id)
     {
@@ -193,15 +232,19 @@ public class DepartmentController : Controller
         }
         catch (ResourceNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(
+                ex.Message);
         }
         catch (BusinessException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(
+                ex.Message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                ex.Message);
         }
     }
 }

@@ -25,7 +25,9 @@ public class NoteService : INoteService
 
 
     public async Task<PagedResponse<NoteDto>> GetAllAsync(
-        PaginationFilterRequest request)
+    PaginationFilterRequest request,
+    string currentUserId,
+    string currentUserRole)
     {
         try
         {
@@ -34,43 +36,94 @@ public class NoteService : INoteService
                     n => !n.IsDeleted);
 
 
-            // Filtering
-            if (!string.IsNullOrWhiteSpace(request.Search))
+            if (currentUserRole == "Employee")
             {
-                notes = notes.Where(
-                    n =>
-                    n.Title.ToLower()
-                        .Contains(request.Search.ToLower())
-                    ||
-                    n.Content.ToLower()
-                        .Contains(request.Search.ToLower())
-                    ||
-                    n.NoteType.ToString()
-                        .ToLower()
-                        .Contains(request.Search.ToLower()));
+                notes =
+                    notes.Where(
+                        n => n.UserId == currentUserId);
+            }
+
+
+            if (currentUserRole == "Manager")
+            {
+                var employees =
+                    await _userRepository.FindAsync(
+                        u => u.LeaderId == currentUserId &&
+                             !u.IsDeleted);
+
+
+                var employeeIds =
+                    employees
+                    .Select(
+                        u => u.UserId)
+                    .ToList();
+
+
+                employeeIds.Add(
+                    currentUserId);
+
+
+                notes =
+                    notes.Where(
+                        n => employeeIds.Contains(
+                            n.UserId));
+            }
+
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(
+                    request.Search))
+            {
+                notes =
+                    notes.Where(
+                        n =>
+                        n.Title.ToLower()
+                            .Contains(
+                                request.Search.ToLower())
+                        ||
+                        n.Content.ToLower()
+                            .Contains(
+                                request.Search.ToLower())
+                        ||
+                        n.NoteType.ToString()
+                            .ToLower()
+                            .Contains(
+                                request.Search.ToLower()));
             }
 
 
             // Sorting
-            notes = request.SortBy?.ToLower() switch
-            {
-                "title" => request.IsDescending
-                    ? notes.OrderByDescending(n => n.Title)
-                    : notes.OrderBy(n => n.Title),
+            notes =
+                request.SortBy?.ToLower() switch
+                {
+                    "title" =>
+                        request.IsDescending
+                            ? notes.OrderByDescending(
+                                n => n.Title)
+                            : notes.OrderBy(
+                                n => n.Title),
 
 
-                "notetype" => request.IsDescending
-                    ? notes.OrderByDescending(n => n.NoteType)
-                    : notes.OrderBy(n => n.NoteType),
+                    "notetype" =>
+                        request.IsDescending
+                            ? notes.OrderByDescending(
+                                n => n.NoteType)
+                            : notes.OrderBy(
+                                n => n.NoteType),
 
 
-                "createddate" => request.IsDescending
-                    ? notes.OrderByDescending(n => n.CreatedDate)
-                    : notes.OrderBy(n => n.CreatedDate),
+                    "createddate" =>
+                        request.IsDescending
+                            ? notes.OrderByDescending(
+                                n => n.CreatedDate)
+                            : notes.OrderBy(
+                                n => n.CreatedDate),
 
 
-                _ => notes.OrderBy(n => n.NoteId)
-            };
+                    _ =>
+                        notes.OrderBy(
+                            n => n.NoteId)
+                };
 
 
             var totalRecords =
@@ -81,9 +134,12 @@ public class NoteService : INoteService
                 notes
                 .Skip(
                     (request.PageNumber - 1)
-                    * request.PageSize)
-                .Take(request.PageSize)
-                .Select(NoteMapper.ToDto)
+                    *
+                    request.PageSize)
+                .Take(
+                    request.PageSize)
+                .Select(
+                    NoteMapper.ToDto)
                 .ToList();
 
 
@@ -96,7 +152,8 @@ public class NoteService : INoteService
         catch (Exception ex)
         {
             throw new BusinessException(
-                "Failed to retrieve notes.", ex);
+                "Failed to retrieve notes.",
+                ex);
         }
     }
 
@@ -335,6 +392,58 @@ public class NoteService : INoteService
         {
             throw new BusinessException(
                 "Failed to delete the note.", ex);
+        }
+    }
+
+    public async Task<bool> CanAccessNoteAsync(
+    int noteId,
+    string currentUserId,
+    string currentUserRole)
+    {
+        try
+        {
+            var note =
+                await _noteRepository.FirstOrDefaultAsync(
+                    n => n.NoteId == noteId &&
+                         !n.IsDeleted);
+
+
+            if (note == null)
+                return false;
+
+
+            if (currentUserRole == "Admin")
+                return true;
+
+
+            if (note.UserId == currentUserId)
+                return true;
+
+
+            if (currentUserRole == "Manager")
+            {
+                var user =
+                    await _userRepository.FirstOrDefaultAsync(
+                        u => u.UserId == note.UserId &&
+                             !u.IsDeleted);
+
+
+                if (user == null)
+                    return false;
+
+
+                return user.LeaderId ==
+                       currentUserId;
+            }
+
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            throw new BusinessException(
+                "Failed to check note permission.",
+                ex);
         }
     }
 }

@@ -7,7 +7,9 @@ namespace CompanySystem.Business.Interfaces;
 public interface IUserService
 {
     Task<PagedResponse<UserDto>> GetAllAsync(
-        PaginationFilterRequest request);
+        PaginationFilterRequest request,
+        string currentUserId,
+        string currentUserRole);
 
 
     Task<UserDto?> GetByIdAsync(
@@ -23,5 +25,10 @@ public interface IUserService
 
 
     Task<bool> DeleteAsync(
+        string userId);
+
+
+    Task<bool> CanManageUserAsync(
+        string managerId,
         string userId);
 }
